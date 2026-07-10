@@ -20,11 +20,15 @@ FIRST_TABLES = ("users_for_form14", "import_batches", "pbo_reports")
 MIGRATION_MARKER_KEY = "sqlite_postgres_migration_completed"
 
 
-def load_form14_app(env_file: Path):
+def load_form14_app(env_file: Path, database_url: str | None = None):
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
     if env_file.exists():
         load_dotenv(env_file, override=True)
+    if database_url:
+        os.environ["INTERNAL_DATABASE_URL"] = database_url
+        os.environ["DATABASE_URL"] = database_url
+        os.environ["PBORA_DATABASE_URL"] = database_url
     os.environ["SKIP_SCHEMA_CHECK"] = "1"
     import app as form14_app
 
@@ -307,6 +311,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Migrate PBORA SQLite backup rows into PostgreSQL.")
     parser.add_argument("--env-file", default=".env.production", help="Environment file for the target database.")
     parser.add_argument("--source", default="returnsform14_org_backup.sqlite", help="SQLite backup file to import.")
+    parser.add_argument("--url", default=None, help="Override PostgreSQL target URL for host-side migration.")
     parser.add_argument("--replace-existing", action="store_true", help="Truncate app tables before import if rows exist.")
     parser.add_argument("--batch-size", type=int, default=500)
     parser.add_argument("--sync-env-users", action="store_true", help="Create/update users from the env file after import.")
@@ -316,7 +321,7 @@ def main() -> int:
     env_file = (PROJECT_ROOT / args.env_file).resolve() if not Path(args.env_file).is_absolute() else Path(args.env_file)
     source_path = (PROJECT_ROOT / args.source).resolve() if not Path(args.source).is_absolute() else Path(args.source)
 
-    form14_app = load_form14_app(env_file)
+    form14_app = load_form14_app(env_file, database_url=args.url)
     with form14_app.app.app_context():
         form14_app.initialize_database(
             reset=False,

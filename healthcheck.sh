@@ -31,6 +31,9 @@ fi
 
 PORT="$(read_env_value HOST_PORT 8000)"
 URL="$(public_base_url)"
+if [[ -f "$APP_DIR/certs/server.crt" && -f "$APP_DIR/certs/server.key" ]]; then
+  URL="${URL/http:\/\//https:\/\/}"
+fi
 
 log_info "Compose status:"
 run_docker_compose --env-file .env.production -f "$COMPOSE_FILE" ps

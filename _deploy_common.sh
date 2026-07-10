@@ -217,7 +217,7 @@ wait_for_http() {
   local attempts="${2:-30}"
   local sleep_seconds="${3:-2}"
   for _ in $(seq 1 "$attempts"); do
-    if curl -fsS -o /dev/null "$url"; then
+    if curl -fsSk -o /dev/null "$url"; then
       return 0
     fi
     sleep "$sleep_seconds"

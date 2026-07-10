@@ -340,6 +340,24 @@ configure_docker_command() {
   die "Docker Engine, Docker Compose plugin, Docker Buildx plugin, and Docker daemon access are required."
 }
 
+remove_stale_container_name() {
+  local name="$1"
+  local container_id
+  container_id="$(${DOCKER_CMD[@]} ps -aq --filter "name=^/${name}$" | head -n 1)"
+  if [[ -z "$container_id" ]]; then
+    return 0
+  fi
+
+  echo "Removing stale Docker container name conflict: $name ($container_id)"
+  "${DOCKER_CMD[@]}" rm -f "$container_id" >/dev/null
+}
+
+remove_stale_deploy_containers() {
+  remove_stale_container_name form14_web
+  remove_stale_container_name form14_db
+}
+
+
 configure_host_routes() {
   if [[ "$MODE" != "postgres" ]]; then
     return 0
@@ -473,12 +491,16 @@ run_app_healthcheck() {
 }
 
 test_browser_access() {
-  local url="http://$APP_IP:$HOST_PORT"
+  local scheme="http"
+  if [[ -f "$CERT_CRT" && -f "$CERT_KEY" ]]; then
+    scheme="https"
+  fi
+  local url="$scheme://$APP_IP:$HOST_PORT"
   local output_file
   local http_status
   output_file="$(mktemp "${TMPDIR:-/tmp}/pbora_browser.XXXXXX.html")"
 
-  http_status="$(curl -sS --max-time 20 -H "Host: $APP_IP" "$url" -o "$output_file" -w '%{http_code}' || true)"
+  http_status="$(curl -sS --max-time 20 -H "Host: $APP_IP" -k "$url" -o "$output_file" -w '%{http_code}' || true)"
 
   if grep -Eiq 'BadHost|Host.*not allowed|Bad token|host not allowed' "$output_file"; then
     die "Browser access test failed: host not allowed for $url. Check ALLOWED_HOSTS and PBORA_APP_HOST_IP in $ENV_FILE."
@@ -686,10 +708,12 @@ open_lan_firewall
   exit 1
 }
 
-"$PYTHON_BIN" "$APP_DIR/scripts/migrate_sqlite_to_postgres.py" --env-file "$ENV_FILE" --source "$SOURCE_SQLITE" --replace-existing --sync-env-users --reset-user-password field.12345 >"$MIGRATE_LOG" 2>&1 || {
+"$PYTHON_BIN" "$APP_DIR/scripts/migrate_sqlite_to_postgres.py" --env-file "$ENV_FILE" --source "$SOURCE_SQLITE" --url "postgresql+psycopg2://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME" --replace-existing --sync-env-users --reset-user-password field.12345 >"$MIGRATE_LOG" 2>&1 || {
   echo "SQLite import into PostgreSQL failed. See $MIGRATE_LOG" >&2
   exit 1
 }
+
+remove_stale_deploy_containers
 
 if [[ "$MODE" == "postgres" ]]; then
   "${DOCKER_CMD[@]}" compose --env-file "$ENV_FILE" -f docker-compose.prod.postgres.yml up -d --build

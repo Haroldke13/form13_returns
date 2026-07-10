@@ -20,6 +20,7 @@ import zipfile
 from collections import Counter, defaultdict
 from functools import wraps
 from flask.cli import with_appcontext
+from flask.config import Config
 
 from dotenv import load_dotenv
 
@@ -112,7 +113,32 @@ except ImportError:  # pragma: no cover - non-POSIX hosts
 
 load_dotenv()
 
-app = Flask(__name__)
+def normalize_flask_trusted_hosts(value):
+    if value and "*" in value:
+        return None
+    return value
+
+
+class PBORAConfig(Config):
+    def __setitem__(self, key, value):
+        if key == "TRUSTED_HOSTS":
+            value = normalize_flask_trusted_hosts(value)
+        super().__setitem__(key, value)
+
+
+class PBORAFlask(Flask):
+    config_class = PBORAConfig
+
+    @property
+    def trusted_hosts(self):
+        return getattr(self, "_pbora_trusted_hosts", None)
+
+    @trusted_hosts.setter
+    def trusted_hosts(self, value):
+        self._pbora_trusted_hosts = normalize_flask_trusted_hosts(value)
+
+
+app = PBORAFlask(__name__)
 BACKUP_THREAD_STARTED = False
 BACKUP_THREAD_LOCK = threading.Lock()
 app.config['MAX_CONTENT_LENGTH'] = max(int(os.getenv('MAX_REQUEST_MB', '260') or 260), 50) * 1024 * 1024
@@ -661,11 +687,11 @@ def build_database_url_from_env_parts():
         }
         return build_database_url_from_parts(
             f"mysql+{mysql_driver}",
-            host=env_first("DB_HOST", "MYSQL_HOST") or "localhost",
-            port=env_first("DB_PORT", "MYSQL_PORT") or "3306",
-            database_name=env_first("DB_NAME", "MYSQL_DATABASE", "MYSQL_DB"),
-            username=env_first("DB_USER", "MYSQL_USER"),
-            password=env_first("DB_PASSWORD", "MYSQL_PASSWORD"),
+            host=env_first("MYSQL_HOST", "DB_HOST") or "localhost",
+            port=env_first("MYSQL_PORT", "DB_PORT") or "3306",
+            database_name=env_first("MYSQL_DATABASE", "MYSQL_DB", "DB_NAME"),
+            username=env_first("MYSQL_USER", "DB_USER"),
+            password=env_first("MYSQL_PASSWORD", "DB_PASSWORD"),
             query_params=query_params,
         )
 
@@ -1481,6 +1507,12 @@ def sql_literal(value, dialect_name):
 
 
 def dialect_quote_identifier(identifier):
+    identifier = str(identifier).replace('\x00', '')
+    dialect_name = getattr(db.engine.dialect, 'name', '')
+    if dialect_name == 'postgresql':
+        return '"' + identifier.replace('\"', '\"\"') + '"'
+    if dialect_name in {'mysql', 'mariadb'}:
+        return '`' + identifier.replace('`', '``') + '`'
     return db.engine.dialect.identifier_preparer.quote(identifier)
 
 
@@ -1570,6 +1602,18 @@ def ensure_model_columns(model):
     return added_columns, skipped_columns
 
 
+def compiled_column_type_name(column_type):
+    if column_type is None:
+        return None
+    compile_method = getattr(column_type, 'compile', None)
+    if callable(compile_method):
+        try:
+            return str(compile_method(dialect=db.engine.dialect)).upper()
+        except Exception:
+            pass
+    return str(column_type).upper()
+
+
 def ensure_model_string_capacities(model, column_names=None):
     """Widen legacy VARCHAR columns or promote them to TEXT when the model allows it."""
     inspector = inspect(db.engine)
@@ -1602,13 +1646,9 @@ def ensure_model_string_capacities(model, column_names=None):
         desired_length = getattr(model_column.type, 'length', None)
         current_length = getattr(existing_column.get('type'), 'length', None)
         model_uses_text = isinstance(model_column.type, Text)
-        desired_compiled_type = str(model_column.type.compile(dialect=db.engine.dialect)).upper()
+        desired_compiled_type = compiled_column_type_name(model_column.type)
         current_type = existing_column.get('type')
-        current_compiled_type = (
-            str(current_type.compile(dialect=db.engine.dialect)).upper()
-            if current_type is not None
-            else None
-        )
+        current_compiled_type = compiled_column_type_name(current_type)
 
         quoted_column = dialect_quote_identifier(column_name)
 
@@ -1627,10 +1667,7 @@ def ensure_model_string_capacities(model, column_names=None):
 
             if dialect_name == 'postgresql':
                 db.session.execute(
-                    text(
-                        f'ALTER TABLE {quoted_table} '
-                        f'ALTER COLUMN {quoted_column} TYPE TEXT'
-                    )
+                    text(f'ALTER TABLE {quoted_table} ALTER COLUMN {quoted_column} TYPE TEXT')
                 )
                 widened_columns.append(f"{column_name}={current_length}->TEXT")
                 continue
@@ -2907,11 +2944,7 @@ def bootstrap_database_on_startup():
         with startup_database_bootstrap_lock():
             with app.app_context():
                 is_postgresql = db.engine.dialect.name == 'postgresql'
-                apply_schema_changes = (
-                    not is_postgresql
-                    or env_flag('RUN_SCHEMA_SYNC_ON_STARTUP', False)
-                    or env_flag('AUTO_IMPORT_DATABASE_DUMP_ON_STARTUP', False)
-                )
+                apply_schema_changes = not is_postgresql
                 initialize_database(
                     reset=False,
                     seed_users=False,
@@ -11044,6 +11077,30 @@ def load_user(user_id):
 
 
 @app.before_request
+def redirect_to_canonical_host():
+    if not env_flag('FORCE_CANONICAL_HOST', False):
+        return None
+
+    canonical_host = normalize_trusted_host_candidate(os.getenv('CANONICAL_HOSTNAME'))
+    if not canonical_host:
+        return None
+
+    request_host = normalize_trusted_host_candidate(request.host)
+    if not request_host or request_host == canonical_host:
+        return None
+
+    target = urlunparse((
+        request.scheme,
+        canonical_host,
+        request.path,
+        '',
+        request.query_string.decode('utf-8', errors='ignore'),
+        '',
+    ))
+    return redirect(target, code=308)
+
+
+@app.before_request
 def enforce_access_rules():
     endpoint = request.endpoint or ''
     normalized_endpoint = endpoint.lower()
@@ -12957,6 +13014,7 @@ def build_admin_user_activity_rows(users, activity_date=None):
 
         submitted_reports = []
         submitted_report_ids = set()
+        activity_report_last_touched = {}
         group_activities = []
         for user in user_group:
             for report in (getattr(user, 'reports', None) or []):
@@ -12988,6 +13046,11 @@ def build_admin_user_activity_rows(users, activity_date=None):
                 ):
                     continue
                 group_activities.append(entry)
+                activity_report_id = getattr(entry, 'report_id', None)
+                if activity_report_id is not None:
+                    previous_touched_at = activity_report_last_touched.get(activity_report_id)
+                    if previous_touched_at is None or entry.created_at > previous_touched_at:
+                        activity_report_last_touched[activity_report_id] = entry.created_at
 
         group_user_ids = [
             getattr(user, 'id', None)
@@ -13012,7 +13075,17 @@ def build_admin_user_activity_rows(users, activity_date=None):
             key=lambda item: (item[1] or datetime.min, item[0]),
             reverse=True,
         )
-        touched_report_ids = [report_id for report_id, _ in worked_report_items[:15]]
+        recent_report_last_touched = dict(group_submitted_last_touched)
+        for report_id, touched_at in activity_report_last_touched.items():
+            previous_touched_at = recent_report_last_touched.get(report_id)
+            if previous_touched_at is None or touched_at > previous_touched_at:
+                recent_report_last_touched[report_id] = touched_at
+        recent_report_items = sorted(
+            recent_report_last_touched.items(),
+            key=lambda item: (item[1] or datetime.min, item[0]),
+            reverse=True,
+        )
+        touched_report_ids = [report_id for report_id, _ in recent_report_items[:15]]
 
         owned_by_id = {report.id: report for report in submitted_reports if getattr(report, 'id', None)}
         touched_reports = []
