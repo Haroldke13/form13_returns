@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}PBO Report Comparative Analysis{% endblock %}
+{% block content %}
+
+<div class="container-fluid px-3 px-md-4">
+    <!-- Header Card -->
+    <div class="card mb-4 border-0 shadow-sm" title="PBO Report Comparative Analysis header card">
+        <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-center py-3">
+            <div>
+                <h1 class="h3 mb-1" title="Page title"><i class="fas fa-chart-line text-primary me-2"></i>PBO Report
+                    Comparative Analysis</h1>
+                {% if pagination %}
+                <small class="text-muted" title="Total reports count">{{ pagination.total }} total reports</small>
+                {% endif %}
+            </div>
+            <div class="mt-2 mt-md-0">
+                <a href="{{ url_for('reports_list') }}" class="btn btn-outline-primary btn-sm"
+                    title="Navigate to full reports list">
+                    <i class="fas fa-list me-1"></i>Full Reports
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if reports %}
+    <div class="table-container table-responsive shadow-sm rounded">
+        <table class="table table-striped table-hover table-bordered align-middle"
+            title="PBO comparative analysis data table">
+            <thead class="table-dark sticky-top">
+                <tr title="Table header row">
+                    <th class="text-nowrap" title="PBO organization name">PBO Name</th>
+                    <th class="text-nowrap" title="Registration number">Reg #</th>
+                    <th class="text-nowrap" title="Reporting period">Period</th>
+                    <th class="text-nowrap" title="PBO category">Category</th>
+                    <th class="text-nowrap" title="Scope of operation">Scope</th>
+                    <th class="text-nowrap text-center" title="Total assets count">Assets</th>
+                    <th class="text-nowrap text-center" title="Total donations count">Donations</th>
+                    <th class="text-nowrap text-center" title="Staff count">Staff</th>
+                    <th class="text-nowrap text-center" title="Projects count">Projects</th>
+                    <th class="text-nowrap" title="Governance details">Governance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr title="Report for {{ r.pbo_name }}">
+                    <td title="PBO name and contact person">
+                        <strong>{{ r.pbo_name or 'N/A' }}</strong>
+                        <br><small class="text-muted">{{ r.contact_person or '' }}</small>
+                    </td>
+                    <td class="text-nowrap small" title="Registration number and date">
+                        {{ r.registration_number or 'N/A' }}
+                        <br><small class="text-muted">{{ r.registration_date or '' }}</small>
+                    </td>
+                    <td class="text-nowrap small" title="Reporting period">{{ r.reporting_period or 'N/A' }}</td>
+                    <td title="PBO category"><span class="badge bg-secondary" title="Category badge">{{ r.category or
+                            'N/A' }}</span></td>
+                    <td title="Scope and counties">
+                        <span class="badge bg-info text-dark" title="Scope badge">{{ r.scope or 'N/A' }}</span>
+                        {% if r.counties %}
+                        <br><small class="text-muted" title="Counties of operation">{{ r.counties|truncate(20)
+                            }}</small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center" title="Number of assets">
+                        {% if r.assets_count > 0 %}
+                        <span class="badge bg-success" title="Assets count">{{ r.assets_count }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center" title="Number of donations">
+                        {% if r.donations_count > 0 %}
+                        <span class="badge bg-warning text-dark" title="Donations count">{{ r.donations_count }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center" title="Number of staff">
+                        {% if r.staff_count > 0 %}
+                        <span class="badge bg-primary" title="Staff count">{{ r.staff_count }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center" title="Number of projects">
+                        {% if r.projects_count > 0 %}
+                        <span class="badge bg-dark" title="Projects count">{{ r.projects_count }}</span>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="small" title="Governance information">
+                        <div class="d-flex flex-wrap gap-1">
+                            <span class="badge bg-light text-dark" title="Number of directors"><i
+                                    class="fas fa-users"></i> {{ r.governance.directors or 0 }}</span>
+                            <span class="badge bg-light text-dark" title="Number of members"><i
+                                    class="fas fa-user-friends"></i> {{ r.governance.members or 0 }}</span>
+                            <span class="badge bg-light text-dark" title="Number of board meetings"><i
+                                    class="fas fa-calendar"></i> {{ r.governance.board_meetings or 0 }}</span>
+                        </div>
+                        <small class="text-muted d-block mt-1" title="Annual General Meeting">
+                            AGM: {{ r.governance.agm or 'N/A' }}
+                        </small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <h2><i class="fas fa-chart-bar me-2"></i>No Analysis Data Available</h2>
+        <p class="mb-0">Submit some reports first to view comparative analysis.</p>
+    </div>
+    {% endif %}
+
+    <!-- Pagination Controls -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Analysis pagination" class="mt-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="text-muted">
+                Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to {{ [pagination.page *
+                pagination.per_page, pagination.total]|min }} of {{ pagination.total }} reports
+            </div>
+            <ul class="pagination mb-0 flex-wrap justify-content-center">
+                <!-- First page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                    <a class="page-link" href="{{ url_for('analysis.analysis', page=1) }}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <!-- Previous page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                    <a class="page-link"
+                        href="{{ url_for('analysis.analysis', page=pagination.prev_num) if pagination.has_prev else '#' }}"
+                        aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <!-- Page numbers -->
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                    <a class="page-link" href="{{ url_for('analysis.analysis', page=p) }}">{{ p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                <!-- Next page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                    <a class="page-link"
+                        href="{{ url_for('analysis.analysis', page=pagination.next_num) if pagination.has_next else '#' }}"
+                        aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <!-- Last page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                    <a class="page-link" href="{{ url_for('analysis.analysis', page=pagination.pages) }}"
+                        aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
+
+    {%if reports %}
+
+    <div class="mt-4">
+        <h4>County Statistics</h4>
+        <img src="data:image/png;base64,{{ county_chart_img }}" alt="County Statistics Chart" class="img-fluid" />
+    </div>
+
+    <div class="mt-4">
+        <h4>Asset Distribution by Type</h4>
+        {% if asset_dist_img %}
+        <img src="data:image/png;base64,{{ asset_dist_img }}" alt="Asset Distribution Chart" class="img-fluid" />
+        {% else %}
+        <div class="alert alert-warning">No asset data available for plotting.</div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h4>Staff Composition (Kenyan vs Foreign)</h4>
+        {% if staff_comp_img %}
+        <img src="data:image/png;base64,{{ staff_comp_img }}" alt="Staff Composition Chart" class="img-fluid" />
+        {% else %}
+        <div class="alert alert-warning">No staff data available for plotting.</div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h4>Donation Breakdown by Category</h4>
+        {% if donation_break_img %}
+        <img src="data:image/png;base64,{{ donation_break_img }}" alt="Donation Breakdown Chart" class="img-fluid" />
+        {% else %}
+        <div class="alert alert-warning">No donation data available for plotting.</div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h4>Project Spending by Sector</h4>
+        {% if project_sector_img %}
+        <img src="data:image/png;base64,{{ project_sector_img }}" alt="Project Sector Chart" class="img-fluid" />
+        {% else %}
+        <div class="alert alert-warning">No project sector data available for plotting.</div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4">
+        <h4>Governance Statistics</h4>
+        {% if gov_stats_img %}
+        <img src="data:image/png;base64,{{ gov_stats_img }}" alt="Governance Statistics Chart" class="img-fluid" />
+        {% else %}
+        <div class="alert alert-warning">No governance data available for plotting.</div>
+        {% endif %}
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+
+
+
+
+
+
+<style>
+    /* Analysis table optimized styles */
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .table thead th {
+        border-bottom-width: 2px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05) !important;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+        .table {
+            font-size: 0.75rem;
+        }
+
+        .badge {
+            font-size: 0.65rem;
+            padding: 0.2em 0.4em;
+        }
+    }
+
+    /* Smooth transitions */
+    .table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    .page-link {
+        transition: all 0.15s ease;
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,2530 @@
+{% extends 'base.html' %}
+{% block title %}PBO Report Details{% endblock %}
+{% block styles %}
+{{ super() }}
+<style>
+  .report-detail-page {
+    --detail-ink: #102033;
+    --detail-muted: #5f6f82;
+    --detail-line: #d7e1ea;
+    --detail-card: #ffffff;
+    --detail-soft: #f8fafc;
+    --detail-primary: #0D2C6C;
+    --detail-success: #16A34A;
+    --detail-danger: #DC2626;
+    --detail-warning: #C89512;
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 24px 12px 40px;
+  }
+
+  .report-detail-frame {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+    border: 1px solid rgba(13, 44, 108, 0.08);
+    border-radius: 30px;
+    padding: 18px;
+  }
+
+  .report-detail-content-wrap {
+    display: grid;
+    gap: 22px;
+  }
+
+  .report-detail-hero {
+    background: var(--detail-card);
+    border: 1px solid #dfe6f0;
+    border-radius: 28px;
+    padding: 14px 16px;
+    margin-bottom: 0;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.05);
+  }
+
+  .report-detail-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid #d8e2ef;
+    color: var(--detail-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .report-detail-title {
+    margin: 8px 0 4px;
+    font-size: clamp(1.05rem, 1.4vw, 1.45rem);
+    line-height: 1.05;
+    color: var(--detail-ink);
+    font-weight: 800;
+  }
+
+  .report-detail-subtitle {
+    color: var(--detail-muted);
+    font-size: 0.74rem;
+    margin-bottom: 0;
+  }
+
+  .report-detail-associated-user {
+    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: #f7fbff;
+    border: 1px solid #d8e2ef;
+  }
+
+  .report-detail-associated-label {
+    color: var(--detail-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .report-detail-associated-value {
+    color: var(--detail-ink);
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
+  .report-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .report-detail-btn {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 700;
+    box-shadow: none !important;
+    font-size: 0.74rem;
+  }
+
+  .report-detail-stats {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    margin-top: 12px;
+    overflow-x: auto;
+  }
+
+  .report-detail-stat {
+    background: #fff;
+    border: 1px solid var(--detail-line);
+    border-radius: 14px;
+    padding: 8px 10px;
+    min-height: 68px;
+    flex: 1 1 0;
+    min-width: 140px;
+  }
+
+  .report-detail-stat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .report-detail-stat-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #eef4ff;
+    color: var(--detail-primary);
+    font-size: 0.72rem;
+  }
+
+  .report-detail-stat.income .report-detail-stat-icon {
+    background: #eaf8ef;
+    color: var(--detail-success);
+  }
+
+  .report-detail-stat.expense .report-detail-stat-icon {
+    background: #fdeeee;
+    color: var(--detail-danger);
+  }
+
+  .report-detail-stat.coverage .report-detail-stat-icon,
+  .report-detail-stat.projects .report-detail-stat-icon {
+    background: #eef4ff;
+    color: var(--detail-primary);
+  }
+
+  .report-detail-stat-label {
+    color: var(--detail-muted);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .report-detail-stat-value {
+    color: var(--detail-ink);
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 2px;
+  }
+
+  .report-detail-stat-note {
+    color: var(--detail-muted);
+    font-size: 0.66rem;
+    margin: 0;
+  }
+
+  .report-detail-page .accordion {
+    display: grid;
+    gap: 16px;
+  }
+
+  .report-detail-shell {
+    display: block;
+    padding: 4px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.7) 0%, rgba(244, 248, 252, 0.82) 100%);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
+  }
+
+  .report-detail-main-layout {
+    align-items: flex-start;
+  }
+
+  .report-detail-main-left,
+  .report-detail-main-right {
+    min-width: 0;
+  }
+
+  .report-detail-main {
+    min-width: 0;
+    border-radius: 24px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1.5px solid #d6deeb;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .report-detail-sidebar {
+    position: sticky;
+    top: 112px;
+    display: grid;
+    gap: 16px;
+    border-radius: 24px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #dfe6f0;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  }
+
+  .report-detail-panel {
+    border: 1.5px solid #d3deec;
+    border-radius: 24px;
+    background: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .report-detail-panel-head {
+    padding: 18px 18px 12px;
+    background: #f7fbff;
+    border-bottom: 1px solid #e4ecf5;
+  }
+
+  .report-detail-panel-title {
+    margin: 0;
+    color: var(--detail-ink);
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  .report-detail-panel-copy {
+    margin: 6px 0 0;
+    color: var(--detail-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .report-detail-panel-body {
+    padding: 14px 18px 18px;
+  }
+
+  .report-detail-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .report-detail-mini-card {
+    border-radius: 18px;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+  }
+
+  .report-detail-mini-label {
+    color: var(--detail-muted);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .report-detail-mini-value {
+    color: var(--detail-ink);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .report-detail-mini-note {
+    margin-top: 4px;
+    color: var(--detail-muted);
+    font-size: 0.82rem;
+  }
+
+  .report-detail-page .accordion-header {
+    scroll-margin-top: 148px;
+  }
+
+  .report-detail-nav-groups {
+    display: grid;
+    gap: 14px;
+  }
+
+  .report-detail-nav-group {
+    display: grid;
+    gap: 8px;
+  }
+
+  .report-detail-nav-label {
+    color: var(--detail-muted);
+    font-size: 0.73rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+  }
+
+  .report-detail-nav-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .report-detail-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid #d9e6ef;
+    background: #fff;
+    color: #244056;
+    text-decoration: none;
+    transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  }
+
+  .report-detail-nav-link:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+    box-shadow: 0 10px 20px rgba(29, 78, 216, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .report-detail-nav-link.is-active {
+    background: #eef4ff;
+    border-color: #9fc0ff;
+    color: var(--detail-primary);
+    box-shadow: inset 0 0 0 1px rgba(13, 44, 108, 0.08);
+  }
+
+  .report-detail-nav-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #f1f6fb;
+    color: var(--detail-primary);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+
+  .report-detail-nav-link.is-active .report-detail-nav-icon {
+    background: #dce9ff;
+  }
+
+  .report-detail-nav-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .report-detail-nav-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--detail-ink);
+    font-size: 0.88rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .report-detail-nav-meta {
+    margin-top: 3px;
+    color: var(--detail-muted);
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .report-detail-nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    background: #cbd5e1;
+    box-shadow: 0 0 0 3px rgba(203, 213, 225, 0.18);
+  }
+
+  .report-detail-nav-dot.is-ready {
+    background: var(--detail-success);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.16);
+  }
+
+  .report-detail-nav-dot.is-partial {
+    background: var(--detail-warning);
+    box-shadow: 0 0 0 3px rgba(200, 149, 18, 0.18);
+  }
+
+  .report-detail-nav-dot.is-empty {
+    background: #cbd5e1;
+    box-shadow: 0 0 0 3px rgba(203, 213, 225, 0.18);
+  }
+
+  .report-detail-insight-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .report-detail-insight {
+    border-radius: 18px;
+    padding: 14px 15px;
+    background: #eef4fb;
+    border: 1px solid #d7e1ea;
+  }
+
+  .report-detail-insight strong {
+    display: block;
+    color: var(--detail-ink);
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+  }
+
+  .report-detail-insight span {
+    color: var(--detail-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .report-detail-page .accordion-item {
+    border: 1.5px solid #d3deec !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+  }
+
+  .report-detail-page .accordion-button {
+    background: #f8fbff;
+    color: var(--detail-ink);
+    font-weight: 800;
+    padding: 16px 18px;
+    box-shadow: none;
+    border-bottom: 1px solid transparent;
+  }
+
+  .report-detail-page .accordion-button:not(.collapsed) {
+    background: #f8fbff;
+    color: var(--detail-primary);
+    border-bottom-color: #e6edf6;
+  }
+
+  .report-detail-page .accordion-body {
+    background: #ffffff;
+    padding: 16px 18px 18px;
+    border-top: 1px solid #e6edf6;
+  }
+
+  .report-detail-page .card {
+    border: 1px solid #dfe6f0;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  }
+
+  .report-detail-page .card-header {
+    background: #f8fbff;
+    color: var(--detail-ink);
+    font-weight: 800;
+    border-bottom: 1px solid #e6edf6;
+    padding: 14px 18px;
+  }
+
+  .report-detail-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+  }
+
+  .report-detail-status.is-draft,
+  .report-detail-status.is-returned {
+    background: #fff6df;
+    color: #9a6700;
+    border-color: #ecd7a0;
+  }
+
+  .report-detail-status.is-submitted,
+  .report-detail-status.is-approved {
+    background: #eaf8ef;
+    color: var(--detail-success);
+    border-color: #b9e2c6;
+  }
+
+  .report-detail-status.is-flagged {
+    background: #fdeeee;
+    color: var(--detail-danger);
+    border-color: #f5c2c7;
+  }
+
+  .report-detail-related {
+    margin-top: 8px;
+    padding: 10px 0 2px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .report-detail-related-label {
+    font-weight: 700;
+    color: var(--detail-ink);
+  }
+
+  .report-detail-related .related-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .report-detail-related .related-chip:hover {
+    background: #eef2ff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+  }
+
+  .report-detail-page .table-responsive {
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-width: 720px;
+  }
+
+  .report-detail-page .table-container {
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    scrollbar-width: thin;
+  }
+
+  .report-detail-page .table-container::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .report-detail-page .table-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+
+  .report-detail-page .table-scrollbar {
+    display: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 14px;
+    border: 1px solid #d8e0ea;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f8fbff 0%, #edf3f9 100%);
+    scrollbar-width: thin;
+  }
+
+  .report-detail-page .table-scrollbar-top {
+    margin-bottom: 8px;
+  }
+
+  .report-detail-page .table-scrollbar-bottom {
+    margin-top: 8px;
+  }
+
+  .report-detail-page .table-scrollbar::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .report-detail-page .table-scrollbar::-webkit-scrollbar-thumb {
+    background: #b8c5d4;
+    border-radius: 999px;
+  }
+
+  .report-detail-page .table-scrollbar-track {
+    height: 1px;
+    min-width: 1px;
+  }
+
+  .report-detail-page .table {
+    margin-bottom: 0;
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: #f8fbfd;
+    --bs-table-hover-bg: #eef7f4;
+  }
+
+  .report-detail-page .table thead.table-light th,
+  .report-detail-page .table thead th {
+    background: #eef4f8 !important;
+    color: #244056;
+    border-bottom-width: 1px;
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .report-detail-page .table th,
+  .report-detail-page .table td {
+    padding: 12px 14px;
+    border-color: #e3ebf2;
+    vertical-align: middle;
+  }
+
+  .report-detail-page .table td[data-type="numeric"],
+  .report-detail-page .table th[data-type="numeric"] {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .report-detail-page .table td[data-type="numeric"] {
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  .report-detail-page .table tbody th {
+    color: var(--detail-ink);
+    background: #f8fbfd;
+  }
+
+  .report-detail-page .table-secondary th,
+  .report-detail-page .table-secondary td {
+    background: #edf7f3 !important;
+  }
+
+  .report-detail-page .accordion-body>p.m-3,
+  .report-detail-page .card-body>p.m-3 {
+    margin: 0 !important;
+    padding: 16px 18px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    color: var(--detail-muted);
+    font-weight: 600;
+  }
+
+  @media (max-width: 991px) {
+    .report-detail-stats {
+      flex-wrap: wrap;
+    }
+
+    .report-detail-sidebar {
+      position: static;
+    }
+
+    .report-detail-actions {
+      justify-content: flex-start;
+      margin-top: 16px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .report-detail-page {
+      padding-inline: 6px;
+    }
+
+    .report-detail-frame {
+      padding: 10px;
+      border-radius: 22px;
+    }
+
+    .report-detail-hero {
+      padding: 20px;
+      border-radius: 22px;
+    }
+
+    .report-detail-stats {
+      flex-direction: column;
+      overflow-x: visible;
+    }
+
+    .report-detail-stat {
+      min-width: 0;
+    }
+
+    .report-detail-page .accordion-button,
+    .report-detail-page .accordion-body {
+      padding-inline: 16px;
+    }
+  }
+</style>
+{% endblock %}
+{% block script %}
+{{ super() }}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("clear_form14_draft") !== "1") {
+      return;
+    }
+
+    try {
+      window.localStorage.removeItem("form14_draft_v1_{{ current_user.id if current_user.is_authenticated else 'anon' }}");
+    } catch (_error) {
+      // Ignore localStorage clear failures.
+    }
+
+    params.delete("clear_form14_draft");
+    if (window.history && window.history.replaceState) {
+      const nextQuery = params.toString();
+      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ""}${window.location.hash || ""}`;
+      window.history.replaceState({}, document.title, nextUrl);
+    }
+  });
+</script>
+{% endblock %}
+{% block content %}
+{% set detail_totals = namespace(donations=0, payments=0, counties=counties_list|length) %}
+{% for d in donations_list %}
+{% set detail_totals.donations = detail_totals.donations + (d.amount or 0) %}
+{% endfor %}
+{% for p in payments_list %}
+{% set detail_totals.payments = detail_totals.payments + (p.kenya_amount or 0) + (p.other_amount or 0) %}
+{% endfor %}
+{% set summary_counts = namespace(
+assets=assets_list|length,
+projects=project_implementations_list|length,
+officials=officials_list|length,
+collaborations=collaboration_list|length
+) %}
+{% set nav_counts = namespace(
+finance=(assets_list|length) + (donations_list|length),
+staff=(staff_biodata_list|length) + (volunteer_biodata_list|length) + (volunteer_privileges_list|length) +
+(training_records_list|length),
+projects=(project_implementations_list|length) + (projects_carried_out_list|length),
+governance=(officials_list|length) + (collaboration_list|length),
+payments=payments_list|length,
+grants=grants_list|length
+) %}
+{% set has_overview = report.reporting_period_start or report.reporting_period_end %}
+{% set has_pbo_primary = report.pbo_name or report.pbo_registration_number %}
+{% set has_pbo_extended = report.scope or report.email or report.telephone or report.contact_name or
+report.contact_email %}
+{% set overview_status = 'is-ready' if has_overview else 'is-empty' %}
+{% set pbo_status = 'is-ready' if has_pbo_primary and has_pbo_extended else ('is-partial' if has_pbo_primary or
+has_pbo_extended else 'is-empty') %}
+{% set finance_status = 'is-ready' if nav_counts.finance > 1 and nav_counts.payments > 0 else ('is-partial' if
+nav_counts.finance > 0 or nav_counts.payments > 0 else 'is-empty') %}
+{% set staff_status = 'is-ready' if nav_counts.staff >= 2 else ('is-partial' if nav_counts.staff > 0 else 'is-empty') %}
+{% set projects_status = 'is-ready' if nav_counts.projects > 0 and summary_counts.collaborations > 0 else ('is-partial'
+if nav_counts.projects > 0 or summary_counts.collaborations > 0 else 'is-empty') %}
+{% set governance_status = 'is-ready' if summary_counts.officials > 0 and (report.submitter_fullname or
+report.membership_number_of_directors or report.non_membership_number_of_directors) else ('is-partial' if
+summary_counts.officials > 0 or report.submitter_fullname or report.membership_number_of_directors or
+report.non_membership_number_of_directors else 'is-empty') %}
+{% set payments_status = 'is-ready' if nav_counts.payments > 0 else 'is-empty' %}
+{% set grants_status = 'is-ready' if nav_counts.grants > 0 else 'is-empty' %}
+{% set workflow_value = (report.workflow_status or 'draft')|lower %}
+{% set status_class = 'is-draft' %}
+{% set status_label = workflow_value|replace('_', ' ')|title %}
+{% if workflow_value in ['submitted', 'validated', 'in review', 'in_review', 'approved'] %}
+{% set status_class = 'is-submitted' if workflow_value != 'approved' else 'is-approved' %}
+{% elif workflow_value in ['returned'] %}
+{% set status_class = 'is-flagged' %}
+{% set status_label = 'Flagged' %}
+{% endif %}
+<div class="report-detail-page">
+  <div class="app-page-container report-detail-frame">
+    <div class="report-detail-content-wrap">
+      <div class="report-detail-hero card border-0">
+        <div class="row g-3 align-items-start">
+          <div class="col-lg-7">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+              <span class="report-detail-kicker">Report #{{ report.id }}</span>
+              {% if report.scope %}
+              <span class="badge rounded-pill text-bg-light border">{{ report.scope.title() }} Scope</span>
+              {% endif %}
+              <span class="report-detail-status {{ status_class }}">
+                <i class="bi bi-patch-check"></i>
+                {{ status_label }}
+              </span>
+            </div>
+            <h1 class="report-detail-title">{{ report.pbo_name or 'PBO Report Details' }}</h1>
+            <p class="report-detail-subtitle">
+              Submitted {{ report.created_at|format_datetime or 'N/A' }}
+              {% if counties_list %}
+              • {{ counties_list|length }} county{{ '' if counties_list|length == 1 else 'ies' }}
+              {% endif %}
+              {% if countries_of_operation_list %}
+              • {{ countries_of_operation_list|length }} countr{{ 'y' if countries_of_operation_list|length == 1 else
+              'ies' }} of operation
+              {% endif %}
+            </p>
+            <div class="report-detail-associated-user">
+              <span class="report-detail-associated-label">Associated Username</span>
+              <span class="report-detail-associated-value">{{ associated_username }}</span>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="report-detail-actions">
+              <a href="{{ url_for('home') }}" class="btn btn-primary report-detail-btn">Submit New Report</a>
+
+              {% if current_user.is_authenticated %}
+              {% if current_user.is_authenticated and current_user.role == 'admin' %}
+              <a href="{{ url_for('reports_list') }}" class="btn btn-outline-secondary report-detail-btn">View All
+                Reports</a>
+              {% endif %}
+              {% endif %}
+              {% if can_edit_report %}
+              <a href="{{ url_for('report_edit', report_id=report.id) }}"
+                class="btn btn-outline-dark report-detail-btn">Edit Report</a>
+              <form method="post" action="{{ url_for('report_delete', report_id=report.id) }}"
+                class="d-inline-block ms-2" onsubmit="return confirm('Delete this record permanently?');">
+                <button type="submit" class="btn btn-outline-danger report-detail-btn" title="Delete this record">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+            {% if neighbor_reports %}
+            <div class="report-detail-related">
+              <span class="report-detail-related-label">Related filings:</span>
+              <div class="d-flex flex-wrap gap-2">
+                {% for rel in neighbor_reports %}
+                <a class="related-chip" href="{{ rel.url }}">{{ rel.label }}</a>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="nav nav-pills gap-2 mt-4 mb-3 small">
+          <a class="nav-link" href="#headingB">Finance</a>
+          <a class="nav-link" href="#headingD">Projects</a>
+          <a class="nav-link" href="#headingGov">Governance</a>
+          <a class="nav-link" href="#headingPayments">Payments</a>
+        </div>
+
+        <div class="report-detail-stats">
+          <div class="report-detail-stat coverage">
+            <div class="report-detail-stat-head">
+              <div class="report-detail-stat-label">Reporting Window</div>
+              <span class="report-detail-stat-icon"><i class="bi bi-calendar-range"></i></span>
+            </div>
+            <div class="report-detail-stat-value">{{ reporting_period_start_display }}</div>
+            <p class="report-detail-stat-note">Start date for this filing period.</p>
+          </div>
+          <div class="report-detail-stat coverage">
+            <div class="report-detail-stat-head">
+              <div class="report-detail-stat-label">Counties Covered</div>
+              <span class="report-detail-stat-icon"><i class="bi bi-geo-alt"></i></span>
+            </div>
+            <div class="report-detail-stat-value">{{ detail_totals.counties }}</div>
+            <p class="report-detail-stat-note">{{ report.counties or 'No counties listed yet.' }}</p>
+          </div>
+          <div class="report-detail-stat income">
+            <div class="report-detail-stat-head">
+              <div class="report-detail-stat-label">Donations Logged</div>
+              <span class="report-detail-stat-icon"><i class="bi bi-cash-stack"></i></span>
+            </div>
+            <div class="report-detail-stat-value">KES {{ "{:,.2f}".format(detail_totals.donations) }}</div>
+            <p class="report-detail-stat-note">{{ donations_list|length }} donor entr{{ 'y' if donations_list|length ==
+              1 else 'ies' }} recorded.</p>
+          </div>
+          <div class="report-detail-stat expense">
+            <div class="report-detail-stat-head">
+              <div class="report-detail-stat-label">Payments Logged</div>
+              <span class="report-detail-stat-icon"><i class="bi bi-wallet2"></i></span>
+            </div>
+            <div class="report-detail-stat-value">KES {{ "{:,.2f}".format(detail_totals.payments) }}</div>
+            <p class="report-detail-stat-note">{{ payments_list|length }} payment entr{{ 'y' if payments_list|length ==
+              1 else 'ies' }} in this report.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="report-detail-shell">
+        <div class="report-detail-main">
+          <div class="row  report-detail-main-layout">
+            <!--====================================================-->
+            <div class="col-lg-9 report-detail-main-left">
+              <div class="accordion" id="reportAccordion">
+
+                <!-- Payments Section -->
+                <div class="accordion-item" title="Payments section">
+                  <h2 class="accordion-header" id="headingPayments" title="Payments header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#collapsePayments" aria-expanded="false" aria-controls="collapsePayments"
+                      title="Toggle payments accordion">
+                      Payments
+                    </button>
+                  </h2>
+                  <div id="collapsePayments" class="accordion-collapse collapse" aria-labelledby="headingPayments"
+                    data-bs-parent="#reportAccordion" title="Payments content">
+                    <div class="accordion-body" title="Payments table container">
+                      {% if payments_list %}
+                      <div class="table-container">
+                        <div class="table-responsive">
+                          <table id="payments-table"
+                            class="table table-bordered table-striped table-hover table-sm mb-0"
+                            title="Payments details table">
+                            <thead class="table-light">
+                              <tr title="Payments table header row">
+                                <th title="Description column">Description</th>
+                                <th data-type="numeric" title="Kenya amount column">Kenya (KES)</th>
+                                <th data-type="numeric" title="Other amount column">Other (KES)</th>
+                                <th data-type="numeric" title="Total amount column">Total (KES)</th>
+                              </tr>
+                            </thead>
+                            <tbody title="Payments table body">
+                              {% for p in payments_list %}
+                              <tr title="Payment record row">
+                                <td title="Payment description">{{ p.description }}</td>
+                                <td data-type="numeric" title="Kenya payment amount">{{ p.kenya_amount }}</td>
+                                <td data-type="numeric" title="Other country payment amount">{{ p.other_amount }}</td>
+                                <td data-type="numeric" title="Total payment amount">{{ (p.kenya_amount or 0) +
+                                  (p.other_amount or 0) }}</td>
+                              </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                          <script defer>
+                            document.addEventListener('DOMContentLoaded', function () {
+                              var tbl = document.getElementById('payments-table');
+                              if (tbl && !tbl.dataset.datatableInitialized) {
+                                new DataTable(tbl, {
+                                  paging: false, // disable paging to use server-side pagination
+                                  searching: true,
+                                  ordering: true,
+                                  info: true,
+                                  responsive: true
+                                });
+                                tbl.dataset.datatableInitialized = "true";
+                              }
+                            });
+                          </script>
+
+
+
+                        </div>
+                        {% else %}
+                        <p class="m-3" title="No payments message">No payments data provided.</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Grants Section -->
+                  <div class="accordion-item" title="Grants to Other PBOs section" hidden aria-hidden="true">
+                    <h2 class="accordion-header" id="headingGrants" title="Grants header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseGrants" aria-expanded="false" aria-controls="collapseGrants"
+                        title="Toggle grants accordion">
+                        Grants to Other PBOs
+                      </button>
+                    </h2>
+                    <div id="collapseGrants" class="accordion-collapse collapse" aria-labelledby="headingGrants"
+                      data-bs-parent="#reportAccordion" title="Grants content">
+                      <div class="accordion-body" title="Grants table container">
+                        {% if grants_list %}
+                        <div class="table-container">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                              title="Grants details table">
+                              <thead class="table-light">
+                                <tr title="Grants table header row">
+                                  <th title="Name column">Name</th>
+                                  <th title="Registration number column">Registration No.</th>
+                                  <th title="Country column">Country</th>
+                                  <th data-type="numeric" title="Amount column">Amount (KES)</th>
+                                </tr>
+                              </thead>
+                              <tbody title="Grants table body">
+                                {% for g in grants_list %}
+                                <tr title="Grant record row">
+                                  <td title="Grant name">{{ g.name }}</td>
+                                  <td title="Grant registration number">{{ g.registration_no }}</td>
+                                  <td title="Grant country">{{ g.country }}</td>
+                                  <td data-type="numeric" title="Grant amount">{{ g.amount }}</td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        {% else %}
+                        <p class="m-3" title="No grants message">No grants data provided.</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Banking Details Section -->
+                  <div class="accordion-item" title="Banking Details section">
+                    <h2 class="accordion-header" id="headingBanking" title="Banking Details header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseBanking" aria-expanded="false" aria-controls="collapseBanking"
+                        title="Toggle banking details accordion">
+                        Banking Details
+                      </button>
+                    </h2>
+                    <div id="collapseBanking" class="accordion-collapse collapse" aria-labelledby="headingBanking"
+                      data-bs-parent="#reportAccordion" title="Banking details content">
+                      <div class="accordion-body" title="Banking table container">
+                        {% if banking_list %}
+                        <div class="table-container">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                              title="Banking details table">
+                              <thead class="table-light">
+                                <tr title="Banking table header row">
+                                  <th title="Bank name column">Bank Name</th>
+                                  <th title="Branch column">Branch</th>
+                                  <th title="Account number column">Account Number</th>
+                                  <th title="Currency column">Currency</th>
+                                </tr>
+                              </thead>
+                              <tbody title="Banking table body">
+                                {% for b in banking_list %}
+                                <tr title="Bank record row">
+                                  <td title="Bank name">{{ b.bank_name }}</td>
+                                  <td title="Branch">{{ b.branch }}</td>
+                                  <td title="Account number">{{ b.account_number }}</td>
+                                  <td title="Currency">{{ b.currency }}</td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        {% else %}
+                        <p class="m-3" title="No banking details message">No banking details provided.</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Auditor Info Section -->
+                  <div class="accordion-item" title="Auditor information section">
+                    <h2 class="accordion-header" id="headingAuditor" title="Auditor information header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseAuditor" aria-expanded="false" aria-controls="collapseAuditor"
+                        title="Toggle auditor information accordion">
+                        Auditor Information
+                      </button>
+                    </h2>
+                    <div id="collapseAuditor" class="accordion-collapse collapse" aria-labelledby="headingAuditor"
+                      data-bs-parent="#reportAccordion" title="Auditor information content">
+                      <div class="accordion-body" title="Auditor information table container">
+                        {% if auditors_list %}
+                        <div class="table-container">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                              title="Auditor information table">
+                              <thead class="table-light">
+                                <tr title="Auditor information table header row">
+                                  <th title="Audit firm column">Audit Firm</th>
+                                  <th title="Auditor name column">Auditor Name</th>
+                                  <th title="Practicing number column">Practicing No.</th>
+                                </tr>
+                              </thead>
+                              <tbody title="Auditor information table body">
+                                {% for a in auditors_list %}
+                                <tr title="Auditor record row">
+                                  <td title="Audit firm">{{ a.firm }}</td>
+                                  <td title="Auditor name">{{ a.auditor_name }}</td>
+                                  <td title="Practicing number">{{ a.practicing_no }}</td>
+                                </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        {% else %}
+                        <p class="m-3" title="No auditor info message">No auditor info provided.</p>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Calculated Totals Section -->
+                  <div class="accordion-item" title="Calculated totals section">
+                    <h2 class="accordion-header" id="headingJSTotals" title="Calculated totals header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseJSTotals" aria-expanded="false" aria-controls="collapseJSTotals"
+                        title="Toggle calculated totals accordion">
+                        Calculated Totals
+                      </button>
+                    </h2>
+                    <div id="collapseJSTotals" class="accordion-collapse collapse" aria-labelledby="headingJSTotals"
+                      data-bs-parent="#reportAccordion" title="Calculated totals content">
+                      <div class="accordion-body" title="Calculated totals table container">
+                        {% set totals = namespace(asset_num=0, asset_val=0, donor=0) %}
+                        {% for a in assets_list %}
+                        {% set totals.asset_num = totals.asset_num + (a.number or 0) %}
+                        {% set totals.asset_val = totals.asset_val + (a.value or 0) %}
+                        {% endfor %}
+                        {% for d in donations_list %}
+                        {% set totals.donor = totals.donor + (d.amount or 0) %}
+                        {% endfor %}
+                        <div class="table-container">
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-sm mb-0" title="Calculated totals table">
+                              <tbody title="Calculated totals table body">
+                                <tr title="Assets total number row">
+                                  <th style="width: 35%" title="Assets total number label">Assets Total Number</th>
+                                  <td data-type="numeric" title="Assets total number value">{{ totals.asset_num }}</td>
+                                </tr>
+                                <tr title="Assets total value row">
+                                  <th title="Assets total value label">Assets Total Value</th>
+                                  <td data-type="numeric" title="Assets total value value">{{ totals.asset_val }}</td>
+                                </tr>
+                                <tr title="Donor total row">
+                                  <th title="Donor total label">Donor Total</th>
+                                  <td data-type="numeric" title="Donor total value">{{ totals.donor }}</td>
+                                </tr>
+                                <tr title="Staff total current row">
+                                  <th title="Staff total current label">Staff Total (Current)</th>
+                                  <td data-type="numeric" title="Staff total current value">{{
+                                    (report.staff_kenyan_current
+                                    or 0) + (report.staff_foreign_current or 0) }}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Report Information section" hidden aria-hidden="true">
+                    <h2 class="accordion-header" id="headingInfo" title="Report Information header">
+                      <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseInfo" aria-expanded="true" aria-controls="collapseInfo"
+                        title="Toggle report information accordion">
+                        Report Information
+                      </button>
+                    </h2>
+                    <div id="collapseInfo" class="accordion-collapse collapse show" aria-labelledby="headingInfo"
+                      data-bs-parent="#reportAccordion" title="Report information content">
+                      <div class="accordion-body" title="Report information table container">
+                        <div class="table-responsive" title="Report information responsive table wrapper">
+                          <table class="table table-bordered table-sm" title="Report information table">
+                            <tbody title="Report information table body">
+                              <tr title="Reporting period start row">
+                                <th style="width: 30%" title="Reporting period start label">Reporting Period Start</th>
+                                <td title="Reporting period start value">{{ reporting_period_start_display }}</td>
+                              </tr>
+                              <tr title="Reporting period end row">
+                                <th title="Reporting period end label">Reporting Period End</th>
+                                <td title="Reporting period end value">{{ reporting_period_end_display }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Section A – PBO Details section">
+                    <h2 class="accordion-header" id="headingA1" title="Section A – PBO Details header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseA1" aria-expanded="false" aria-controls="collapseA1"
+                        title="Toggle Section A accordion">
+                        Section A – PBO Details
+                      </button>
+                    </h2>
+                    <div id="collapseA1" class="accordion-collapse collapse" aria-labelledby="headingA1"
+                      data-bs-parent="#reportAccordion" title="Section A content">
+                      <div class="accordion-body" title="Section A table container">
+                        <div class="table-responsive" title="Section A responsive table wrapper">
+                          <table class="table table-bordered table-sm" title="Section A details table">
+                            <tbody title="Section A table body">
+                              <tr title="PBO name row">
+                                <th style="width: 30%" title="PBO name label">PBO Name</th>
+                                <td title="PBO name value">{{ report.pbo_name or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Registration number row">
+                                <th title="Registration number label">Registration Number</th>
+                                <td title="Registration number value">{{ report.pbo_registration_number or 'Not
+                                  provided' }}
+                                </td>
+                              </tr>
+                              <tr title="Date of registration row">
+                                <th title="Date of registration label">Date of Registration</th>
+                                <td title="Date of registration value">{{ report.pbo_registration_date|format_date or
+                                  'Not
+                                  provided' }}</td>
+                              </tr>
+                              <tr title="Scope row">
+                                <th title="Scope label">Scope of PBO</th>
+                                <td title="Scope value">{{ report.scope.title() if report.scope else 'Not provided' }}
+                                </td>
+                              </tr>
+                              <tr hidden title="KRA PIN row">
+                                <th title="KRA PIN label">KRA PIN</th>
+                                <td title="KRA PIN value">{{ report.kra_pin or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Postal address row">
+                                <th title="Postal address label">Postal Address</th>
+                                <td title="Postal address value">{{ report.postal_address or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Physical address row">
+                                <th title="Physical address label">Physical Address</th>
+                                <td title="Physical address value">{{ report.physical_address or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Telephone row">
+                                <th title="Telephone label">Telephone</th>
+                                <td title="Telephone value">{{ report.telephone or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Cell phone row">
+                                <th title="Cell phone label">Cell Phone</th>
+                                <td title="Cell phone value">{{ report.cell_phone or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Email row">
+                                <th title="Email label">Email</th>
+                                <td title="Email value">{{ report.email or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Website row">
+                                <th title="Website label">Website</th>
+                                <td title="Website value">{{ report.website or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Social media row">
+                                <th title="Social media label">Social Media</th>
+                                <td title="Social media value">{{ report.social_media or 'Not provided' }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Contact Person section">
+                    <h2 class="accordion-header" id="headingContact" title="Contact Person header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseContact" aria-expanded="false" aria-controls="collapseContact"
+                        title="Toggle contact person accordion">
+                        Contact Person
+                      </button>
+                    </h2>
+                    <div id="collapseContact" class="accordion-collapse collapse" aria-labelledby="headingContact"
+                      data-bs-parent="#reportAccordion" title="Contact person content">
+                      <div class="accordion-body" title="Contact person table container">
+                        <div class="table-responsive" title="Contact person responsive table wrapper">
+                          <table class="table table-bordered table-sm" title="Contact person details table">
+                            <tbody title="Contact person table body">
+                              <tr title="Contact name row">
+                                <th style="width: 30%" title="Contact name label">Name</th>
+                                <td title="Contact name value">{{ report.contact_name or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Contact position row">
+                                <th title="Contact position label">Position</th>
+                                <td title="Contact position value">{{ report.contact_position or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Contact telephone row">
+                                <th title="Contact telephone label">Telephone</th>
+                                <td title="Contact telephone value">{{ report.contact_telephone or 'Not provided' }}
+                                </td>
+                              </tr>
+                              <tr title="Contact email row">
+                                <th title="Contact email label">Email</th>
+                                <td title="Contact email value">{{ report.contact_email or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Contact nationality row">
+                                <th title="Contact nationality label">Nationality</th>
+                                <td title="Contact nationality value">{{ report.contact_nationality or 'Not provided' }}
+                                </td>
+                              </tr>
+                              <tr title="Contact gender row">
+                                <th title="Contact gender label">Gender</th>
+                                <td title="Contact gender value">{{ report.contact_gender or 'Not provided' }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Section A3–A6 – Registration, Counties section">
+                    <h2 class="accordion-header" id="headingA3" title="Section A3–A6 – Registration, Counties header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseA3" aria-expanded="false" aria-controls="collapseA3"
+                        title="Toggle Section A3-A6 accordion">
+                        Section A3–A6 – Registration, Counties
+                      </button>
+                    </h2>
+                    <div id="collapseA3" class="accordion-collapse collapse" aria-labelledby="headingA3"
+                      data-bs-parent="#reportAccordion" title="Section A3-A6 content">
+                      <div class="accordion-body" title="Section A3-A6 table container">
+                        <div class="table-responsive" title="Section A3-A6 responsive table wrapper">
+                          <table class="table table-bordered table-sm" title="Section A3-A6 details table">
+                            <tbody title="Section A3-A6 table body">
+                              <tr hidden title="Registration number row">
+                                <th style="width: 30%" title="Registration number label">Registration Number (A3)</th>
+                                <td title="Registration number value">{{ report.pbo_registration_number or 'Not
+                                  provided' }}
+                                </td>
+                              </tr>
+                              <tr hidden title="PIN number row">
+                                <th title="PIN number label">PIN Number</th>
+                                <td title="PIN number value">{{ report.pin_number or 'Not provided' }}</td>
+                              </tr>
+                              <tr hidden title="Date of registration row">
+                                <th title="Date of registration label">Date of Registration</th>
+                                <td title="Date of registration value">{{ report.pbo_registration_date|format_date or
+                                  'Not
+                                  provided' }}</td>
+                              </tr>
+                              <tr title="Countries of operation row">
+                                <th title="Countries of operation label">Countries of Operation</th>
+                                <td title="Countries of operation value">
+                                  {% if countries_of_operation_list %}
+                                  <ul class="mb-0" title="Countries of operation list">
+                                    {% for c in countries_of_operation_list %}<li title="Country of operation item">{{ c
+                                      }}
+                                    </li>{% endfor %}
+                                  </ul>
+                                  {% else %}
+                                  {{ report.countries_of_operation or 'Not provided' }}
+                                  {% endif %}
+                                </td>
+                              </tr>
+                              <tr title="Counties row">
+                                <th title="Counties label">Counties</th>
+                                <td title="Counties value">
+                                  {% if counties_list %}
+                                  <ul class="mb-0" title="Counties list">
+                                    {% for c in counties_list %}<li title="County item">{{ c }}</li>{% endfor %}
+                                  </ul>
+                                  {% else %}
+                                  {{ report.counties or 'Not provided' }}
+                                  {% endif %}
+                                </td>
+                              </tr>
+                              <tr title="Audited report row">
+                                <th title="Audited report label">Audited Report</th>
+                                <td title="Audited report value">{{ report.audited or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Assets stolen row">
+                                <th title="Assets stolen label">Assets Stolen/Misappropriated</th>
+                                <td title="Assets stolen value">{{ report.assets_stolen or 'Not provided' }}</td>
+                              </tr>
+                              <tr title="Cash balance previous year row">
+                                <th title="Cash balance previous year label">Cash/Bank Balance (Prev. Year)</th>
+                                <td title="Cash balance previous year value">{{ report.cash_balance_previous_year if
+                                  report.cash_balance_previous_year is not none else 'Not provided' }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Section B – Assets & Finance section">
+                    <h2 class="accordion-header" id="headingB" title="Section B – Assets & Finance header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseB" aria-expanded="false" aria-controls="collapseB"
+                        title="Toggle Section B accordion">
+                        Section B – Assets & Finance
+                      </button>
+                    </h2>
+                    <div id="collapseB" class="accordion-collapse collapse" aria-labelledby="headingB"
+                      data-bs-parent="#reportAccordion" title="Section B content">
+                      <div class="accordion-body" title="Section B body">
+                        <div class="card mb-3" title="Assets register card">
+                          <div class="card-header" title="Assets register header">Assets Register</div>
+                          <div class="card-body p-0" title="Assets register body">
+                            {% if assets_list %}
+                            <div class="table-responsive" title="Assets responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Assets details table">
+                                <thead class="table-light" title="Assets table header">
+                                  <tr title="Assets table header row">
+                                    <th title="Item column">Item</th>
+                                    <th data-type="numeric" title="Number column">Number</th>
+                                    <th data-type="numeric" title="Estimated value column">Estimated Value (KES)</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Assets table body">
+                                  {% for a in assets_list %}
+                                  <tr title="Asset record row">
+                                    <td title="Asset item">{{ a.item }}</td>
+                                    <td data-type="numeric" title="Asset number">{{ a.number if a.number is not none
+                                      else ''
+                                      }}</td>
+                                    <td data-type="numeric" title="Asset value">{{ a.value if a.value is not none else
+                                      '' }}
+                                    </td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No assets message">No assets data provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="card" title="Donations card">
+                          <div class="card-header" title="Donations header">Donations</div>
+                          <div class="card-body p-0" title="Donations body">
+                            {% if donations_list %}
+                            <div class="table-responsive" title="Donations responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Donations table">
+                                <thead class="table-light" title="Donations table header">
+                                  <tr title="Donations header row">
+                                    <th title="Donor name column">Donor Name</th>
+                                    <th title="Category column">Category</th>
+                                    <th title="Country column">Country</th>
+                                    <th data-type="numeric" title="Amount column">Amount (KES)</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Donations table body">
+                                  {% set ns2 = namespace(total=0) %}
+                                  {% for d in donations_list %}
+                                  <tr title="Donation record row">
+                                    <td title="Donor name">{{ d.name }}</td>
+                                    <td title="Donation category">{{ d.category }}</td>
+                                    <td title="Donation country">{{ d.country }}</td>
+                                    <td data-type="numeric" title="Donation amount">{{ d.amount if d.amount is not none
+                                      else
+                                      '' }}</td>
+                                  </tr>
+                                  {% set ns2.total = ns2.total + (d.amount or 0) %}
+                                  {% endfor %}
+                                  <tr class="table-secondary" title="Total row">
+                                    <th colspan="3" title="Total label">Total</th>
+                                    <th data-type="numeric" title="Total value">{{ ns2.total }}</th>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No donations message">No donations provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Section C – Staff Information section">
+                    <h2 class="accordion-header" id="headingC" title="Section C – Staff Information header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseC" aria-expanded="false" aria-controls="collapseC"
+                        title="Toggle Section C accordion">
+                        Section C – Staff Information
+                      </button>
+                    </h2>
+                    <div id="collapseC" class="accordion-collapse collapse" aria-labelledby="headingC"
+                      data-bs-parent="#reportAccordion" title="Section C content">
+                      <div class="accordion-body" title="Section C body">
+                        <div class="card mb-3" title="Staff counts Kenya card">
+                          <div class="card-header" title="Staff counts Kenya header">Staff Counts (Kenya)</div>
+                          <div class="card-body p-0" title="Staff counts Kenya body">
+                            <div class="table-responsive" title="Staff counts Kenya responsive table wrapper">
+                              <table class="table table-bordered table-sm mb-0" title="Staff counts Kenya table">
+                                <thead class="table-light" title="Staff counts Kenya table header">
+                                  <tr title="Staff counts Kenya header row">
+                                    <th title="Category column"></th>
+                                    <th title="Kenyan column">Kenyan</th>
+                                    <th title="Foreign column">Foreign</th>
+                                    <th title="Total column">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Staff counts Kenya table body">
+                                  <tr title="Previous year row">
+                                    <th style="width: 40%" title="Previous year label">Previous Year</th>
+                                    <td title="Kenyan previous year">{{ report.staff_kenyan_prev }}</td>
+                                    <td title="Foreign previous year">{{ report.staff_foreign_prev }}</td>
+                                    <td title="Total previous year">{{ (report.staff_kenyan_prev or 0) + (report.staff_foreign_prev or 0) }}</td>
+                                  </tr>
+                                  <tr title="Current year row">
+                                    <th title="Current year label">Current Year</th>
+                                    <td title="Kenyan current year">{{ report.staff_kenyan_current }}</td>
+                                    <td title="Foreign current year">{{ report.staff_foreign_current }}</td>
+                                    <td title="Total current year">{{ (report.staff_kenyan_current or 0) + (report.staff_foreign_current or 0) }}</td>
+                                  </tr>
+                                  <tr title="Came in row">
+                                    <th title="Came in label">Came In This Year</th>
+                                    <td title="Kenyan came in">{{ report.staff_kenyan_came_in }}</td>
+                                    <td title="Foreign came in">{{ report.staff_foreign_came_in }}</td>
+                                    <td title="Total came in">{{ (report.staff_kenyan_came_in or 0) + (report.staff_foreign_came_in or 0) }}</td>
+                                  </tr>
+                                  <tr title="Left row">
+                                    <th title="Left label">Left This Year</th>
+                                    <td title="Kenyan left">{{ report.staff_kenyan_left }}</td>
+                                    <td title="Foreign left">{{ report.staff_foreign_left }}</td>
+                                    <td title="Total left">{{ (report.staff_kenyan_left or 0) + (report.staff_foreign_left or 0) }}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Staff counts other countries card">
+                          <div class="card-header" title="Staff counts other countries header">Staff Counts (Other
+                            Countries)</div>
+                          <div class="card-body p-0" title="Staff counts other countries body">
+                            <div class="table-responsive" title="Staff counts other countries responsive table wrapper">
+                              <table class="table table-bordered table-sm mb-0"
+                                title="Staff counts other countries table">
+                                <thead class="table-light" title="Staff counts other countries table header">
+                                  <tr title="Staff counts other countries header row">
+                                    <th title="Category column"></th>
+                                    <th title="Kenyan column">Kenyan</th>
+                                    <th title="Foreign column">Foreign</th>
+                                    <th title="Total column">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Staff counts other countries table body">
+                                  <tr title="Previous year row">
+                                    <th style="width: 40%" title="Previous year label">Previous Year</th>
+                                    <td title="Kenyan previous year">{{ report.staff_other_kenyan_prev }}</td>
+                                    <td title="Foreign previous year">{{ report.staff_other_foreign_prev }}</td>
+                                    <td title="Total previous year">{{ (report.staff_other_kenyan_prev or 0) + (report.staff_other_foreign_prev or 0) }}</td>
+                                  </tr>
+                                  <tr title="Current year row">
+                                    <th title="Current year label">Current Year</th>
+                                    <td title="Kenyan current year">{{ report.staff_other_kenyan_current }}</td>
+                                    <td title="Foreign current year">{{ report.staff_other_foreign_current }}</td>
+                                    <td title="Total current year">{{ (report.staff_other_kenyan_current or 0) + (report.staff_other_foreign_current or 0) }}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Volunteers/Interns counts card">
+                          <div class="card-header" title="Volunteers/Interns counts header">Volunteers/Interns Counts
+                          </div>
+                          <div class="card-body p-0" title="Volunteers/Interns counts body">
+                            <div class="table-responsive" title="Volunteers/Interns counts responsive table wrapper">
+                              <table class="table table-bordered table-sm mb-0" title="Volunteers/Interns counts table">
+                                <thead class="table-light" title="Volunteers/Interns counts table header">
+                                  <tr title="Volunteers/Interns counts header row">
+                                    <th title="Category column"></th>
+                                    <th title="Kenyan column">Kenyan</th>
+                                    <th title="Foreign column">Foreign</th>
+                                    <th title="Total column">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Volunteers/Interns counts table body">
+                                  <tr title="Previous year row">
+                                    <th style="width: 40%" title="Previous year label">Previous Year</th>
+                                    <td title="Kenyan previous year">{{ report.volunteers_kenyan_prev }}</td>
+                                    <td title="Foreign previous year">{{ report.volunteers_foreign_prev }}</td>
+                                    <td title="Total previous year">{{ (report.volunteers_kenyan_prev or 0) + (report.volunteers_foreign_prev or 0) }}</td>
+                                  </tr>
+                                  <tr title="Current year row">
+                                    <th title="Current year label">Current Year</th>
+                                    <td title="Kenyan current year">{{ report.volunteers_kenyan_current }}</td>
+                                    <td title="Foreign current year">{{ report.volunteers_foreign_current }}</td>
+                                    <td title="Total current year">{{ (report.volunteers_kenyan_current or 0) + (report.volunteers_foreign_current or 0) }}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Staff biodata card">
+                          <div class="card-header" title="Staff biodata header">Staff Biodata</div>
+                          <div class="card-body p-0" title="Staff biodata body">
+                            {% if staff_biodata_list %}
+                            <div class="table-responsive" title="Staff biodata responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Staff biodata table">
+                                <thead class="table-light" title="Staff biodata table header">
+                                  <tr title="Staff biodata header row">
+                                    <th title="Category column">Category</th>
+                                    <th title="Previous year column">Previous Year</th>
+                                    <th title="Current year column">Current Year</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Staff biodata table body">
+                                  {% for s in staff_biodata_list %}
+                                  <tr title="Staff biodata record row">
+                                    <td title="Category">{{ s.category }}</td>
+                                    <td title="Previous year">{{ s.prev_year }}</td>
+                                    <td title="Current year">{{ s.curr_year }}</td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No staff biodata message">No staff biodata provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Volunteers/Interns biodata card">
+                          <div class="card-header" title="Volunteers/Interns biodata header">Volunteers/Interns Biodata
+                          </div>
+                          <div class="card-body p-0" title="Volunteers/Interns biodata body">
+                            {% if volunteer_biodata_list %}
+                            <div class="table-responsive" title="Volunteers/Interns biodata responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Volunteers/Interns biodata table">
+                                <thead class="table-light" title="Volunteers/Interns biodata table header">
+                                  <tr title="Volunteers/Interns biodata header row">
+                                    <th title="Category column">Category</th>
+                                    <th title="Previous year column">Previous Year</th>
+                                    <th title="Current year column">Current Year</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Volunteers/Interns biodata table body">
+                                  {% for v in volunteer_biodata_list %}
+                                  <tr title="Volunteer biodata record row">
+                                    <td title="Category">{{ v.category }}</td>
+                                    <td title="Previous year">{{ v.prev_year }}</td>
+                                    <td title="Current year">{{ v.curr_year }}</td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No volunteer biodata message">No volunteer biodata provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Volunteers privileges card">
+                          <div class="card-header" title="Volunteers privileges header">Volunteers' Privileges</div>
+                          <div class="card-body p-0" title="Volunteers privileges body">
+                            {% if volunteer_privileges_list %}
+                            <div class="table-responsive" title="Volunteers privileges responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Volunteers privileges table">
+                                <thead class="table-light" title="Volunteers privileges table header">
+                                  <tr title="Volunteers privileges header row">
+                                    <th title="Category column">Category</th>
+                                    <th title="Kenyan volunteers column">Kenyan Volunteers</th>
+                                    <th title="Kenyan interns column">Kenyan Interns</th>
+                                    <th title="International volunteers column">International Volunteers</th>
+                                    <th title="International interns column">International Interns</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Volunteers privileges table body">
+                                  {% for v in volunteer_privileges_list %}
+                                  <tr title="Volunteer privileges record row">
+                                    <td title="Category">{{ v.category or 'Not provided' }}</td>
+                                    <td title="Kenyan volunteer">{{ 'Yes' if v.kenyan_volunteer else 'No' }}</td>
+                                    <td title="Kenyan intern">{{ 'Yes' if v.kenyan_intern else 'No' }}</td>
+                                    <td title="International volunteer">{{ 'Yes' if v.international_volunteer else 'No'
+                                      }}
+                                    </td>
+                                    <td title="International intern">{{ 'Yes' if v.international_intern else 'No' }}
+                                    </td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No volunteers privileges message">No volunteers' privileges provided.
+                            </p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Staff training card">
+                          <div class="card-header" title="Staff training header">Staff Training</div>
+                          <div class="card-body p-0" title="Staff training body">
+                            {% if training_records_list %}
+                            <div class="table-responsive" title="Staff training responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Staff training table">
+                                <thead class="table-light" title="Staff training table header">
+                                  <tr title="Staff training header row">
+                                    <th title="Training type column">Training Type</th>
+                                    <th title="Kenyan column">Kenyan</th>
+                                    <th title="International column">International</th>
+                                    <th title="Total column">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Staff training table body">
+                                  {% for t in training_records_list %}
+                                  <tr title="Training record row">
+                                    <td title="Training type">{{ t.training_type }}</td>
+                                    <td title="Kenyan count">{{ t.kenyan_count }}</td>
+                                    <td title="International count">{{ t.international_count }}</td>
+                                    <td title="Total count">{{ (t.kenyan_count or 0) + (t.international_count or 0) }}
+                                    </td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No staff training message">No staff training records provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Section D – Project Implementation section">
+                    <h2 class="accordion-header" id="headingD" title="Section D – Project Implementation header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseD" aria-expanded="false" aria-controls="collapseD"
+                        title="Toggle Section D accordion">
+                        Section D – Project Implementation
+                      </button>
+                    </h2>
+                    <div id="collapseD" class="accordion-collapse collapse" aria-labelledby="headingD"
+                      data-bs-parent="#reportAccordion" title="Section D content">
+                      <div class="accordion-body" title="Section D body">
+                        <div class="card mb-3" title="Project Implementation Area card">
+                          <div class="card-header" title="Project Implementation Area header">Project Implementation
+                            (Area)
+                          </div>
+                          <div class="card-body p-0" title="Project Implementation Area body">
+                            {% if project_implementations_list %}
+                            <div class="table-responsive" title="Project Implementation Area responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Project Implementation Area table">
+                                <thead class="table-light" title="Project Implementation Area table header">
+                                  <tr title="Project Implementation Area header row">
+                                    <th title="Sector column">Sector</th>
+                                    <th title="County column">County</th>
+                                    <th title="Beneficiary Category column">Beneficiary Category</th>
+                                    <th data-type="numeric" title="Beneficiaries column">Beneficiaries</th>
+                                    <th data-type="numeric" title="Spending per County column">Spending/County</th>
+                                    <th data-type="numeric" title="Duration Years column">Duration (Years)</th>
+                                    <th title="Completion Status column">Completion Status</th>
+                                    <th data-type="numeric" title="Spent in Kenya column">Spent in Kenya</th>
+                                    <th data-type="numeric" title="Spent in Other column">Spent in Other</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Project Implementation Area table body">
+                                  {% for p in project_implementations_list %}
+                                  <tr title="Project Implementation Area record row">
+                                    <td title="Sector">{{ p.sector}}</td>
+                                    <td title="County">{{ p.county }}</td>
+                                    <td title="Vulnerable group">{{ p.vulnerable_group }}</td>
+                                    <td data-type="numeric" title="Beneficiaries number">{{ p.beneficiaries_no }}</td>
+                                    <td data-type="numeric" title="Spending per county">{{ p.spending_per_county }}</td>
+                                    <td data-type="numeric" title="Duration years">{{ p.duration_years }}</td>
+                                    <td title="Completion status">{{ p.completion_status }}</td>
+                                    <td data-type="numeric" title="Amount spent Kenya">{{ p.amount_spent_kenya }}</td>
+                                    <td data-type="numeric" title="Amount spent other">{{ p.amount_spent_other }}</td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No project implementation data message">No project implementation data
+                              provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Bank Accounts card">
+                          <div class="card-header" title="Bank Accounts header">Bank Accounts</div>
+                          <div class="card-body p-0" title="Bank Accounts body">
+                            {% if banking_list %}
+                            <div class="table-responsive" title="Bank Accounts responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Bank Accounts table">
+                                <thead class="table-light" title="Bank Accounts table header">
+                                  <tr title="Bank Accounts header row">
+                                    <th title="Bank name column">Bank Name</th>
+                                    <th title="Branch column">Branch</th>
+                                    <th title="Account number column">Account Number</th>
+                                    <th title="Currency column">Currency</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Bank Accounts table body">
+                                  {% for bank in banking_list %}
+                                  <tr title="Bank Accounts record row">
+                                    <td title="Bank name">{{ bank.bank_name or '-' }}</td>
+                                    <td title="Branch">{{ bank.branch or '-' }}</td>
+                                    <td title="Account number">{{ bank.account_number or '-' }}</td>
+                                    <td title="Currency">{{ bank.currency or '-' }}</td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No bank accounts data message">No bank account data provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="card mb-3" title="Projects Carried Out card">
+                          <div class="card-header" title="Projects Carried Out header">Projects Carried Out</div>
+                          <div class="card-body p-0" title="Projects Carried Out body">
+                            {% if projects_carried_out_list %}
+                            <div class="table-responsive" title="Projects Carried Out responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Projects Carried Out table">
+                                <thead class="table-light" title="Projects Carried Out table header">
+                                  <tr title="Projects Carried Out header row">
+                                    <th title="Sector column">Sector</th>
+                                    <th title="Carried Forward Kenya column">Carried Forward (Kenya)</th>
+                                    <th title="Carried Forward Other column">Carried Forward (Other)</th>
+                                    <th title="Started Kenya column">Started (Kenya)</th>
+                                    <th title="Started Other column">Started (Other)</th>
+                                    <th title="Completed Kenya column">Completed (Kenya)</th>
+                                    <th title="Completed Other column">Completed (Other)</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Projects Carried Out table body">
+                                  {% for p in projects_carried_out_list %}
+                                  <tr title="Projects Carried Out record row">
+                                    <td title="Sector">{{ p.sector }}</td>
+                                    <td title="Carried forward Kenya">{{ p.carried_forward_kenya or '-' }}</td>
+                                    <td title="Carried forward other">{{ p.carried_forward_other or '-' }}</td>
+                                    <td title="Started Kenya">{{ p.started_kenya or '-' }}</td>
+                                    <td title="Started other">{{ p.started_other or '-' }}</td>
+                                    <td title="Completed Kenya">{{ p.completed_kenya or '-' }}</td>
+                                    <td title="Completed other">{{ p.completed_other or '-' }}</td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No projects carried out data message">No projects carried out data
+                              provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+
+                        <div class="row g-3" title="Implementation and contributions section">
+                          <div class="col-md-4" title="Implementation method column">
+                            <div class="card h-100" title="Implementation method card">
+                              <div class="card-header" title="Implementation method header">Implementation Method</div>
+                              <div class="card-body" title="Implementation method body">
+                                <p class="mb-0" title="Implementation method value">{{
+                                  report.project_implementation_method
+                                  or 'Not provided' }}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-8" title="Contributions in kind column">
+                            <div class="card h-100" title="Contributions in kind card">
+                              <div class="card-header" title="Contributions in kind header">Contributions in Kind</div>
+                              <div class="card-body p-0" title="Contributions in kind body">
+                                <div class="table-responsive" title="Contributions in kind responsive table wrapper">
+                                  <table class="table table-bordered table-sm mb-0" title="Contributions in kind table">
+                                    <tbody title="Contributions in kind table body">
+                                      <tr title="Local material row">
+                                        <th style="width: 40%" title="Local material label">Local Material</th>
+                                        <td title="Local material checked">{{ '✓' if report.local_material else '-' }}
+                                        </td>
+                                        <td title="Local material amount">{{ report.local_material_amount }}</td>
+                                      </tr>
+                                      <tr title="Local labour row">
+                                        <th title="Local labour label">Local Labour</th>
+                                        <td title="Local labour checked">{{ '✓' if report.local_labour else '-' }}</td>
+                                        <td title="Local labour amount">{{ report.local_labour_amount }}</td>
+                                      </tr>
+                                      <tr title="Local financial row">
+                                        <th title="Local financial label">Local Financial</th>
+                                        <td title="Local financial checked">{{ '✓' if report.local_financial else '-' }}
+                                        </td>
+                                        <td title="Local financial amount">{{ report.local_financial_amount }}</td>
+                                      </tr>
+                                      <tr title="Local other row">
+                                        <th title="Local other label">Local Other</th>
+                                        <td title="Local other checked">{{ '✓' if report.local_other else '-' }}</td>
+                                        <td title="Local other value">{{ report.local_other_specify }} {{
+                                          report.local_other_amount }}</td>
+                                      </tr>
+                                      <tr hidden title="Government tax waiver row">
+                                        <th title="Government tax waiver label">Government Tax Waiver</th>
+                                        <td title="Government tax waiver checked">{{ '✓' if report.gov_tax_waiver else
+                                          '-'
+                                          }}</td>
+                                        <td title="Government tax waiver amount">{{ report.gov_tax_waiver_amount }}</td>
+                                      </tr>
+                                      <tr hidden title="Government other row">
+                                        <th title="Government other label">Government Other</th>
+                                        <td title="Government other checked">{{ '✓' if report.gov_other else '-' }}</td>
+                                        <td title="Government other value">{{ report.gov_other_specify }} {{
+                                          report.gov_other_amount }}</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                                {% if tax_waiver_list %}
+                                <div hidden class="table-responsive mt-2"
+                                  title="Tax waiver items responsive table wrapper">
+                                  <table class="table table-bordered table-sm mb-0" title="Tax waiver items table">
+                                    <thead class="table-light" title="Tax waiver items table header">
+                                      <tr title="Tax waiver items header row">
+                                        <th title="Item description column">Item Description</th>
+                                        <th title="Quantity column">Quantity</th>
+                                        <th title="Exemption type column">Exemption Type</th>
+                                        <th title="Estimated tax waived column">Estimated Tax Waived (KES)</th>
+                                        <th title="Certificate column">Certificate/Approval No.</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody title="Tax waiver items table body">
+                                      {% for t in tax_waiver_list %}
+                                      <tr title="Tax waiver item row">
+                                        <td title="Item description">{{ t.item_description }}</td>
+                                        <td title="Quantity">{{ t.quantity }}</td>
+                                        <td title="Exemption type">{{ t.exemption_type }}</td>
+                                        <td title="Estimated tax waived">{{ t.estimated_tax_waived }}</td>
+                                        <td title="Certificate approval">{{ t.certificate_approval_no }}</td>
+                                      </tr>
+                                      {% endfor %}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="card mt-3" title="Collaboration and Networking card">
+                          <div class="card-header" title="Collaboration and Networking header">Collaboration &
+                            Networking
+                          </div>
+                          <div class="card-body p-0" title="Collaboration and Networking body">
+                            {% if collaboration_list %}
+                            <div class="table-responsive" title="Collaboration and Networking responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Collaboration and Networking table">
+                                <thead class="table-light" title="Collaboration and Networking table header">
+                                  <tr title="Collaboration and Networking header row">
+                                    <th title="Partner type column">Partner Type</th>
+                                    <th title="Info exchange column">Info Exchange</th>
+                                    <th title="Tech support to column">Tech Support To</th>
+                                    <th title="Tech support from column">Tech Support From</th>
+                                    <th title="Funding to column">Funding To</th>
+                                    <th title="Funding from column">Funding From</th>
+                                    <th title="Equipment to column">Equipment To</th>
+                                    <th title="Equipment from column">Equipment From</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Collaboration and Networking table body">
+                                  {% for c in collaboration_list %}
+                                  <tr title="Collaboration record row">
+                                    <td title="Partner type">{{ c.partner_type }}</td>
+                                    <td title="Info exchange">{{ c.info_exchange or '-' }}</td>
+                                    <td title="Tech support to partner">{{ c.tech_support_to_partner or '-' }}</td>
+                                    <td title="Tech support from partner">{{ c.tech_support_from_partner or '-' }}</td>
+                                    <td title="Funding to partner">{{ c.funding_to_partner or '-' }}</td>
+                                    <td title="Funding from partner">{{ c.funding_from_partner or '-' }}</td>
+                                    <td title="Equipment to partner">{{ c.equipment_to_partner or '-' }}</td>
+                                    <td title="Equipment from partner">{{ c.equipment_from_partner or '-' }}</td>
+                                  </tr>
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No collaboration data message">No collaboration data provided.</p>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="accordion-item" title="Governance and Officials section">
+                    <h2 class="accordion-header" id="headingGov" title="Governance and Officials header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseGov" aria-expanded="false" aria-controls="collapseGov"
+                        title="Toggle Governance and Officials accordion">
+                        Governance & Officials
+                      </button>
+                    </h2>
+                    <div id="collapseGov" class="accordion-collapse collapse" aria-labelledby="headingGov"
+                      data-bs-parent="#reportAccordion" title="Governance and Officials content">
+                      <div class="accordion-body" title="Governance and Officials body">
+                        <div class="card mb-3" title="Governance information card">
+                          <div class="card-body p-0" title="Governance information body">
+                            <div class="table-responsive" title="Governance information responsive table wrapper">
+                              <table class="table table-bordered table-sm mb-0" title="Governance information table">
+                                <tbody title="Governance information table body">
+                                  <tr title="Number of directors row">
+                                    <th style="width: 30%" title="Number of directors label">Membership: Number of
+                                      Directors
+                                    </th>
+                                    <td title="Number of directors value">{{ report.membership_number_of_directors or
+                                      'Not
+                                      provided' }}</td>
+                                  </tr>
+                                  <tr title="Number of registered members row">
+                                    <th title="Number of registered members label">Membership: Number of Registered
+                                      Members
+                                    </th>
+                                    <td title="Number of registered members value">{{
+                                      report.membership_number_of_registered_members or 'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Number of board meetings row">
+                                    <th title="Number of board meetings label">Membership: Number of Board Meetings</th>
+                                    <td title="Number of board meetings value">{{
+                                      report.membership_number_of_board_meetings
+                                      or 'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Election frequency row">
+                                    <th title="Election frequency label">Election Frequency</th>
+                                    <td title="Election frequency value">
+                                      {% if election_frequency_list %}
+                                      <ul class="mb-0" title="Election frequency list">{% for f in
+                                        election_frequency_list
+                                        %}<li title="Election frequency item">{{ f }}</li>{% endfor %}</ul>
+                                      {% else %}
+                                      {{ report.election_frequency or 'Not provided' }}
+                                      {% endif %}
+                                    </td>
+                                  </tr>
+                                  <tr title="Date of last AGM row">
+                                    <th title="Date of last AGM label">Membership: Date of Last AGM</th>
+                                    <td title="Date of last AGM value">{{ report.membership_date_last_agm|format_date or
+                                      'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Date of last election row">
+                                    <th title="Date of last election label">Membership: Date of Last Election</th>
+                                    <td title="Date of last election value">{{
+                                      report.membership_date_last_election|format_date or 'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Non-membership number of directors row">
+                                    <th title="Non-membership number of directors label">Non-Membership: Number of
+                                      Directors
+                                    </th>
+                                    <td title="Non-membership number of directors value">{{
+                                      report.non_membership_number_of_directors or 'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Non-membership number of board meetings row">
+                                    <th title="Non-membership number of board meetings label">Non-Membership: Number of
+                                      Board Meetings</th>
+                                    <td title="Non-membership number of board meetings value">{{
+                                      report.non_membership_number_of_board_meetings or 'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Non-membership date of last board meeting row">
+                                    <th title="Non-membership date of last board meeting label">Non-Membership: Date of
+                                      Last
+                                      Board Meeting</th>
+                                    <td title="Non-membership date of last board meeting value">{{
+                                      report.non_membership_date_last_board_meeting|format_date or 'Not provided' }}
+                                    </td>
+                                  </tr>
+                                  <tr title="Non-membership date of last election row">
+                                    <th title="Non-membership date of last election label">Non-Membership: Date of Last
+                                      Election</th>
+                                    <td title="Non-membership date of last election value">{{
+                                      report.non_membership_date_last_election|format_date or 'Not provided' }}</td>
+                                  </tr>
+                                  <tr title="Submitter full name row">
+                                    <th title="Submitter full name label">Submitter Full Name</th>
+                                    <td title="Submitter full name value">{{ report.submitter_fullname or 'Not provided'
+                                      }}
+                                    </td>
+                                  </tr>
+                                  <tr title="Signature row">
+                                    <th title="Signature label">Signature</th>
+                                    <td title="Signature value">
+                                      {% if report.signature %}
+                                      <img src="{{ report.signature }}" alt="Signature"
+                                        style="max-width: 200px; max-height: 100px; border: 1px solid #ccc; border-radius: 4px;"
+                                        title="Signature image">
+                                      {% else %}
+                                      Not provided
+                                      {% endif %}
+                                    </td>
+                                  </tr>
+                                  <tr title="Submission date row">
+                                    <th title="Submission date label">Submission Date</th>
+                                    <td title="Submission date value">{{ report.submission_date|format_date or 'Not
+                                      provided' }}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="card" title="Officials card">
+                          <div class="card-header" title="Officials header">Officials</div>
+                          <div class="card-body p-0" title="Officials body">
+                            {% if officials_list %}
+                            <div class="table-responsive" title="Top 3 Current Officials responsive table wrapper">
+                              <table class="table table-bordered table-striped table-hover table-sm mb-0"
+                                title="Top 3 Current Officials table">
+                                <thead class="table-light" title="Top 3 Current Officials table header">
+                                  <tr title="Top 3 Current Officials header row">
+                                    <th title="Role column">Role</th>
+                                    <th title="Name column">Name</th>
+                                    <th title="Nationality column">Nationality</th>
+                                    <th title="Gender column">Gender</th>
+                                    <th title="Email column">Email</th>
+                                    <th title="Residence column">Residence</th>
+                                    <th title="Phone column">Phone</th>
+                                    <th title="KRA PIN column">KRA PIN</th>
+                                    <th title="Professional Qualification column">Professional Qualification</th>
+                                  </tr>
+                                </thead>
+                                <tbody title="Top 3 Current Officials table body">
+                                  {% set hidden_roles = [
+                                  'Board Member 1',
+                                  'Board Member 2',
+                                  'Board Member 3',
+                                  'Board Member 4',
+                                  'Board Member 5',
+                                  'Board Member 6'
+                                  ] %}
+                                  {% for o in officials_list %}
+                                  {% if o.role not in hidden_roles %}
+                                  <tr title="Official record row">
+                                    <td title="Role">{{ o.role }}</td>
+                                    <td title="Name">{{ o.name }}</td>
+                                    <td title="Nationality">{{ o.nationality }}</td>
+                                    <td title="Gender">{{ o.gender }}</td>
+                                    <td title="Email">{{ o.email }}</td>
+                                    <td title="Residence">{{ o.residence }}</td>
+                                    <td title="Phone">{{ o.phone }}</td>
+                                    <td title="KRA PIN">{{ o.kra_pin or '' }}</td>
+                                    <td title="Professional Qualification">{{ o.professional_qualification or '' }}</td>
+                                  </tr>
+                                  {% endif %}
+                                  {% endfor %}
+                                </tbody>
+                              </table>
+
+                              <!-- Officials Signatures -->
+                              <div class="mt-3 px-3 pb-3">
+                                <h6>Official Signatures</h6>
+                                <div class="row">
+                                  {% for o in officials_list %}
+                                  {% if o.role in ['Chairperson', 'Secretary', 'Treasurer'] and o.signature %}
+                                  <div class="col-md-4 mb-2">
+                                    <div class="card">
+                                      <div class="card-header py-1">{{ o.role }}</div>
+                                      <div class="card-body p-2 text-center">
+                                        <img src="{{ o.signature }}" alt="{{ o.role }} Signature"
+                                          style="max-width: 100%; max-height: 100px; border: 1px solid #ddd;">
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {% endif %}
+                                  {% endfor %}
+                                </div>
+                              </div>
+                            </div>
+                            {% else %}
+                            <p class="m-3" title="No officials data message">Not provided</p>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+            <!--====================================================-->
+
+              <div class="col-lg-3 report-detail-main-right">
+                <aside class="report-detail-sidebar">
+                  <section class="report-detail-panel card">
+                    <div class="report-detail-panel-head">
+                      <h2 class="report-detail-panel-title">Report Snapshot</h2>
+                      <p class="report-detail-panel-copy">A quick-read sidebar inspired by notebook and competition
+                        dashboards.</p>
+                    </div>
+                    <div class="report-detail-panel-body">
+                      <div class="report-detail-mini-grid">
+                        <div class="report-detail-mini-card">
+                          <div class="report-detail-mini-label">Assets</div>
+                          <div class="report-detail-mini-value">{{ summary_counts.assets }}</div>
+                          <div class="report-detail-mini-note">Registered asset rows</div>
+                        </div>
+                        <div class="report-detail-mini-card">
+                          <div class="report-detail-mini-label">Projects</div>
+                          <div class="report-detail-mini-value">{{ summary_counts.projects }}</div>
+                          <div class="report-detail-mini-note">Implementation entries</div>
+                        </div>
+                        <div class="report-detail-mini-card">
+                          <div class="report-detail-mini-label">Officials</div>
+                          <div class="report-detail-mini-value">{{ summary_counts.officials }}</div>
+                          <div class="report-detail-mini-note">Governance records</div>
+                        </div>
+                        <div class="report-detail-mini-card">
+                          <div class="report-detail-mini-label">Networks</div>
+                          <div class="report-detail-mini-value">{{ summary_counts.collaborations }}</div>
+                          <div class="report-detail-mini-note">Collaboration rows</div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="report-detail-panel card">
+                    <div class="report-detail-panel-head">
+                      <h2 class="report-detail-panel-title">Jump To Section</h2>
+                      <p class="report-detail-panel-copy">Quick navigation across the report, with live section status
+                        for
+                        review.</p>
+                    </div>
+                    <div class="report-detail-panel-body">
+                      <div class="report-detail-nav-groups">
+                        <div class="report-detail-nav-group">
+                          <div class="report-detail-nav-label">Profile</div>
+                          <div class="report-detail-nav-list">
+                            <a class="report-detail-nav-link" href="#headingA1" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-building"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">PBO Details <span
+                                    class="report-detail-nav-dot {{ pbo_status }}"></span></span>
+                                <span class="report-detail-nav-meta">Organisation profile and contact information</span>
+                              </span>
+                            </a>
+                          </div>
+                        </div>
+
+                        <div class="report-detail-nav-group">
+                          <div class="report-detail-nav-label">Finance</div>
+                          <div class="report-detail-nav-list">
+                            <a class="report-detail-nav-link" href="#headingB" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-bank"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">Assets & Finance <span
+                                    class="report-detail-nav-dot {{ finance_status }}"></span></span>
+                                <span class="report-detail-nav-meta">{{ nav_counts.finance }} finance row{{ '' if
+                                  nav_counts.finance == 1 else 's' }} captured</span>
+                              </span>
+                            </a>
+                            <a class="report-detail-nav-link" href="#headingPayments" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-credit-card"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">Payments <span
+                                    class="report-detail-nav-dot {{ payments_status }}"></span></span>
+                                <span class="report-detail-nav-meta">{{ nav_counts.payments }} payment entr{{ 'y' if
+                                  nav_counts.payments == 1 else 'ies' }}</span>
+                              </span>
+                            </a>
+                            <a class="report-detail-nav-link" href="#headingGrants" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-cash-coin"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">Grants <span
+                                    class="report-detail-nav-dot {{ grants_status }}"></span></span>
+                                <span class="report-detail-nav-meta">{{ nav_counts.grants }} grant entr{{ 'y' if
+                                  nav_counts.grants == 1 else 'ies' }}</span>
+                              </span>
+                            </a>
+                          </div>
+                        </div>
+
+                        <div class="report-detail-nav-group">
+                          <div class="report-detail-nav-label">Operations</div>
+                          <div class="report-detail-nav-list">
+                            <a class="report-detail-nav-link" href="#headingC" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-people"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">Staff <span
+                                    class="report-detail-nav-dot {{ staff_status }}"></span></span>
+                                <span class="report-detail-nav-meta">{{ nav_counts.staff }} staffing dataset{{ '' if
+                                  nav_counts.staff == 1 else 's' }}</span>
+                              </span>
+                            </a>
+                            <a class="report-detail-nav-link" href="#headingD" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-diagram-3"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">Projects <span
+                                    class="report-detail-nav-dot {{ projects_status }}"></span></span>
+                                <span class="report-detail-nav-meta">{{ summary_counts.projects }} implementation entr{{
+                                  'y'
+                                  if summary_counts.projects == 1 else 'ies' }}</span>
+                              </span>
+                            </a>
+                          </div>
+                        </div>
+
+                        <div class="report-detail-nav-group">
+                          <div class="report-detail-nav-label">Governance</div>
+                          <div class="report-detail-nav-list">
+                            <a class="report-detail-nav-link" href="#headingGov" data-section-nav>
+                              <span class="report-detail-nav-icon"><i class="bi bi-shield-check"></i></span>
+                              <span class="report-detail-nav-copy">
+                                <span class="report-detail-nav-title">Governance <span
+                                    class="report-detail-nav-dot {{ governance_status }}"></span></span>
+                                <span class="report-detail-nav-meta">{{ summary_counts.officials }} official entr{{ 'y'
+                                  if
+                                  summary_counts.officials == 1 else 'ies' }}</span>
+                              </span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="report-detail-panel card">
+                    <div class="report-detail-panel-head">
+                      <h2 class="report-detail-panel-title">Quick Insights</h2>
+                    </div>
+                    <div class="report-detail-panel-body">
+                      <div class="report-detail-insight-list">
+                        <div class="report-detail-insight">
+                          <strong>Funding picture</strong>
+                          <span>Donations logged total KES {{ "{:,.2f}".format(detail_totals.donations) }}, with
+                            payments at
+                            KES {{ "{:,.2f}".format(detail_totals.payments) }}.</span>
+                        </div>
+                        <div class="report-detail-insight">
+                          <strong>Geographic footprint</strong>
+                          <span>{{ detail_totals.counties }} count{{ '' if detail_totals.counties == 1 else 'ies' }}
+                            listed{% if report.scope %} under a {{ report.scope.title() }} scope{% endif %}.</span>
+                        </div>
+                        <div class="report-detail-insight">
+                          <strong>Governance view</strong>
+                          <span>{{ summary_counts.officials }} official entr{{ 'y' if summary_counts.officials == 1 else
+                            'ies' }} and {{ summary_counts.collaborations }} collaboration record{{ '' if
+                            summary_counts.collaborations == 1 else 's' }} are available for review.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </aside>
+              </div>
+            
+          </div>
+        </div>
+      </div>
+
+      <script defer>
+        document.addEventListener("DOMContentLoaded", function () {
+          const sectionNavLinks = Array.from(document.querySelectorAll("[data-section-nav]"));
+          const sectionNavTargets = sectionNavLinks
+            .map((link) => {
+              const href = link.getAttribute("href") || "";
+              if (!href.startsWith("#")) return null;
+              const target = document.querySelector(href);
+              if (!target) return null;
+              return { link, target };
+            })
+            .filter(Boolean);
+
+          const setActiveSectionLink = (activeId) => {
+            sectionNavLinks.forEach((link) => {
+              const isActive = (link.getAttribute("href") || "") === `#${activeId}`;
+              link.classList.toggle("is-active", isActive);
+            });
+          };
+
+          sectionNavLinks.forEach((link) => {
+            link.addEventListener("click", function (event) {
+              const href = link.getAttribute("href") || "";
+              if (!href.startsWith("#")) return;
+              const target = document.querySelector(href);
+              if (!target) return;
+              event.preventDefault();
+              const accordionButton = target.querySelector(".accordion-button");
+              if (accordionButton && accordionButton.classList.contains("collapsed")) {
+                accordionButton.click();
+              }
+              target.scrollIntoView({ behavior: "smooth", block: "start" });
+              setActiveSectionLink(target.id);
+            });
+          });
+
+          if (sectionNavTargets.length) {
+            const observer = new IntersectionObserver(
+              (entries) => {
+                const visibleEntries = entries
+                  .filter((entry) => entry.isIntersecting)
+                  .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+                if (visibleEntries.length) {
+                  setActiveSectionLink(visibleEntries[0].target.id);
+                }
+              },
+              {
+                rootMargin: "-18% 0px -62% 0px",
+                threshold: [0.2, 0.45, 0.7],
+              }
+            );
+
+            sectionNavTargets.forEach(({ target }) => observer.observe(target));
+            setActiveSectionLink(sectionNavTargets[0].target.id);
+          }
+
+          const syncTableScrollbars = (container, topBar, bottomBar) => {
+            const syncTargets = [container, topBar, bottomBar];
+            let isSyncing = false;
+
+            const syncFrom = (source) => {
+              if (isSyncing) return;
+              isSyncing = true;
+              const nextLeft = source.scrollLeft;
+              syncTargets.forEach((target) => {
+                if (target !== source) {
+                  target.scrollLeft = nextLeft;
+                }
+              });
+              isSyncing = false;
+            };
+
+            container.addEventListener("scroll", () => syncFrom(container));
+            topBar.addEventListener("scroll", () => syncFrom(topBar));
+            bottomBar.addEventListener("scroll", () => syncFrom(bottomBar));
+          };
+
+          const createTableScrollbars = (container) => {
+            if (container.dataset.scrollbarsReady === "true") {
+              if (typeof container._updateTableScrollbars === "function") {
+                container._updateTableScrollbars();
+              }
+              return;
+            }
+            container.dataset.scrollbarsReady = "true";
+
+            const topBar = document.createElement("div");
+            topBar.className = "table-scrollbar table-scrollbar-top";
+            topBar.setAttribute("aria-hidden", "true");
+
+            const topTrack = document.createElement("div");
+            topTrack.className = "table-scrollbar-track";
+            topBar.appendChild(topTrack);
+
+            const bottomBar = document.createElement("div");
+            bottomBar.className = "table-scrollbar table-scrollbar-bottom";
+            bottomBar.setAttribute("aria-hidden", "true");
+
+            const bottomTrack = document.createElement("div");
+            bottomTrack.className = "table-scrollbar-track";
+            bottomBar.appendChild(bottomTrack);
+
+            container.parentNode.insertBefore(topBar, container);
+            if (container.nextSibling) {
+              container.parentNode.insertBefore(bottomBar, container.nextSibling);
+            } else {
+              container.parentNode.appendChild(bottomBar);
+            }
+
+            syncTableScrollbars(container, topBar, bottomBar);
+
+            const update = () => {
+              const scrollWidth = container.scrollWidth;
+              const clientWidth = container.clientWidth;
+              const isOverflowing = scrollWidth > clientWidth + 1;
+              topTrack.style.width = `${scrollWidth}px`;
+              bottomTrack.style.width = `${scrollWidth}px`;
+              topBar.style.display = isOverflowing ? "block" : "none";
+              bottomBar.style.display = isOverflowing ? "block" : "none";
+              topBar.scrollLeft = container.scrollLeft;
+              bottomBar.scrollLeft = container.scrollLeft;
+            };
+
+            container._updateTableScrollbars = update;
+            update();
+
+            let observer = null;
+            if ("ResizeObserver" in window) {
+              observer = new ResizeObserver(update);
+              observer.observe(container);
+              const table = container.querySelector("table");
+              if (table) {
+                observer.observe(table);
+              }
+            }
+
+            const onResize = () => update();
+            window.addEventListener("resize", onResize);
+          };
+
+          const initAccordionTableScrollbars = () => {
+            const containerSelectors = [
+              ".report-detail-page .accordion-body .table-container",
+              ".report-detail-page .accordion-body .table-responsive",
+            ];
+
+            const candidates = Array.from(document.querySelectorAll(containerSelectors.join(","))).filter(
+              (node) => !(node.classList.contains("table-responsive") && node.parentElement && node.parentElement.classList.contains("table-container"))
+            );
+
+            candidates.forEach((container) => {
+              container.style.overflowX = "auto";
+              createTableScrollbars(container);
+            });
+          };
+
+          initAccordionTableScrollbars();
+          document.querySelectorAll(".accordion-collapse").forEach((panel) => {
+            panel.addEventListener("shown.bs.collapse", initAccordionTableScrollbars);
+          });
+          window.setTimeout(initAccordionTableScrollbars, 120);
+
+          try {
+            Object.keys(window.localStorage).forEach(function (key) {
+              if (key.indexOf("form14Draft:") === 0) {
+                window.localStorage.removeItem(key);
+              }
+            });
+          } catch (error) {
+            // Ignore storage access issues.
+          }
+        });
+      </script>
+      {% endblock %}

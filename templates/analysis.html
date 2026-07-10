@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block title %}National NGO Sector Dashboard{% endblock %}
+{% block script %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="app-page-container">
+  <div class="container-fluid px-3 px-md-4 analysis-dashboard">
+    <section class="analysis-hero mb-3">
+      <div>
+        <h1 class="mb-1">National NGO Sector Dashboard</h1>
+        <p class="mb-0">Government briefing view for PBO Week built directly from submitted report data and live workflow records.</p>
+      </div>
+      <div class="analysis-hero-meta">
+        <div>Updated: {{ dashboard.generated_at }}</div>
+        <a href="{{ url_for('reports_list') }}" class="btn btn-sm btn-light">Open Reports</a>
+      </div>
+    </section>
+
+    <section class="analysis-kpis mb-3">
+      {% for card in dashboard.kpi_cards %}
+      <article class="analysis-kpi-card">
+        <div class="analysis-kpi-label">{{ card.label }}</div>
+        <div class="analysis-kpi-value">{{ card.value }}</div>
+        <div class="analysis-kpi-sub">{{ card.sub }}</div>
+      </article>
+      {% endfor %}
+    </section>
+
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-xl-8">
+        <div class="analysis-card h-100">
+          <div class="analysis-card-head">
+            <h3>Dashboard Visuals</h3>
+            <span class="analysis-chip">Hover chart elements for tooltips</span>
+          </div>
+          <div class="analysis-chart-grid">
+            {% for chart in dashboard.charts %}
+            <article class="analysis-chart-card">
+              <h4>{{ chart.title }}</h4>
+              <p>{{ chart.subtitle }}</p>
+              <div class="analysis-chart-plot">{{ chart.html|safe }}</div>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <div class="analysis-card mb-3">
+          <div class="analysis-card-head">
+            <h3>Operational Brief</h3>
+          </div>
+          <ul class="analysis-list mb-2">
+            {% for line in dashboard.operational_brief %}
+            <li>{{ line }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="analysis-card">
+          <div class="analysis-card-head">
+            <h3>Qualitative Insights</h3>
+          </div>
+          <ul class="analysis-list">
+            {% for line in dashboard.qualitative_rows %}
+            <li>{{ line }}</li>
+            {% endfor %}
+          </ul>
+          <div class="analysis-subtable-wrap mt-2">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Quant Metric</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in dashboard.quant_rows %}
+                <tr>
+                  <td>{{ row.metric }}</td>
+                  <td>{{ row.value }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="analysis-card">
+      <div class="analysis-card-head mb-2">
+        <h3>Report Register</h3>
+        <div class="d-flex align-items-center gap-2">
+          <span class="analysis-chip">{{ pagination.total if pagination else reports|length }} reports</span>
+          <form method="get" class="d-flex align-items-center gap-2 m-0">
+            <label for="analysis-per-page" class="small text-muted mb-0">Rows</label>
+            <select id="analysis-per-page" name="per_page" class="form-select form-select-sm" onchange="this.form.submit()">
+              {% for option in per_page_options %}
+              <option value="{{ option }}" {{ 'selected' if option == per_page else '' }}>{{ option }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </div>
+      </div>
+
+      {% if reports %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Report</th>
+              <th>Registration</th>
+              <th>Reporting Period</th>
+              <th>Scope</th>
+              <th class="text-center">Assets</th>
+              <th class="text-center">Donations</th>
+              <th class="text-center">Staff</th>
+              <th class="text-center">Projects</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in reports %}
+            <tr>
+              <td>
+                <a href="{{ url_for('report_detail', report_id=row.id) }}"><strong>{{ row.pbo_name }}</strong></a>
+                <div class="small text-muted">#{{ row.id }}</div>
+              </td>
+              <td>{{ row.registration_number }}</td>
+              <td>{{ row.reporting_period }}</td>
+              <td>{{ row.scope }}</td>
+              <td class="text-center">{{ row.assets_count }}</td>
+              <td class="text-center">{{ row.donations_count }}</td>
+              <td class="text-center">{{ row.staff_count }}</td>
+              <td class="text-center">{{ row.projects_count }}</td>
+              <td>{{ row.workflow_status }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info mb-0">No reports available for this dashboard view yet.</div>
+      {% endif %}
+
+      {% if pagination and pagination.pages > 1 %}
+      <nav class="mt-3" aria-label="Analysis pagination">
+        <ul class="pagination mb-0 flex-wrap">
+          <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+            <a class="page-link" href="{{ url_for('analysis.analysis', page=1, per_page=per_page) }}">&laquo;&laquo;</a>
+          </li>
+          <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+            <a class="page-link" href="{{ url_for('analysis.analysis', page=pagination.prev_num, per_page=per_page) if pagination.has_prev else '#' }}">&laquo;</a>
+          </li>
+          {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+              <a class="page-link" href="{{ url_for('analysis.analysis', page=p, per_page=per_page) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+          {% endfor %}
+          <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+            <a class="page-link" href="{{ url_for('analysis.analysis', page=pagination.next_num, per_page=per_page) if pagination.has_next else '#' }}">&raquo;</a>
+          </li>
+          <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+            <a class="page-link" href="{{ url_for('analysis.analysis', page=pagination.pages, per_page=per_page) }}">&raquo;&raquo;</a>
+          </li>
+        </ul>
+      </nav>
+      {% endif %}
+    </section>
+  </div>
+
+  <style>
+    .analysis-dashboard {
+      background: linear-gradient(180deg, #f3f7fb 0%, #eef3f8 100%);
+      border-radius: 14px;
+      padding-top: 0.75rem;
+      padding-bottom: 1.2rem;
+    }
+    .analysis-hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      background: linear-gradient(135deg, #0b3d91 0%, #1f4f9f 55%, #2d6ab5 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      box-shadow: 0 8px 20px rgba(11, 61, 145, 0.2);
+    }
+    .analysis-hero h1 { font-size: 1.35rem; font-weight: 800; }
+    .analysis-hero p { font-size: 0.92rem; opacity: 0.94; }
+    .analysis-hero-meta {
+      display: grid;
+      gap: 0.5rem;
+      text-align: right;
+      font-size: 0.82rem;
+    }
+    .analysis-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.65rem;
+    }
+    .analysis-kpi-card {
+      background: #fff;
+      border: 1px solid #d3dfef;
+      border-radius: 12px;
+      padding: 0.72rem;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+    }
+    .analysis-kpi-label { font-size: 0.74rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.04em; }
+    .analysis-kpi-value {
+      font-size: clamp(0.98rem, 0.72vw, 1.08rem);
+      font-weight: 800;
+      color: #0b2239;
+      margin-top: 0.2rem;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .analysis-kpi-sub { font-size: 0.74rem; color: #64748b; }
+    .analysis-card {
+      background: #fff;
+      border: 1px solid #d3dfef;
+      border-radius: 12px;
+      padding: 0.85rem;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+    }
+    .analysis-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .analysis-card h3 { margin: 0; font-size: 1rem; font-weight: 800; color: #12304e; }
+    .analysis-subhead { font-size: 0.88rem; font-weight: 700; color: #1d3557; margin-top: 0.5rem; }
+    .analysis-chip {
+      background: #ecf3ff;
+      color: #134074;
+      border: 1px solid #c6d9f5;
+      padding: 0.2rem 0.48rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .analysis-chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 0.8rem;
+      margin-top: 0.65rem;
+    }
+    .analysis-chart-card {
+      border: 1px solid #dbe5f1;
+      border-radius: 10px;
+      padding: 0.62rem;
+      background: #f9fbfe;
+      min-height: 520px;
+      overflow: hidden;
+    }
+    .analysis-chart-card h4 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #14365d;
+      margin: 0;
+    }
+    .analysis-chart-card p {
+      font-size: 0.74rem;
+      color: #64748b;
+      margin: 0.2rem 0 0.5rem;
+    }
+    .analysis-chart-plot {
+      min-height: 430px;
+      height: 430px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .analysis-chart-plot > div {
+      width: 100% !important;
+      max-width: 100% !important;
+      height: 100% !important;
+    }
+    .analysis-chart-plot .plotly-graph-div,
+    .analysis-chart-plot .js-plotly-plot,
+    .analysis-chart-plot .plotly,
+    .analysis-chart-plot .plot-container,
+    .analysis-chart-plot .svg-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-height: 430px !important;
+      height: 430px !important;
+      max-height: 430px !important;
+    }
+    .analysis-chart-plot .main-svg,
+    .analysis-chart-plot .svg-container svg {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    .analysis-list {
+      margin: 0;
+      padding-left: 1rem;
+      font-size: 0.84rem;
+      color: #243b53;
+      display: grid;
+      gap: 0.38rem;
+    }
+    .analysis-subtable-wrap {
+      border: 1px solid #d7e2f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .analysis-subtable-wrap thead th {
+      background: #edf3fa;
+      color: #12304e;
+      font-size: 0.76rem;
+    }
+    @media (max-width: 768px) {
+      .analysis-hero { flex-direction: column; align-items: flex-start; }
+      .analysis-hero-meta { text-align: left; }
+      .analysis-kpis { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+      .analysis-chart-grid { grid-template-columns: 1fr; }
+      .analysis-chart-card { min-height: 430px; }
+      .analysis-chart-plot,
+      .analysis-chart-plot .plotly-graph-div,
+      .analysis-chart-plot .js-plotly-plot,
+      .analysis-chart-plot .plot-container,
+      .analysis-chart-plot .svg-container {
+        min-height: 340px !important;
+        height: 340px !important;
+        max-height: 340px !important;
+      }
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!window.Plotly) return;
+      const resizeCharts = function () {
+        document.querySelectorAll('.analysis-chart-plot .plotly-graph-div').forEach(function (chart) {
+          try {
+            window.Plotly.Plots.resize(chart);
+          } catch (err) {
+            /* no-op: keep dashboard stable even if one chart fails resize */
+          }
+        });
+      };
+      resizeCharts();
+      window.addEventListener('resize', resizeCharts);
+      setTimeout(resizeCharts, 120);
+    });
+  </script>
+</div>
+{% endblock %}

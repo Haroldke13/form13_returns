@@ -1,0 +1,713 @@
+{% extends "base.html" %}
+
+{% block title %}My Files{% endblock %}
+
+{% block content %}
+<div class="app-page-container">
+<style>
+    :root {
+        --my-files-bg: #f8fafc;
+        --my-files-panel: #ffffff;
+        --my-files-line: #dbe2ea;
+        --my-files-text: #0f172a;
+        --my-files-muted: #64748b;
+        --my-files-blue-bg: #eff6ff;
+        --my-files-blue-text: #1e3a8a;
+        --my-files-green-bg: #ecfdf5;
+        --my-files-green-text: #166534;
+    }
+
+    .my-files-page {
+        width: 100%;
+        color: var(--my-files-text);
+    }
+
+    .my-files-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .my-files-title {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+    }
+
+    .my-files-subtitle,
+    .my-files-meta {
+        margin: 0;
+        color: var(--my-files-muted);
+    }
+
+    .my-files-links {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .my-files-card {
+        background: var(--my-files-panel);
+        border: 1px solid var(--my-files-line);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .my-files-dashboard {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .my-files-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .my-files-stat-card {
+        position: relative;
+        padding: 16px 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.8)),
+            linear-gradient(135deg, #f8fafc, #eef2ff);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    }
+
+    .my-files-stat-card.accent-blue {
+        background:
+            radial-gradient(circle at top right, rgba(219, 234, 254, 0.92), rgba(255, 255, 255, 0.9)),
+            linear-gradient(135deg, #eff6ff, #f8fafc);
+    }
+
+    .my-files-stat-card.accent-green {
+        background:
+            radial-gradient(circle at top right, rgba(209, 250, 229, 0.92), rgba(255, 255, 255, 0.9)),
+            linear-gradient(135deg, #ecfdf5, #f8fafc);
+    }
+
+    .my-files-stat-card.accent-amber {
+        background:
+            radial-gradient(circle at top right, rgba(254, 240, 138, 0.76), rgba(255, 255, 255, 0.92)),
+            linear-gradient(135deg, #fff7ed, #fefce8);
+    }
+
+    .my-files-stat-card.accent-rose {
+        background:
+            radial-gradient(circle at top right, rgba(251, 207, 232, 0.84), rgba(255, 255, 255, 0.92)),
+            linear-gradient(135deg, #fff1f2, #f8fafc);
+    }
+
+    .my-files-stat-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 10px 0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--my-files-muted);
+        font-weight: 700;
+    }
+
+    .my-files-stat-value {
+        margin: 0;
+        font-size: 24px;
+        line-height: 1.15;
+        color: var(--my-files-text);
+    }
+
+    .my-files-stat-value-row {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .my-files-spark-wrap {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .my-files-spark-caption {
+        margin-top: 8px;
+        color: var(--my-files-muted);
+        font-size: 12px;
+    }
+
+    .my-files-sparkline {
+        height: 72px;
+        display: grid;
+        grid-template-columns: repeat(var(--spark-count, 14), minmax(0, 1fr));
+        align-items: end;
+        gap: 4px;
+    }
+
+    .my-files-spark-bar {
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: end;
+    }
+
+    .my-files-spark-bar-fill {
+        width: 100%;
+        min-height: 8px;
+        border-radius: 999px 999px 4px 4px;
+        background: var(--bar-color, #93c5fd);
+        box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+        transition: transform 0.18s ease, filter 0.18s ease;
+    }
+
+    .my-files-spark-bar:hover .my-files-spark-bar-fill,
+    .my-files-spark-bar:focus-within .my-files-spark-bar-fill {
+        transform: translateY(-2px);
+        filter: saturate(1.1);
+    }
+
+    .my-files-spark-tooltip {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 8px);
+        transform: translateX(-50%);
+        width: 152px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 11px;
+        line-height: 1.35;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+        z-index: 6;
+    }
+
+    .my-files-spark-bar:hover .my-files-spark-tooltip,
+    .my-files-spark-bar:focus-within .my-files-spark-tooltip {
+        opacity: 1;
+    }
+
+    .my-files-tooltip {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.08);
+        color: #334155;
+        font-size: 11px;
+        cursor: help;
+    }
+
+    .my-files-tooltip-text {
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 10px);
+        transform: translateX(-50%);
+        width: 220px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 12px;
+        line-height: 1.4;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 5;
+    }
+
+    .my-files-tooltip:hover .my-files-tooltip-text,
+    .my-files-tooltip:focus-within .my-files-tooltip-text {
+        opacity: 1;
+    }
+
+    .my-files-chart-card {
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+        max-width: 760px;
+    }
+
+    .my-files-chart-title {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .my-files-chart-subtitle {
+        margin: 6px 0 0;
+        color: var(--my-files-muted);
+        font-size: 14px;
+    }
+
+    .my-files-chart-frame {
+        margin-top: 12px;
+        min-height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: radial-gradient(circle at top, rgba(241, 245, 249, 0.95), rgba(255, 255, 255, 0.8));
+        overflow: hidden;
+    }
+
+    .my-files-chart-frame img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .my-files-table-card {
+        margin-top: 4px;
+    }
+
+    .my-files-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: flex-end;
+        padding: 12px 20px 0;
+    }
+
+    .my-files-control {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .my-files-search-input,
+    .my-files-select,
+    .my-files-page-btn {
+        min-height: 38px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid var(--my-files-line);
+        background: #fff;
+        color: var(--my-files-text);
+    }
+
+    .my-files-search-input {
+        min-width: 260px;
+    }
+
+    .my-files-pagination {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+        flex-wrap: wrap;
+    }
+
+    .my-files-page-btn {
+        background: #0f172a;
+        color: #fff;
+        border-color: #0f172a;
+        padding: 8px 14px;
+        cursor: pointer;
+    }
+
+    .my-files-page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .my-files-page-info {
+        color: var(--my-files-muted);
+        font-size: 14px;
+    }
+
+    .my-files-chart-empty {
+        color: var(--my-files-muted);
+        text-align: center;
+        padding: 24px;
+    }
+
+    .my-files-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--my-files-muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .my-files-summary {
+        padding: 18px 20px 0;
+        color: var(--my-files-muted);
+        font-size: 14px;
+    }
+
+    .my-files-empty {
+        padding: 48px 24px;
+        text-align: center;
+    }
+
+    .my-files-table-wrap {
+        overflow: auto;
+    }
+
+    .my-files-top-scroll {
+        overflow-x: auto;
+        margin: 6px 20px 0;
+        height: 12px;
+    }
+
+    .my-files-top-scroll-inner {
+        height: 1px;
+    }
+
+    .my-files-table {
+        width: 100%;
+        min-width: 2200px;
+        border-collapse: collapse;
+        background: #fff;
+    }
+
+    .my-files-table th,
+    .my-files-table td {
+        padding: 10px;
+        border-bottom: 1px solid var(--my-files-line);
+        white-space: nowrap;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .my-files-table td {
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .my-files-table td.my-files-cell-text {
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .my-files-empty-value {
+        color: var(--my-files-muted);
+        font-style: italic;
+    }
+
+    .my-files-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #fff;
+    }
+
+    .my-files-group-select {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .my-files-group-data {
+        background: var(--my-files-blue-bg);
+        color: var(--my-files-blue-text);
+    }
+
+    .my-files-head-select {
+        background: #f1f5f9;
+        position: sticky;
+        left: 0;
+        z-index: 3;
+    }
+
+    .my-files-head-actions {
+        background: var(--my-files-green-bg);
+        color: var(--my-files-green-text);
+    }
+
+    .my-files-select-cell {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: #f8fafc;
+    }
+
+    .my-files-action-form {
+        margin: 0;
+    }
+
+    .my-files-delete-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    @media (max-width: 1100px) {
+        .my-files-stat-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="my-files-page">
+    <div class="my-files-topbar">
+        <div>
+            <h1 class="my-files-title">My Files</h1>
+            <p class="my-files-subtitle">Reports and uploaded files you have worked on, with direct access to view and edit.</p>
+            <p class="my-files-meta">Generated: {{ generated_at }}</p>
+        </div>
+        <div class="my-files-links">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Form 14</a>
+            {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized %}
+            <a href="{{ url_for('reports_list') }}" class="btn btn-outline-secondary">Reports</a>
+            {% if sector_analytics_enabled %}
+            <a href="{{ url_for('sector_report_data') }}" class="btn btn-outline-primary">Sector Report Data</a>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    {% if total_reports == 0 %}
+    <div class="my-files-card">
+        <div class="my-files-empty">
+            <h2>No worked-on records found yet.</h2>
+            <p class="my-files-subtitle">Your reports and uploaded files will appear here after you create, edit, or upload against a record.</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="my-files-dashboard">
+        <div class="my-files-stat-grid">
+            {% for card in dashboard_cards %}
+            <section class="my-files-stat-card accent-{{ card.accent }}">
+                <p class="my-files-stat-label">
+                    <span>{{ card.label }}</span>
+                    <span class="my-files-tooltip" tabindex="0">
+                        i
+                        <span class="my-files-tooltip-text">{{ card.tooltip }}</span>
+                    </span>
+                </p>
+                {% if card.spark_bars %}
+                <div class="my-files-stat-value-row">
+                    <p class="my-files-stat-value">{{ card.value }}</p>
+                    <div class="my-files-spark-wrap" aria-label="{{ card.label }}">
+                        <div class="my-files-sparkline" style="--spark-count: {{ card.spark_bars|length }};">
+                            {% for bar in card.spark_bars %}
+                            <div class="my-files-spark-bar" tabindex="0">
+                                <span class="my-files-spark-tooltip">{{ bar.tooltip }}</span>
+                                <div class="my-files-spark-bar-fill" style="height: {{ bar.height_percent }}%; --bar-color: {{ bar.color }};" title="{{ bar.tooltip }}"></div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="my-files-spark-caption">{{ card.spark_caption }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <p class="my-files-stat-value">{{ card.value }}</p>
+                {% endif %}
+            </section>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="my-files-card my-files-table-card">
+        <div class="my-files-summary">
+            Showing <span id="my-files-total">{{ total_reports }}</span> worked-on record{{ '' if total_reports == 1 else 's' }} in the table below.
+        </div>
+        <div class="my-files-controls">
+            <div class="my-files-control">
+                <label class="my-files-label" for="my-files-search">Search rows</label>
+                <input type="search" id="my-files-search" class="my-files-search-input" placeholder="Filter by any column">
+            </div>
+            <div class="my-files-control">
+                <label class="my-files-label" for="my-files-page-size">Rows per page</label>
+                <select id="my-files-page-size" class="my-files-select">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+            <div class="my-files-pagination">
+                <button type="button" class="my-files-page-btn" id="my-files-prev">Prev</button>
+                <span class="my-files-page-info" id="my-files-page-info">Page 1</span>
+                <button type="button" class="my-files-page-btn" id="my-files-next">Next</button>
+            </div>
+        </div>
+        <div class="my-files-top-scroll" aria-hidden="true">
+            <div class="my-files-top-scroll-inner"></div>
+        </div>
+        <div class="my-files-table-wrap">
+            <table id="my-files-table" class="my-files-table">
+                <thead>
+                    <tr>
+                        <th colspan="2" class="my-files-group-select">Selection</th>
+                        <th colspan="{{ columns|length }}" class="my-files-group-data">My Worked-On Records</th>
+                    </tr>
+                    <tr>
+                        <th class="my-files-head-select">Select</th>
+                        <th class="my-files-head-actions">Actions</th>
+                        {% for key, label in columns %}
+                        <th>{{ label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="my-files-body">
+                    {% for row in rows %}
+                    <tr>
+                        <td class="my-files-select-cell">
+                            <input type="checkbox" class="row-selector" value="{{ row['report_id'] }}" aria-label="Select report {{ row['report_id'] }}">
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{{ url_for('report_detail', report_id=row['report_id']) }}" class="btn btn-sm btn-outline-dark">View</a>
+                                <a href="{{ url_for('report_edit', report_id=row['report_id']) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                {% if row['latest_file_id'] %}
+                                <a href="{{ url_for('my_file_open', file_id=row['latest_file_id']) }}" class="btn btn-sm btn-outline-success">Open File</a>
+                                {% endif %}
+                                <form method="post" action="{{ url_for('report_delete', report_id=row['report_id']) }}" class="my-files-action-form" onsubmit="return confirm('Delete this record permanently?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger my-files-delete-btn" title="Delete this record">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% for key, label in columns %}
+                        <td class="{% if key in money_columns %}money-cell{% else %}my-files-cell-text{% endif %}"{% if key in money_columns %} data-raw-value="{{ row[key] if row[key] is not none else '' }}"{% endif %} title="{{ row[key] if row[key] not in [None, ''] else 'No saved value' }}">
+                            {% if row[key] in [None, ""] %}
+                            <span class="my-files-empty-value">No saved value</span>
+                            {% elif key in money_columns %}
+                            {{ "{:,.2f}".format(row[key]) }}
+                            {% else %}
+                            {{ row[key] }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const table = document.getElementById('my-files-table');
+    const tbody = document.getElementById('my-files-body');
+    if (!table || !tbody) return;
+
+    const allRows = Array.from(tbody.querySelectorAll('tr'));
+    const searchInput = document.getElementById('my-files-search');
+    const pageSizeSelect = document.getElementById('my-files-page-size');
+    const prevBtn = document.getElementById('my-files-prev');
+    const nextBtn = document.getElementById('my-files-next');
+    const pageInfo = document.getElementById('my-files-page-info');
+    const totalCount = document.getElementById('my-files-total');
+    const topScroll = document.querySelector('.my-files-top-scroll');
+    const topScrollInner = document.querySelector('.my-files-top-scroll-inner');
+    const tableWrap = document.querySelector('.my-files-table-wrap');
+    const colCount = table.querySelector('thead tr:last-child')?.children.length || 1;
+    const pageSizeStorageKey = 'myFilesRowsPerPage';
+
+    let filtered = [...allRows];
+    const storedPageSize = Number(localStorage.getItem(pageSizeStorageKey) || 0);
+    if (storedPageSize && pageSizeSelect && Array.from(pageSizeSelect.options).some((option) => Number(option.value) === storedPageSize)) {
+        pageSizeSelect.value = String(storedPageSize);
+    }
+    let pageSize = parseInt(pageSizeSelect.value, 10) || 10;
+    let currentPage = 1;
+    let searchTerm = '';
+
+    const updateTopScrollWidth = () => {
+        if (topScrollInner) {
+            topScrollInner.style.width = `${table.scrollWidth}px`;
+        }
+    };
+
+    const render = () => {
+        filtered = allRows.filter((row) => row.innerText.toLowerCase().includes(searchTerm));
+        const total = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        currentPage = Math.min(currentPage, totalPages);
+
+        tbody.innerHTML = '';
+
+        if (total === 0) {
+            const emptyRow = document.createElement('tr');
+            const emptyCell = document.createElement('td');
+            emptyCell.colSpan = colCount;
+            emptyCell.className = 'my-files-empty-value';
+            emptyCell.textContent = 'No matching records';
+            emptyRow.appendChild(emptyCell);
+            tbody.appendChild(emptyRow);
+        } else {
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            filtered.slice(start, end).forEach((row) => tbody.appendChild(row));
+        }
+
+        const pageLabel = `Page ${currentPage} of ${Math.max(1, Math.ceil(total / pageSize))} • ${total} row${total === 1 ? '' : 's'}`;
+        if (pageInfo) pageInfo.textContent = pageLabel;
+        if (totalCount) totalCount.textContent = total;
+
+        if (prevBtn) prevBtn.disabled = currentPage === 1 || total === 0;
+        if (nextBtn) nextBtn.disabled = currentPage >= Math.max(1, Math.ceil(total / pageSize)) || total === 0;
+    };
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchTerm = e.target.value.trim().toLowerCase();
+            currentPage = 1;
+            render();
+        });
+    }
+
+    if (pageSizeSelect) {
+        pageSizeSelect.addEventListener('change', (e) => {
+            pageSize = parseInt(e.target.value, 10) || 10;
+            localStorage.setItem(pageSizeStorageKey, String(pageSize));
+            currentPage = 1;
+            render();
+        });
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                render();
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            currentPage += 1;
+            render();
+        });
+    }
+
+    if (topScroll && tableWrap) {
+        topScroll.addEventListener('scroll', () => {
+            tableWrap.scrollLeft = topScroll.scrollLeft;
+        });
+        tableWrap.addEventListener('scroll', () => {
+            topScroll.scrollLeft = tableWrap.scrollLeft;
+        });
+    }
+
+    updateTopScrollWidth();
+    window.addEventListener('resize', updateTopScrollWidth);
+    window.addEventListener('orientationchange', updateTopScrollWidth);
+
+    render();
+});
+</script>
+{% endblock %}

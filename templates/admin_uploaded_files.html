@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h2 class="mb-1">Uploaded Files Manager</h2>
+    <p class="text-muted mb-0">Superadmin-only file cleanup. Deleting a file removes the stored upload but keeps report table data intact.</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary">Back to Admin</a>
+    <span class="btn btn-outline-dark disabled">Generated: {{ generated_at }}</span>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    {% if file_rows %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>File</th>
+            <th>Category / Status</th>
+            <th>Uploaded By</th>
+            <th>Linked Record</th>
+            <th>Matching Components They Affect</th>
+            <th>Created</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in file_rows %}
+          {% set uploaded_file = row.file %}
+          <tr>
+            <td>#{{ uploaded_file.id }}</td>
+            <td>
+              <div class="fw-semibold">{{ uploaded_file.original_filename }}</div>
+              <div class="small text-muted">{{ uploaded_file.stored_filename }}</div>
+              <div class="small text-muted">{{ uploaded_file.mime_type or 'unknown type' }} / {{ uploaded_file.file_size or 0 }} bytes</div>
+            </td>
+            <td>
+              <div>{{ uploaded_file.category or 'uncategorized' }}</div>
+              <div class="small text-muted">{{ uploaded_file.status }}</div>
+            </td>
+            <td>
+              {% if uploaded_file.uploaded_by %}
+              <div>{{ uploaded_file.uploaded_by.full_name or uploaded_file.uploaded_by.email or ('User #' ~ uploaded_file.uploaded_by.id) }}</div>
+              <div class="small text-muted">{{ uploaded_file.uploaded_by.email or 'No email' }}</div>
+              {% else %}
+              <span class="text-muted">System / Unknown</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if uploaded_file.report %}
+              <div><a href="{{ url_for('report_detail', report_id=uploaded_file.report.id) }}">Report #{{ uploaded_file.report.id }}</a></div>
+              <div class="small text-muted">{{ uploaded_file.report.pbo_name or 'Unnamed PBO' }}</div>
+              {% elif uploaded_file.batch %}
+              <div>Import Batch #{{ uploaded_file.batch.id }}</div>
+              <div class="small text-muted">{{ uploaded_file.batch.original_filename or 'Manual batch' }}</div>
+              {% else %}
+              <span class="text-muted">No linked report or batch</span>
+              {% endif %}
+            </td>
+            <td>
+              {% for impact in row.impacts %}
+              <div class="small">{{ impact }}</div>
+              {% endfor %}
+            </td>
+            <td>{{ uploaded_file.created_at|format_datetime if uploaded_file.created_at else 'Unknown' }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_delete_uploaded_file', file_id=uploaded_file.id) }}" onsubmit="return confirm('Delete this uploaded file from storage and metadata?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No uploaded files are currently stored.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

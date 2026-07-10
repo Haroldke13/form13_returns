@@ -1,0 +1,2 @@
+merge_status,report_id,pbo_name,pbo_registration_number,reporting_period_start,reporting_period_end,scope,counties,workflow_status,review_status,source_row_id,source_report_id,source_name,source_category,source_country,source_amount
+matched,1,MILLER INC PBO,PBO/REG/7384/2026,2025-07-01,2026-06-30,INTERNATIONAL,MURANG'A,submitted,pending,1,1,"MILLER, MCLEAN AND HOUSE",CORPORATE DONORS,GERMANY,1376128.06

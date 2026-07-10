@@ -1,0 +1,129 @@
+To initialize the database directly from models.py now:
+
+Install deps: pip install -r requirements.txt
+Set the app: export FLASK_APP=app.py
+Create missing tables and seed users:
+flask init-db
+Reset the whole database and reseed users:
+flask reset-db
+
+
+
+Yep — this is **multi-cursor editing** in VS Code, and it’s 🔥 once it clicks.
+
+I’ll give you the **exact keys**, split by use-case.
+
+---
+
+## ⭐ Most useful shortcuts (Linux / Windows)
+
+### 1️⃣ Add cursors with mouse (fast & precise)
+
+```
+Alt + Click
+```
+
+* Places cursors anywhere you click
+* Edit multiple lines at once
+* Does **not** select or copy whole lines
+
+---
+
+### 2️⃣ Add cursors above / below (keyboard-only)
+
+```
+Ctrl + Alt + ↑
+Ctrl + Alt + ↓
+```
+
+* Adds a cursor directly above or below
+* Perfect for vertical edits (same column)
+
+---
+
+### 3️⃣ Select the same word in many places
+
+```
+Ctrl + D
+```
+
+* First press: selects current word
+* Each press adds the next occurrence
+* You can type to edit all at once
+
+💡 Skip an occurrence:
+
+```
+Ctrl + K, Ctrl + D
+```
+
+---
+
+### 4️⃣ Select ALL matching occurrences
+
+```
+Ctrl + Shift + L
+```
+
+* Instantly places cursors on every match
+* Powerful but use carefully 😅
+
+---
+
+### 5️⃣ Insert cursor at end of each selected line
+
+```
+Shift + Alt + I
+```
+
+* Select multiple lines first
+* Adds a cursor to the **end of each line**
+* Great for appending text
+
+---
+
+## 🧠 Pro workflows (no copying involved)
+
+### Edit different positions on different lines
+
+1. Hold `Alt`
+2. Click exactly where you want each cursor
+3. Type once → edits everywhere
+
+---
+
+### Column (box) selection
+
+```
+Shift + Alt + Drag (mouse)
+```
+
+* Creates a vertical selection
+* Converts into multiple cursors automatically
+
+---
+
+## ❌ How to escape multi-cursor mode
+
+```
+Esc
+```
+
+Removes all extra cursors instantly.
+
+---
+
+## 🧩 macOS note (just in case)
+
+* `Cmd` replaces `Ctrl`
+* `Option` replaces `Alt`
+
+---
+
+If you want, I can:
+
+* Show **real examples** (editing JSON, HTML, SQL, Python)
+* Help you **rebind keys** if shortcuts clash
+* Share **multi-cursor tricks most people don’t know**
+
+Just tell me 👌

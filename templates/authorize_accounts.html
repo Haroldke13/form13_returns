@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-0">Account Management</h2>
+    <div class="text-muted small">Create, edit, authorize, and remove user accounts.</div>
+  </div>
+  <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary">Back to Admin</a>
+</div>
+
+{% if current_user_is_superadmin %}
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="mb-0">Add User</h4>
+        <div class="text-muted small">New accounts are created as regular users. You can authorize or promote them after creation.</div>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('create_user_account') }}" class="row g-3">
+      <div class="col-md-4">
+        <label for="login_identifier" class="form-label">Username or Email</label>
+        <input type="text" class="form-control" id="login_identifier" name="login_identifier" placeholder="e.g. jdoe or jdoe@example.com" required>
+      </div>
+      <div class="col-md-4">
+        <label for="full_name" class="form-label">Full Name</label>
+        <input type="text" class="form-control" id="full_name" name="full_name" placeholder="e.g. Jane Doe">
+      </div>
+      <div class="col-md-4">
+        <label for="department" class="form-label">Department</label>
+        <input type="text" class="form-control" id="department" name="department" placeholder="e.g. REGISTRATION">
+      </div>
+      <div class="col-md-4">
+        <label for="phone" class="form-label">Phone</label>
+        <input type="text" class="form-control" id="phone" name="phone" placeholder="e.g. 0700123456">
+      </div>
+      <div class="col-md-4">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Leave blank if generating">
+      </div>
+      <div class="col-md-4">
+        <label for="confirm_password" class="form-label">Confirm Password</label>
+        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Repeat password">
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-3">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="1" id="generate_password" name="generate_password">
+          <label class="form-check-label" for="generate_password">Generate Password</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="1" id="is_authorized" name="is_authorized" checked>
+          <label class="form-check-label" for="is_authorized">Authorize Immediately</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="1" id="must_change_password" name="must_change_password" checked>
+          <label class="form-check-label" for="must_change_password">Force Password Change</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-dark">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-bordered align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Privileges</th>
+        <th>Status</th>
+        <th>Last Login</th>
+        <th>Failed Attempts</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      {% if not user.is_superadmin or current_user_is_superadmin %}
+      <tr>
+        <td>{{ user.full_name or '—' }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.role }}</td>
+        <td>
+          {% if user.is_superadmin %}
+          <span class="badge bg-dark">Superadmin</span>
+          {% elif user.can_manage_all_records %}
+          <span class="badge bg-primary">Can Manage All Records</span>
+          {% else %}
+          <span class="text-muted">Own records only</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if user.is_authorized %}
+          <span class="text-success">Authorized</span>
+          {% else %}
+          <span class="text-warning">Pending</span>
+          {% endif %}
+        </td>
+        <td>{{ user.last_login_at|format_datetime if user.last_login_at else 'Never' }}</td>
+        <td>{{ user.failed_login_attempts or 0 }}</td>
+        <td>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('edit_user_account', user_id=user.id) }}" class="btn btn-outline-secondary btn-sm">Edit Details</a>
+            {% if current_user_is_superadmin %}
+              {% if user.id == current_user.id %}
+              <button type="button" class="btn btn-outline-secondary btn-sm" disabled>Your Account</button>
+              {% elif user.is_superadmin %}
+              <button type="button" class="btn btn-outline-dark btn-sm" disabled>Superadmin Locked</button>
+              {% elif user.role == 'admin' %}
+              <button type="button" class="btn btn-outline-dark btn-sm" onclick="handleAdminAccess({{ user.id }}, false, '{{ user.email|e }}')">Revoke Admin</button>
+              {% else %}
+              <button type="button" class="btn btn-dark btn-sm" onclick="handleAdminAccess({{ user.id }}, true, '{{ user.email|e }}')">Grant Admin</button>
+              {% endif %}
+            {% endif %}
+            {% if not user.is_authorized and not user.is_superadmin %}
+            <form method="post" action="{{ url_for('authorize_account', user_id=user.id) }}">
+              <button type="submit" class="btn btn-success btn-sm">Authorize</button>
+            </form>
+            {% endif %}
+            {% if user.is_authorized and not user.is_superadmin %}
+            <form method="post" action="{{ url_for('revoke_account', user_id=user.id) }}">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Revoke</button>
+            </form>
+            {% endif %}
+            {% if current_user_is_superadmin and user.role == 'admin' and not user.is_superadmin %}
+              {% if user.can_manage_all_records %}
+              <form method="post" action="{{ url_for('revoke_record_access', user_id=user.id) }}">
+                <button type="submit" class="btn btn-outline-warning btn-sm">Revoke Record Access</button>
+              </form>
+              {% else %}
+              <form method="post" action="{{ url_for('grant_record_access', user_id=user.id) }}">
+                <button type="submit" class="btn btn-outline-primary btn-sm">Grant Record Access</button>
+              </form>
+              {% endif %}
+            {% endif %}
+            {% if current_user_is_superadmin and user.id != current_user.id and not user.is_superadmin %}
+            <form method="post" action="{{ url_for('delete_user_account', user_id=user.id) }}" onsubmit="return confirm('Delete {{ user.email|e }}? Reports will remain in the system as unassigned records.');">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Delete User</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  function handleAdminAccess(userId, makeAdmin, email) {
+    const action = makeAdmin ? "grant" : "revoke";
+    const targetLabel = email ? ` for ${email}` : "";
+    if (!confirm(`Are you sure you want to ${action} admin access${targetLabel}?`)) return;
+
+    fetch("{{ url_for('change_admin') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, admin: makeAdmin })
+    })
+      .then(async (resp) => {
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok || !data.success) {
+          throw new Error(data.message || "Failed to update admin access.");
+        }
+        alert(data.message || `Admin access ${action}ed successfully.`);
+        window.location.reload();
+      })
+      .catch((error) => {
+        alert(error.message || "Failed to update admin access.");
+      });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,218 @@
+FORM START
+INPUT type=hidden name=submission_token
+BUTTON type=button id=clear-form14-draft
+LABEL: Starting On
+INPUT type=date name=reporting_period_start
+LABEL: Ending On
+INPUT type=date name=
+INPUT type=hidden name=reporting_period_end
+H2: SECTION A - GENERAL INFORMATION
+H4: A1) Name and Address of NGO
+LABEL: PBO Name
+INPUT type=text name=pbo_name
+LABEL: PBO Registration Number
+INPUT type=text name=pbo_registration_number
+LABEL: PBO Date of Registration
+INPUT type=date name=pbo_registration_date
+H4: A2) Name and Address of Contact Person
+LABEL: Name
+INPUT type=text name=contact_name
+LABEL: Position / Designation
+INPUT type=text name=contact_position
+LABEL: Telephone
+SELECT name=contact_country_code
+INPUT type=tel name=contact_telephone[]
+BUTTON type=button id=add-contact-telephone-btn-visible
+BUTTON type=button id=add-contact-telephone-custom-btn-visible
+LABEL: Email
+INPUT type=text name=contact_email[]
+BUTTON type=button id=add-contact-email-btn-visible
+LABEL: Nationality
+SELECT name=contact_nationality
+LABEL: Gender
+SELECT name=contact_gender
+LABEL: A5) Scope of PBO
+LABEL: National
+INPUT type=radio name=scope
+LABEL: International
+INPUT type=radio name=scope
+LABEL: A6) Select your Countries of Operation
+INPUT type=search name=
+INPUT type=text name=
+BUTTON type=button id=country-of-operation-add-btn
+LABEL: All Countries
+INPUT type=checkbox name=country_of_operation
+LABEL: Other Country (Specify)
+INPUT type=checkbox name=country_of_operation_other_toggle
+LABEL: {{ country }}
+INPUT type=checkbox name=country_of_operation
+LABEL: A6) Select your Counties of Operation
+INPUT type=search name=
+LABEL: {{ county }}
+INPUT type=checkbox name=county
+H2: SECTION B – FINANCE
+H4: Asset Guidelines & Notes
+H4: B1) List of PBO’s Assets & Reserves, in regard to the following (Those stationed in Kenya only)
+SELECT name=assets_item[]
+INPUT type=number name=assets_number[]
+INPUT type=text name=assets_value[]
+BUTTON type=button id=
+H4: B2) Receipts
+H4: i) Cash and Bank Balances Carried Forward from Previous Year ℹ️
+INPUT type=text name=cash_balance_previous_year
+H4: (ii) INCOME
+LABEL: Total Donations Received (KES)
+INPUT type=text name=donor_name[]
+SELECT name=donor_category[]
+SELECT name=donor_country[]
+INPUT type=text name=donor_amount[]
+BUTTON type=button id=
+H4: iii) Income sub-total (B2 total)
+INPUT type=text name=income_b2_total
+H4: iv) Receipts total (B2(i) + B2(iii))
+INPUT type=text name=receipts_total
+H4: B3) Payments
+SELECT name=payment_description[]
+INPUT type=text name=payment_kenya[]
+INPUT type=text name=payment_other[]
+BUTTON type=button id=add-payment-row
+H4: B4(I) Closing Balance (B2(iv) - B3(vi))
+LABEL: Cash & Bank Balance (As per Bank Statement and Cash Account)
+INPUT type=text name=cash_bank_balance
+H4: B5) Accounts audited in the last Financial Year.
+LABEL: Were accounts audited?
+SELECT name=audited
+LABEL: IF YES, Please Provide Audit Information
+INPUT type=text name=audit_firm[]
+INPUT type=text name=auditor_name[]
+INPUT type=text name=auditor_practicing_no[]
+BUTTON type=button id=add-auditor-row
+H4: B6) For the amount spent on Projects in B3(ii) above, break it down to sectors in which it was spent in Kenya and other countries
+SELECT name=project_sector[]
+INPUT type=text name=project_sector_other[]
+SELECT name=project_county[]
+SELECT name=project_vulnerable_group[]
+INPUT type=number name=project_beneficiaries_no[]
+INPUT type=text name=project_spending_per_county[]
+INPUT type=number name=project_duration_years[]
+SELECT name=project_completion_status[]
+INPUT type=text name=project_amount_spent_kenya[]
+INPUT type=text name=project_amount_spent_other[]
+BUTTON type=button id=
+BUTTON type=button id=
+H4: B7) Name(s) of Bank(s) and Brach(es) for this NGO
+SELECT name=bank_name[]
+SELECT name=bank_branch_select[]
+INPUT type=text name=bank_branch[]
+INPUT type=text name=bank_account_number[]
+INPUT type=hidden name=bank_currency[]
+INPUT type=text name=
+BUTTON type=button id=
+H2: SECTION C – PERSONNEL
+H3: C1. Staff Composition & Personnel Count
+LABEL: C1 (i) Number of Staff Stationed in Kenyan
+INPUT type=number name=staff_kenyan[]
+INPUT type=number name=staff_foreign[]
+INPUT type=number name=staff_ke_row_total[]
+INPUT type=number name=staff_kenyan[]
+INPUT type=number name=staff_foreign[]
+INPUT type=number name=staff_ke_row_total[]
+INPUT type=number name=staff_kenyan[]
+INPUT type=number name=staff_foreign[]
+INPUT type=number name=staff_ke_row_total[]
+INPUT type=number name=staff_kenyan[]
+INPUT type=number name=staff_foreign[]
+INPUT type=number name=staff_ke_row_total[]
+LABEL: C1 (ii) Number of Staff Stationed in Other Countries
+INPUT type=number name=staff_other_kenyan[]
+INPUT type=number name=staff_other_foreign[]
+INPUT type=number name=staff_other_row_total[]
+INPUT type=number name=staff_other_kenyan[]
+INPUT type=number name=staff_other_foreign[]
+INPUT type=number name=staff_other_row_total[]
+LABEL: C1 (iii) Number of Volunteers/Interns
+INPUT type=number name=volunteers_kenyan[]
+INPUT type=number name=volunteers_foreign[]
+INPUT type=number name=volunteer_row_total[]
+INPUT type=number name=volunteers_kenyan[]
+INPUT type=number name=volunteers_foreign[]
+INPUT type=number name=volunteer_row_total[]
+H4: C2. Privileges accorded to Volunteers / Interns
+SELECT name=vol_priv_category[]
+INPUT type=checkbox name=vol_priv_kenyan_volunteer[]
+INPUT type=checkbox name=vol_priv_kenyan_intern[]
+INPUT type=checkbox name=vol_priv_international_volunteer[]
+INPUT type=checkbox name=vol_priv_international_intern[]
+BUTTON type=button id=
+H4: C3. Number of staff members trained during the reporting period
+SELECT name=training_type[]
+INPUT type=number name=training_kenyan[]
+INPUT type=number name=training_foreign[]
+INPUT type=number name=training_row_total[]
+BUTTON type=button id=
+H2: D) PROJECTS
+H4: D1) Projects Carried Out
+SELECT name=projects_sector[]
+INPUT type=checkbox name=projects_carried_forward_kenya[]
+INPUT type=checkbox name=projects_carried_forward_other[]
+INPUT type=checkbox name=projects_started_kenya[]
+INPUT type=checkbox name=projects_started_other[]
+INPUT type=checkbox name=projects_completed_kenya[]
+INPUT type=checkbox name=projects_completed_other[]
+BUTTON type=button id=
+H4: D2) Contributions in Kind
+H4: i) From Local Community (Tick where appropriate)
+INPUT type=checkbox name=local_material
+INPUT type=text name=local_material_amount
+INPUT type=checkbox name=local_labour
+INPUT type=text name=local_labour_amount
+INPUT type=checkbox name=local_financial
+INPUT type=text name=local_financial_amount
+INPUT type=text name=local_other_specify
+INPUT type=checkbox name=local_other[]
+INPUT type=text name=local_other_amount[]
+INPUT type=text name=local_contributions_total
+BUTTON type=button id=
+INPUT type=text name=total_contributions_in_kind
+H3: SECTION D) PROJECTS
+H4: D3) Type of Organization collaborated with and Nature of Collaboration
+SELECT name=collab_partner_type[]
+INPUT type=checkbox name=collab_info_exchange[]
+INPUT type=checkbox name=collab_tech_support_to[]
+INPUT type=checkbox name=collab_tech_support_from[]
+INPUT type=checkbox name=collab_funding_to[]
+INPUT type=checkbox name=collab_funding_from[]
+INPUT type=checkbox name=collab_equipment_to[]
+INPUT type=checkbox name=collab_equipment_from[]
+BUTTON type=button id=
+H2: SECTION E – GOVERNANCE
+H4: MEMBERSHIP
+INPUT type=number name=membership_number_of_board_meetings
+INPUT type=number name=membership_number_of_registered_members
+INPUT type=number name=membership_number_of_directors
+LABEL: E4) Date of Last AGM
+INPUT type=date name=membership_date_last_agm
+H4: E5) Frequency of Elections as per Constitution (Tick where appropriate)
+LABEL: Annually
+INPUT type=radio name=election_frequency
+LABEL: Every 2 years
+INPUT type=radio name=election_frequency
+LABEL: Every 3 years
+INPUT type=radio name=election_frequency
+LABEL: Every 4 years
+INPUT type=radio name=election_frequency
+LABEL: Every 5 years
+INPUT type=radio name=election_frequency
+LABEL: Other
+INPUT type=radio name=election_frequency
+INPUT type=text name=election_frequency_other
+LABEL: E6) Date of Last Election
+INPUT type=date name=membership_date_last_election
+H4: NON-MEMBERSHIP
+INPUT type=number name=non_membership_number_of_directors
+INPUT type=number name=non_membership_number_of_board_meetings
+INPUT type=date name=non_membership_date_last_board_meeting
+INPUT type=date name=non_membership_date_last_election
+INPUT type=hidden name=officials_section_inactive
+BUTTON type=submit id=
+FORM END

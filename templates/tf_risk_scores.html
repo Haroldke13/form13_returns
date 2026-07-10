@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}TF Risk Scores{% endblock %}
+{% block content %}
+<div class="app-page-container">
+<div class="container mt-4">
+  <h2 class="mb-4 text-danger">Terrorist Financing (TF) Risk Scores</h2>
+  <p class="lead">This page lists all NPOs with their computed TF risk scores and a summary of risk factors. High-risk NPOs (score ≥ {{ high_risk_threshold }}) are highlighted.</p>
+  <!-- Search and per-page form -->
+  <form method="get" class="row g-2 mb-3 align-items-center">
+    <div class="col-auto">
+      <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Search by PBO Name...">
+    </div>
+    <div class="col-auto">
+      <select name="per_page" class="form-select" onchange="this.form.submit()">
+        {% for n in per_page_options %}
+        <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>Show {{ n }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary">Apply</button>
+    </div>
+    <input type="hidden" name="sort_by" value="{{ sort_by }}">
+    <input type="hidden" name="sort_dir" value="{{ sort_dir }}">
+  </form>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle" id="riskTable">
+      <thead class="table-dark">
+        <tr>
+          <th>
+            <a href="{{ url_for('admin_tf_risk', page=1, per_page=per_page, search=search, sort_by='pbo_name', sort_dir='asc' if sort_by != 'pbo_name' or sort_dir == 'desc' else 'desc') }}">
+              PBO Name
+              {% if sort_by == 'pbo_name' %}
+                <span>{{ '▲' if sort_dir == 'asc' else '▼' }}</span>
+              {% endif %}
+            </a>
+          </th>
+          <th>
+            Updated By
+          </th>
+          <th>
+            <a href="{{ url_for('admin_tf_risk', page=1, per_page=per_page, search=search, sort_by='risk_score', sort_dir='asc' if sort_by != 'risk_score' or sort_dir == 'desc' else 'desc') }}">
+              Risk Score
+              {% if sort_by == 'risk_score' %}
+                <span>{{ '▲' if sort_dir == 'asc' else '▼' }}</span>
+              {% endif %}
+            </a>
+          </th>
+          <th>Risk Profile Summary</th>
+        </tr>
+      </thead>
+      <tbody id="riskTableBody">
+        {% for entry in risk_data %}
+        <tr {% if entry.is_high_risk %}class="table-danger"{% endif %}>
+          <td><a href="{{ url_for('report_detail', report_id=entry.report.id) }}">{{ entry.report.pbo_name }}</a></td>
+          <td>{{ entry.updater_name }}</td>
+          <td><strong>{{ entry.score }}</strong>{% if entry.is_high_risk %} <span class="badge bg-danger">High</span>{% endif %}</td>
+          <td>
+            <ul class="mb-0">
+              {% for item in entry.summary %}
+                <li>{{ item }}</li>
+              {% endfor %}
+              {% if not entry.summary %}<li>No major red flags detected.</li>{% endif %}
+            </ul>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+<!-- Pagination controls -->
+{% if total_pages > 1 %}
+<nav aria-label="TF Risk pagination" class="mt-4">
+
+    <ul class="pagination justify-content-center pagination-sm shadow-sm rounded-pill px-3 py-2 bg-light">
+
+
+        <!-- First Page Button -->
+        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+          <a class="page-link border-0 bg-transparent fw-semibold" href="{{ url_for('admin_tf_risk', page=1, per_page=per_page, search=search, sort_by=sort_by, sort_dir=sort_dir) if page > 1 else '#' }}" aria-disabled="{{ page == 1 }}">
+            <i class="fa fa-angle-double-left me-1"></i> First
+          </a>
+        </li>
+        <!-- Previous Button -->
+        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+          <a class="page-link border-0 bg-transparent fw-semibold" href="{{ url_for('admin_tf_risk', page=page-1, per_page=per_page, search=search, sort_by=sort_by, sort_dir=sort_dir) if page > 1 else '#' }}" aria-disabled="{{ page == 1 }}">
+            <i class="fa fa-chevron-left me-1"></i> Prev
+          </a>
+        </li>
+
+        <!-- Page Numbers (limit visible range) -->
+        {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+          <a class="page-link rounded-circle mx-1 text-center fw-semibold" style="width:38px; height:38px; line-height:24px;" href="{{ url_for('admin_tf_risk', page=p, per_page=per_page, search=search, sort_by=sort_by, sort_dir=sort_dir) }}">
+            {{ p }}
+          </a>
+        </li>
+        {% endfor %}
+
+        <!-- Next Button -->
+        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+          <a class="page-link border-0 bg-transparent fw-semibold" href="{{ url_for('admin_tf_risk', page=page+1, per_page=per_page, search=search, sort_by=sort_by, sort_dir=sort_dir) if page < total_pages else '#' }}" aria-disabled="{{ page == total_pages }}">
+            Next <i class="fa fa-chevron-right ms-1"></i>
+          </a>
+        </li>
+        <!-- Last Page Button -->
+        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+          <a class="page-link border-0 bg-transparent fw-semibold" href="{{ url_for('admin_tf_risk', page=total_pages, per_page=per_page, search=search, sort_by=sort_by, sort_dir=sort_dir) if page < total_pages else '#' }}" aria-disabled="{{ page == total_pages }}">
+            Last <i class="fa fa-angle-double-right ms-1"></i>
+          </a>
+        </li>
+
+    </ul>
+
+    <!-- Page Info -->
+    <div class="text-center text-muted small mt-2">
+        Showing page <strong>{{ page }}</strong> of 
+        <strong>{{ total_pages }}</strong> 
+        ({{ total }} Registered NPOs)
+    </div>
+
+</nav>
+{% endif %}
+
+<div class="alert alert-info mt-4">
+    <strong>How to use:</strong> Review NPOs with high risk scores for further AML/CFT investigation. Scores are based on financial, governance, operational, and staff risk indicators.
+</div>
+</div>
+<style>
+  .pagination .page-link {
+  transition: all 0.2s ease-in-out;
+}
+
+.pagination .page-link:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+.pagination .active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.pagination {
+  border-radius: 50px;
+}
+</style>
+</div>
+{% endblock %}

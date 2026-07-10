@@ -1,0 +1,8 @@
+git branch --show-current
+# should be: main
+
+git add .gitattributes .gitignore app.py templates/admin_data_analysis_bot.html
+git commit -m "Scope LFS to 3 JSON files and add external JSON sync cache UI"
+
+# then push
+git push origin main --force

@@ -1,0 +1,1836 @@
+{% extends "base.html" %}
+
+{% block title %}Data Interpretation Plan{% endblock %}
+
+{% block script %}
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="app-page-container">
+  <div class="container-fluid px-3 px-md-4 data-interpretation-page">
+    <section class="interp-hero mb-3">
+      <div class="interp-hero-copy">
+        <p class="interp-kicker mb-2">Sector Intelligence Workspace</p>
+        <h1 class="mb-2">Data Interpretation Plan for 18 Topical Statistics</h1>
+        <p class="interp-lead mb-3">
+          The page stays light on first load. Choose a fiscal year, click <strong>Run Analysis</strong>, and the app will
+          generate fresh Plotly charts, reporting tables, and live chapter summaries from the current Form 14 data.
+        </p>
+        <div class="interp-chip-row">
+          <span class="interp-chip">{{ reference_report_title }}</span>
+          <span class="interp-chip">{{ reference_report_publication }}</span>
+          <span class="interp-chip">{{ scope_label }}</span>
+          {% if analysis_focus_label %}
+          <span class="interp-chip interp-chip--solid">{{ analysis_focus_label }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <aside class="interp-hero-panel">
+        <div class="interp-hero-panel-label">Run Fresh Analysis</div>
+        <form method="post" class="interp-run-form">
+          <label class="interp-form-label" for="analysis-fy">Fiscal Year</label>
+          <select id="analysis-fy" name="fy" class="form-select">
+            {% for option in fiscal_year_options %}
+            <option value="{{ option.value }}" {% if option.value == selected_fiscal_year %}selected{% endif %}>
+              {{ option.label }}
+            </option>
+            {% endfor %}
+          </select>
+          <button
+            type="submit"
+            name="run_analysis"
+            value="1"
+            class="btn btn-primary interp-run-btn"
+            {% if analysis_job.running %}disabled{% endif %}>
+            {{ 'Analysis Running...' if analysis_job.running else 'Run Analysis' }}
+          </button>
+        </form>
+        <div class="interp-hero-panel-meta">
+          {% if analysis_run %}
+          Last generated {{ analysis_generated_at }}
+          {% else %}
+          No heavy analysis is preloaded until you run it.
+          {% endif %}
+        </div>
+
+        {% if top_sector_labels %}
+        <div class="interp-side-block">
+          <h3>Leading Sectors in Latest Run</h3>
+          <div class="interp-chip-row">
+            {% for label in top_sector_labels %}
+            <span class="interp-chip interp-chip--solid">{{ label }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if top_donor_labels %}
+        <div class="interp-side-block">
+          <h3>Leading Donor Classes in Latest Run</h3>
+          <div class="interp-chip-row">
+            {% for label in top_donor_labels %}
+            <span class="interp-chip interp-chip--amber">{{ label }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div
+          class="interp-job-card {{ analysis_job.status_class }}"
+          data-analysis-job
+          data-status-endpoint="{{ analysis_status_endpoint }}"
+          data-selected-fy="{{ selected_fiscal_year }}"
+          data-running="{{ '1' if analysis_job.running else '0' }}"
+          data-status="{{ analysis_job.status }}">
+          <div class="interp-job-topline">
+            <span class="interp-hero-panel-label">Background Run Status</span>
+            <span class="interp-qa-badge {{ analysis_job.status_class }}" data-analysis-job-badge>{{ analysis_job.status_label }}</span>
+          </div>
+          <div class="interp-job-message" data-analysis-job-message>{{ analysis_job.detail }}</div>
+          <div class="interp-job-meta" data-analysis-job-meta>
+            {% if analysis_job.selected_fiscal_year %}
+            Window: {{ analysis_job.selected_fiscal_year }}
+            {% else %}
+            No background run queued yet.
+            {% endif %}
+            {% if analysis_job.started_at %}
+            <span>Started {{ analysis_job.started_at }}</span>
+            {% endif %}
+            {% if analysis_job.finished_at %}
+            <span>Finished {{ analysis_job.finished_at }}</span>
+            {% endif %}
+          </div>
+          {% if analysis_job.running and analysis_run %}
+          <div class="interp-job-note">A new run is processing in background. The visible charts and tables are from the latest completed run for this fiscal-year view.</div>
+          {% endif %}
+        </div>
+      </aside>
+    </section>
+
+    {% if analysis_error %}
+    <div class="alert alert-warning mb-3">{{ analysis_error }}</div>
+    {% endif %}
+
+    {% if analysis_run %}
+    <section class="interp-analysis-shell mb-3">
+      <div class="interp-card mb-3">
+        <div class="interp-card-head">
+          <div>
+            <h2>Analysis Reporting Output</h2>
+            <p>Fresh reporting generated for {{ analysis_focus_label }}. Rerun the page after new data updates to refresh the outputs.</p>
+          </div>
+          <span class="interp-badge">Plotly Reporting Run</span>
+        </div>
+        <section class="interp-kpis mt-3">
+          {% for card in analysis_cards %}
+          <article class="interp-kpi-card">
+            <div class="interp-kpi-label">{{ card.label }}</div>
+            <div class="interp-kpi-value">{{ card.value }}</div>
+            <div class="interp-kpi-sub">{{ card.sub }}</div>
+          </article>
+          {% endfor %}
+        </section>
+        <ul class="interp-list mt-3">
+          {% for line in analysis_summary_lines %}
+          <li>{{ line }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <section class="interp-card mb-3">
+        <div class="interp-card-head">
+          <div>
+            <h2>QA Status Checks</h2>
+            <p>These run-time checks tell you whether the current analysis pack is ready to publish or still needs cleanup.</p>
+          </div>
+          <span class="interp-qa-badge {{ qa_summary.status_class }}">{{ qa_summary.label }}</span>
+        </div>
+        <div class="interp-qa-banner {{ qa_summary.status_class }} mt-3">
+          <strong>{{ qa_summary.label }}</strong>
+          <span>{{ qa_summary.message }}</span>
+        </div>
+        <div class="interp-qa-grid mt-3">
+          {% for check in qa_checks %}
+          <article class="interp-qa-card {{ check.status_class }}">
+            <div class="interp-qa-topline">
+              <h3>{{ check.title }}</h3>
+              <span class="interp-qa-badge {{ check.status_class }}">{{ check.status_label }}</span>
+            </div>
+            <p class="interp-qa-copy">{{ check.summary }}</p>
+            {% if check.metrics %}
+            <ul class="interp-list interp-list--tight mt-2">
+              {% for metric in check.metrics %}
+              <li>{{ metric }}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if check.examples %}
+            <div class="interp-qa-examples">
+              {% for example in check.examples %}
+              <div>{{ example }}</div>
+              {% endfor %}
+            </div>
+            {% endif %}
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      {% for section in analysis_sections %}
+      <section class="interp-card mb-3">
+        <div class="interp-card-head">
+          <div>
+            <h2>{{ section.title }}</h2>
+            <p>{{ section.subtitle }}</p>
+          </div>
+        </div>
+
+        {% if section.charts %}
+        <div class="interp-analysis-chart-grid mt-3">
+          {% for chart in section.charts %}
+          <article class="interp-analysis-chart-card {{ chart.card_class or '' }}" data-download-name="{{ chart.title }}">
+            <div class="interp-card-inline-head">
+              <div>
+                <h3>{{ chart.title }}</h3>
+                <p>{{ chart.subtitle }}</p>
+              </div>
+              <div class="interp-card-actions">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-download-chart>
+                  Download PNG
+                </button>
+              </div>
+            </div>
+            <div class="interp-plot-scroll" data-plot-scroll>
+              <div
+                class="interp-plotly"
+                style="min-width: {{ chart.min_width if chart.min_width is defined else (1120 if chart.card_class == 'is-wide' else 860) }}px;">
+                {{ chart.html|safe }}
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if section.tables %}
+        <div class="interp-table-stack mt-3">
+          {% for table in section.tables %}
+          {% set table_key = (section.title ~ '-' ~ table.title ~ '-' ~ loop.index0)|lower|replace(' ', '-')|replace(',', '')|replace('/', '-')|replace('(', '')|replace(')', '') %}
+          <div class="interp-table-card" data-analysis-table data-table-key="{{ table_key }}">
+            <div class="interp-table-head">
+              <div>
+                <div class="interp-table-title">{{ table.title }}</div>
+                {% if table.subtitle %}
+                <p class="interp-table-copy">{{ table.subtitle }}</p>
+                {% endif %}
+              </div>
+              <div class="interp-card-actions">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-download-table="csv">
+                  Download CSV
+                </button>
+              </div>
+            </div>
+            <div class="interp-table-controls">
+              <div class="interp-table-control">
+                <label class="interp-form-label" for="{{ table_key }}-search">Search</label>
+                <input
+                  id="{{ table_key }}-search"
+                  type="search"
+                  class="form-control"
+                  placeholder="Search this table"
+                  data-table-search>
+              </div>
+              <div class="interp-table-control interp-table-control--compact">
+                <label class="interp-form-label" for="{{ table_key }}-page-size">Rows Per Page</label>
+                <select id="{{ table_key }}-page-size" class="form-select" data-table-page-size>
+                  <option value="10">10</option>
+                  <option value="25" selected>25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="all">All</option>
+                </select>
+              </div>
+            </div>
+            <div class="interp-table-summary" data-table-summary>Showing all rows.</div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0 interp-data-table" data-table-element>
+                <thead>
+                  <tr>
+                    {% for column in table.columns %}
+                    <th class="interp-sortable" data-column-index="{{ loop.index0 }}">{{ column }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody data-table-body>
+                  {% if table.rows %}
+                  {% for row in table.rows %}
+                  <tr>
+                    {% for column in table.columns %}
+                    <td>{{ row[column] }}</td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                  {% else %}
+                  <tr data-empty-row="1">
+                    <td colspan="{{ table.columns|length }}">
+                      <span class="sector-empty-value">No rows available for this analysis run.</span>
+                    </td>
+                  </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="interp-table-pagination">
+              <div class="interp-table-page-status" data-table-page-status>Page 1</div>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Analysis table pagination controls">
+                <button type="button" class="btn btn-outline-secondary" data-table-first>First</button>
+                <button type="button" class="btn btn-outline-secondary" data-table-prev>Previous</button>
+                <button type="button" class="btn btn-outline-secondary" data-table-next>Next</button>
+                <button type="button" class="btn btn-outline-secondary" data-table-last>Last</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </section>
+      {% endfor %}
+    </section>
+    {% else %}
+    <section class="interp-card interp-empty-state mb-3">
+      <div class="interp-card-head">
+        <div>
+          <h2>Run Analysis When You Need It</h2>
+          <p>
+            {% if analysis_job.running %}
+            The analysis is currently running in background for {{ analysis_job.selected_fiscal_year or 'the selected fiscal year' }}. This page will refresh into the finished reporting pack when it is ready.
+            {% else %}
+            The page does not precompute the heavy chapter analytics on load. Pick a fiscal year and click the button above to generate the latest reporting pack.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-xl-7">
+        <div class="interp-card h-100">
+          <div class="interp-card-head">
+            <div>
+              <h2>Plan Overview</h2>
+              <p>These planning visuals are lightweight and explain the 18-topic roadmap before you run the full reporting job.</p>
+            </div>
+            <div class="interp-legend">
+              <span class="interp-legend-item"><i class="dot dot-direct"></i>Direct</span>
+              <span class="interp-legend-item"><i class="dot dot-partial"></i>Partial</span>
+            </div>
+          </div>
+          <div class="interp-plan-chart-grid mt-3">
+            <article class="interp-analysis-chart-card" data-download-name="Readiness Split">
+              <div class="interp-card-inline-head">
+                <h3>Readiness Split</h3>
+                <div class="interp-card-actions">
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-download-chart data-chart-target="planReadinessPlot">
+                    Download PNG
+                  </button>
+                </div>
+              </div>
+              <div id="planReadinessPlot" class="interp-plan-plot"></div>
+            </article>
+            <article class="interp-analysis-chart-card" data-download-name="Topics by Chapter">
+              <div class="interp-card-inline-head">
+                <h3>Topics by Chapter</h3>
+                <div class="interp-card-actions">
+                  <button type="button" class="btn btn-outline-primary btn-sm" data-download-chart data-chart-target="planChapterPlot">
+                    Download PNG
+                  </button>
+                </div>
+              </div>
+              <div id="planChapterPlot" class="interp-plan-plot"></div>
+            </article>
+          </div>
+          <article class="interp-analysis-chart-card mt-3" data-download-name="Most Reused Data Sources">
+            <div class="interp-card-inline-head">
+              <h3>Most Reused Data Sources</h3>
+              <div class="interp-card-actions">
+                <button type="button" class="btn btn-outline-primary btn-sm" data-download-chart data-chart-target="planSourcePlot">
+                  Download PNG
+                </button>
+              </div>
+            </div>
+            <div id="planSourcePlot" class="interp-plan-plot interp-plan-plot--wide"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-5">
+        <div class="interp-card mb-3">
+          <div class="interp-card-head">
+            <div>
+              <h2>Coverage Notes</h2>
+              <p>What the current schema already does well, and where controlled mappings still improve consistency.</p>
+            </div>
+          </div>
+          <ul class="interp-list interp-list--tight mt-3">
+            {% for note in coverage_notes %}
+            <li>{{ note }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="interp-card">
+          <div class="interp-card-head">
+            <div>
+              <h2>Live Data Assets</h2>
+              <p>Use these exports when you need offline QA, Excel drill-downs, or external dashboarding.</p>
+            </div>
+          </div>
+          <div class="interp-downloads mt-3">
+            {% for download in data_downloads %}
+            <a class="interp-download" href="{{ url_for(download.endpoint) }}">
+              <span class="interp-download-title">{{ download.label }}</span>
+              <span class="interp-download-text">{{ download.description }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="row g-3 mb-3">
+      <div class="col-12 col-xl-7">
+        <div class="interp-card h-100">
+          <div class="interp-card-head">
+            <div>
+              <h2>Replication Workflow</h2>
+              <p>A practical sequence for producing the chapter outputs from the current schema.</p>
+            </div>
+          </div>
+          <div class="interp-step-grid mt-3">
+            {% for item in workflow_steps %}
+            <article class="interp-step">
+              <h3>{{ item.step }}</h3>
+              <p>{{ item.detail }}</p>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-5">
+        <div class="interp-card mb-3">
+          <div class="interp-card-head">
+            <div>
+              <h2>Quality Checks</h2>
+              <p>These checks keep the published charts and tables consistent with regulator expectations.</p>
+            </div>
+          </div>
+          <ul class="interp-list interp-list--tight mt-3">
+            {% for check in quality_checks %}
+            <li>{{ check }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <div class="interp-card">
+          <div class="interp-card-head">
+            <div>
+              <h2>Crosswalk Files to Add</h2>
+              <p>These mappings close the main gaps between raw Form 14 data and the official chapter structure.</p>
+            </div>
+          </div>
+          <div class="interp-crosswalks mt-3">
+            {% for item in crosswalks %}
+            <article class="interp-crosswalk">
+              <h3>{{ item.name }}</h3>
+              <p>{{ item.purpose }}</p>
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="interp-card mb-3">
+      <div class="interp-card-head">
+        <div>
+          <h2>18 Topic Replication Plan</h2>
+          <p>Each topic shows the data to use, the output to build, the recommended visual, and the live result from the latest run when available.</p>
+        </div>
+      </div>
+      <div class="interp-topic-grid mt-3">
+        {% for topic in topic_plan %}
+        <article class="interp-topic-card">
+          <div class="interp-topic-topline">
+            <span class="interp-topic-code">{{ topic.code }}</span>
+            <span class="interp-status {{ topic.status_class }}">{{ topic.status }}</span>
+          </div>
+          <h3>{{ topic.title }}</h3>
+          <p class="interp-topic-objective">{{ topic.objective }}</p>
+
+          {% if topic.live_result %}
+          <div class="interp-live-result">
+            <div class="interp-topic-label">Latest Run</div>
+            <div class="interp-live-head">{{ topic.live_result.headline }}</div>
+            <p>{{ topic.live_result.detail }}</p>
+          </div>
+          {% endif %}
+
+          <div class="interp-topic-section">
+            <div class="interp-topic-label">Use This Data</div>
+            <ul class="interp-list interp-list--tight">
+              {% for item in topic.use_data %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <div class="interp-topic-section">
+            <div class="interp-topic-label">Recommended Visuals</div>
+            <div class="interp-chip-row">
+              {% for visual in topic.visuals %}
+              <span class="interp-chip interp-chip--solid">{{ visual }}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="interp-topic-section">
+            <div class="interp-topic-label">Primary Sources</div>
+            <div class="interp-chip-row">
+              {% for label in topic.source_labels %}
+              <span class="interp-chip">{{ label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="interp-topic-foot">
+            <div><strong>Deliverable:</strong> {{ topic.deliverable }}</div>
+            <div><strong>Gap:</strong> {{ topic.gap }}</div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="interp-card mb-4">
+      <div class="interp-card-head">
+        <div>
+          <h2>Data Analysis and Visualization Tools to Use</h2>
+          <p>Recommended tools for extraction, cleaning, QA, in-app visuals, and management reporting.</p>
+        </div>
+      </div>
+      <div class="interp-tool-grid mt-3">
+        {% for tool in tool_stack %}
+        <article class="interp-tool-card">
+          <h3>{{ tool.name }}</h3>
+          <p>{{ tool.purpose }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<style>
+  :root {
+    --interp-bg-1: #f4f8fc;
+    --interp-bg-2: #eef2f8;
+    --interp-panel: #ffffff;
+    --interp-line: #d7e1ec;
+    --interp-text: #13253d;
+    --interp-muted: #5f7086;
+    --interp-blue: #103a7d;
+    --interp-blue-soft: #e6eefc;
+    --interp-teal: #0e8b7d;
+    --interp-teal-soft: #dbf6f2;
+    --interp-amber: #d18a00;
+    --interp-amber-soft: #fff1cf;
+  }
+
+  .data-interpretation-page {
+    padding-top: 0.75rem;
+    padding-bottom: 1.1rem;
+    background:
+      radial-gradient(circle at top right, rgba(16, 58, 125, 0.08), transparent 25%),
+      linear-gradient(180deg, var(--interp-bg-1) 0%, var(--interp-bg-2) 100%);
+    border-radius: 18px;
+  }
+
+  .interp-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .interp-hero-copy,
+  .interp-hero-panel,
+  .interp-card,
+  .interp-kpi-card {
+    background: var(--interp-panel);
+    border: 1px solid var(--interp-line);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  }
+
+  .interp-hero-copy {
+    border-radius: 18px;
+    padding: 1.15rem 1.2rem;
+    background:
+      linear-gradient(135deg, rgba(16, 58, 125, 0.96), rgba(21, 86, 163, 0.92)),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+    color: #ffffff;
+  }
+
+  .interp-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #fbd267;
+  }
+
+  .interp-hero-copy h1 {
+    font-size: clamp(1.45rem, 1.4vw, 2rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .interp-lead {
+    max-width: 60rem;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.96rem;
+  }
+
+  .interp-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .interp-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: 999px;
+    padding: 0.26rem 0.65rem;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: inherit;
+    font-size: 0.77rem;
+    font-weight: 700;
+  }
+
+  .interp-chip--solid {
+    background: var(--interp-blue-soft);
+    border-color: #c9d6f4;
+    color: var(--interp-blue);
+  }
+
+  .interp-chip--amber {
+    background: var(--interp-amber-soft);
+    border-color: #f2d690;
+    color: #8f5f00;
+  }
+
+  .interp-hero-panel {
+    border-radius: 18px;
+    padding: 1rem;
+    display: grid;
+    gap: 0.85rem;
+    align-content: start;
+  }
+
+  .interp-hero-panel-label,
+  .interp-topic-label,
+  .interp-kpi-label {
+    color: var(--interp-muted);
+    font-size: 0.74rem;
+    font-weight: 900;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .interp-hero-panel-meta {
+    color: var(--interp-muted);
+    font-size: 0.82rem;
+  }
+
+  .interp-run-form {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .interp-form-label {
+    color: var(--interp-text);
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .interp-run-btn {
+    margin-top: 0.2rem;
+  }
+
+  .interp-job-card {
+    border-radius: 14px;
+    border: 1px solid #dbe4ef;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fafe 100%);
+    padding: 0.85rem 0.9rem;
+    display: grid;
+    gap: 0.42rem;
+  }
+
+  .interp-job-card.is-neutral {
+    background: #edf3fb;
+    border-color: #cedced;
+  }
+
+  .interp-job-card.is-good {
+    background: var(--interp-teal-soft);
+    border-color: #a9e7dd;
+  }
+
+  .interp-job-card.is-warn {
+    background: var(--interp-amber-soft);
+    border-color: #efd48f;
+  }
+
+  .interp-job-card.is-bad {
+    background: #ffe4e6;
+    border-color: #f7b7c2;
+  }
+
+  .interp-job-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .interp-job-message {
+    color: var(--interp-text);
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .interp-job-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 0.9rem;
+    color: var(--interp-muted);
+    font-size: 0.8rem;
+  }
+
+  .interp-job-note {
+    color: var(--interp-muted);
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .interp-side-block h3,
+  .interp-card h2,
+  .interp-step h3,
+  .interp-crosswalk h3,
+  .interp-tool-card h3,
+  .interp-topic-card h3,
+  .interp-analysis-chart-card h3,
+  .interp-table-title {
+    margin: 0;
+    color: var(--interp-text);
+    font-weight: 800;
+  }
+
+  .interp-analysis-shell {
+    display: grid;
+    gap: 0.95rem;
+    min-width: 0;
+  }
+
+  .interp-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .interp-kpi-card {
+    border-radius: 14px;
+    padding: 0.9rem;
+  }
+
+  .interp-kpi-value {
+    margin-top: 0.28rem;
+    color: var(--interp-text);
+    font-size: clamp(1rem, 1.05vw, 1.35rem);
+    font-weight: 900;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .interp-kpi-sub {
+    color: var(--interp-muted);
+    font-size: 0.8rem;
+    margin-top: 0.28rem;
+  }
+
+  .interp-card {
+    border-radius: 16px;
+    padding: 1rem;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .interp-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .interp-card-inline-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+  }
+
+  .interp-card-head h2 {
+    font-size: 1.02rem;
+    margin-bottom: 0.18rem;
+  }
+
+  .interp-card-head p,
+  .interp-analysis-chart-card p,
+  .interp-step p,
+  .interp-crosswalk p,
+  .interp-tool-card p,
+  .interp-live-result p {
+    margin: 0.45rem 0 0;
+    color: var(--interp-muted);
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .interp-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border-radius: 999px;
+    padding: 0.18rem 0.72rem;
+    background: var(--interp-blue-soft);
+    color: var(--interp-blue);
+    font-size: 0.76rem;
+    font-weight: 800;
+  }
+
+  .interp-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    flex: 0 0 auto;
+  }
+
+  .interp-empty-state {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  }
+
+  .interp-list {
+    margin: 0;
+    padding-left: 1.05rem;
+    color: var(--interp-text);
+    display: grid;
+    gap: 0.52rem;
+    font-size: 0.9rem;
+  }
+
+  .interp-list--tight {
+    gap: 0.42rem;
+    font-size: 0.86rem;
+  }
+
+  .interp-plan-chart-grid,
+  .interp-analysis-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 540px), 1fr));
+    gap: 0.9rem;
+    align-items: start;
+    min-width: 0;
+  }
+
+  .interp-analysis-chart-card,
+  .interp-step,
+  .interp-crosswalk,
+  .interp-tool-card,
+  .interp-table-card {
+    border-radius: 13px;
+    border: 1px solid #dbe4ef;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fafe 100%);
+    padding: 0.85rem 0.9rem;
+    min-width: 0;
+  }
+
+  .interp-analysis-chart-card.is-wide {
+    grid-column: 1 / -1;
+  }
+
+  .interp-plan-plot,
+  .interp-plotly {
+    min-height: 320px;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .interp-plot-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: #8ba1bf #edf3fb;
+  }
+
+  .interp-plot-scroll::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .interp-plot-scroll::-webkit-scrollbar-track {
+    background: #edf3fb;
+    border-radius: 999px;
+  }
+
+  .interp-plot-scroll::-webkit-scrollbar-thumb {
+    background: #8ba1bf;
+    border-radius: 999px;
+  }
+
+  .interp-plan-plot--wide {
+    min-height: 350px;
+  }
+
+  .interp-plotly > div,
+  .interp-plan-plot > div,
+  .interp-plotly .js-plotly-plot,
+  .interp-plan-plot .js-plotly-plot {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .interp-analysis-chart-card .plotly,
+  .interp-analysis-chart-card .main-svg,
+  .interp-plan-plot .plotly,
+  .interp-plan-plot .main-svg {
+    max-width: 100% !important;
+  }
+
+  .interp-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    color: var(--interp-muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .interp-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+  }
+
+  .dot-direct { background: var(--interp-teal); }
+  .dot-partial { background: var(--interp-amber); }
+
+  .interp-downloads,
+  .interp-crosswalks,
+  .interp-tool-grid,
+  .interp-table-stack,
+  .interp-qa-grid {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .interp-download {
+    display: block;
+    padding: 0.82rem 0.9rem;
+    border-radius: 12px;
+    border: 1px solid #d7e1ee;
+    background: #f8fbff;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+
+  .interp-download:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 58, 125, 0.08);
+    border-color: #b8caeb;
+  }
+
+  .interp-download-title {
+    display: block;
+    color: var(--interp-blue);
+    font-size: 0.92rem;
+    font-weight: 800;
+    margin-bottom: 0.15rem;
+  }
+
+  .interp-download-text {
+    display: block;
+    color: var(--interp-muted);
+    font-size: 0.83rem;
+    line-height: 1.4;
+  }
+
+  .interp-step-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .interp-tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .interp-qa-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .interp-topic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .interp-topic-card {
+    display: grid;
+    gap: 0.7rem;
+    border-radius: 15px;
+    border: 1px solid #dbe4ef;
+    background:
+      radial-gradient(circle at top right, rgba(16, 58, 125, 0.05), transparent 22%),
+      linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    padding: 0.95rem;
+  }
+
+  .interp-topic-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+
+  .interp-topic-code {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 32px;
+    padding: 0 0.7rem;
+    border-radius: 999px;
+    background: #0f2f68;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+  }
+
+  .interp-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border-radius: 999px;
+    padding: 0.22rem 0.72rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+    border: 1px solid transparent;
+  }
+
+  .interp-status.is-direct {
+    background: var(--interp-teal-soft);
+    color: #0b6c61;
+    border-color: #a9e7dd;
+  }
+
+  .interp-status.is-partial {
+    background: var(--interp-amber-soft);
+    color: #8e6100;
+    border-color: #efd48f;
+  }
+
+  .interp-topic-objective {
+    margin: 0;
+    color: var(--interp-muted);
+    font-size: 0.86rem;
+    line-height: 1.52;
+  }
+
+  .interp-topic-section {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .interp-topic-foot {
+    display: grid;
+    gap: 0.36rem;
+    color: var(--interp-text);
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .interp-live-result {
+    border-radius: 12px;
+    border: 1px solid #d8e4f6;
+    background: #f5f8ff;
+    padding: 0.75rem 0.8rem;
+  }
+
+  .interp-live-head {
+    margin-top: 0.18rem;
+    color: var(--interp-blue);
+    font-weight: 800;
+    font-size: 0.88rem;
+  }
+
+  .interp-qa-banner,
+  .interp-qa-card {
+    border-radius: 13px;
+    border: 1px solid #dbe4ef;
+    background: linear-gradient(180deg, #ffffff 0%, #f7fafe 100%);
+    padding: 0.9rem;
+  }
+
+  .interp-qa-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .interp-qa-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .interp-qa-copy {
+    margin: 0.5rem 0 0;
+    color: var(--interp-muted);
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .interp-qa-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border-radius: 999px;
+    padding: 0.22rem 0.72rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+
+  .interp-qa-badge.is-good,
+  .interp-qa-banner.is-good,
+  .interp-qa-card.is-good {
+    background: var(--interp-teal-soft);
+    border-color: #a9e7dd;
+    color: #0b6c61;
+  }
+
+  .interp-qa-badge.is-warn,
+  .interp-qa-banner.is-warn,
+  .interp-qa-card.is-warn {
+    background: var(--interp-amber-soft);
+    border-color: #efd48f;
+    color: #8e6100;
+  }
+
+  .interp-qa-badge.is-bad,
+  .interp-qa-banner.is-bad,
+  .interp-qa-card.is-bad {
+    background: #ffe4e6;
+    border-color: #f7b7c2;
+    color: #9f1239;
+  }
+
+  .interp-qa-badge.is-neutral,
+  .interp-qa-banner.is-neutral,
+  .interp-qa-card.is-neutral {
+    background: #edf3fb;
+    border-color: #cedced;
+    color: #35517c;
+  }
+
+  .interp-qa-examples {
+    margin-top: 0.7rem;
+    display: grid;
+    gap: 0.45rem;
+    color: inherit;
+    font-size: 0.8rem;
+  }
+
+  .interp-table-title {
+    font-size: 0.9rem;
+  }
+
+  .interp-table-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .interp-table-copy {
+    margin: 0.35rem 0 0;
+    color: var(--interp-muted);
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .interp-table-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: end;
+    margin-bottom: 0.65rem;
+  }
+
+  .interp-table-control {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+
+  .interp-table-control--compact {
+    flex: 0 0 180px;
+  }
+
+  .interp-table-summary {
+    margin-bottom: 0.65rem;
+    color: var(--interp-blue);
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .interp-data-table thead th {
+    background: #edf3fb;
+    color: var(--interp-text);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .interp-data-table tbody td {
+    color: var(--interp-text);
+    font-size: 0.84rem;
+    vertical-align: top;
+  }
+
+  .interp-sortable {
+    position: relative;
+    cursor: pointer;
+    padding-right: 1.15rem !important;
+    user-select: none;
+  }
+
+  .interp-sortable::after {
+    content: '↕';
+    position: absolute;
+    right: 0.38rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8ba1bf;
+    font-size: 0.72rem;
+  }
+
+  .interp-sortable.sort-asc::after {
+    content: '▲';
+    color: var(--interp-blue);
+  }
+
+  .interp-sortable.sort-desc::after {
+    content: '▼';
+    color: var(--interp-blue);
+  }
+
+  .interp-table-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.75rem;
+  }
+
+  .interp-table-page-status {
+    color: var(--interp-muted);
+    font-size: 0.82rem;
+  }
+
+  @media (max-width: 1199.98px) {
+    .interp-hero {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 1599.98px) {
+    .interp-analysis-chart-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .interp-tool-grid,
+    .interp-qa-grid,
+    .interp-topic-grid,
+    .interp-step-grid,
+    .interp-plan-chart-grid,
+    .interp-analysis-chart-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 575.98px) {
+    .data-interpretation-page {
+      border-radius: 14px;
+    }
+
+    .interp-hero-copy,
+    .interp-hero-panel,
+    .interp-card,
+    .interp-kpi-card,
+    .interp-topic-card {
+      border-radius: 14px;
+    }
+
+    .interp-card {
+      padding: 0.9rem;
+    }
+
+    .interp-card-head {
+      flex-direction: column;
+    }
+
+    .interp-table-control,
+    .interp-table-control--compact {
+      flex-basis: 100%;
+    }
+
+    .interp-plan-plot,
+    .interp-plan-plot--wide,
+    .interp-plotly {
+      min-height: 280px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const analysisJobCard = document.querySelector('[data-analysis-job]');
+    const analysisRunButton = document.querySelector('.interp-run-btn');
+    const analysisFySelect = document.getElementById('analysis-fy');
+
+    function slugifyFileName(value) {
+      return String(value || 'data-interpretations')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        || 'data-interpretations';
+    }
+
+    function selectedFiscalYearLabel() {
+      return analysisFySelect && analysisFySelect.value ? analysisFySelect.value : 'all-years';
+    }
+
+    function downloadBlob(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    }
+
+    function downloadTableAsCsv(shell) {
+      if (!shell) return;
+      const table = shell.querySelector('[data-table-element]');
+      if (!table) return;
+
+      const headers = Array.from(table.querySelectorAll('thead th')).map((cell) => cell.textContent.trim());
+      const rows = Array.from(table.querySelectorAll('tbody tr'))
+        .filter((row) => !row.dataset.emptyRow)
+        .map((row) => Array.from(row.children).map((cell) => cell.textContent.trim().replace(/\s+/g, ' ')));
+
+      const csvRows = [headers, ...rows].map((columns) =>
+        columns.map((value) => `"${String(value || '').replace(/"/g, '""')}"`).join(',')
+      );
+
+      const titleNode = shell.querySelector('.interp-table-title');
+      const fileName = `${slugifyFileName(titleNode ? titleNode.textContent : 'analysis-table')}-${slugifyFileName(selectedFiscalYearLabel())}.csv`;
+      downloadBlob(new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' }), fileName);
+    }
+
+    async function downloadChartAsImage(button) {
+      if (!window.Plotly || !button) return;
+
+      const card = button.closest('.interp-analysis-chart-card');
+      if (!card) return;
+
+      let plot = null;
+      const explicitTarget = button.dataset.chartTarget;
+      if (explicitTarget) {
+        const targetRoot = document.getElementById(explicitTarget);
+        if (targetRoot) {
+          plot = targetRoot.querySelector('.js-plotly-plot') || targetRoot;
+        }
+      }
+      if (!plot) {
+        plot = card.querySelector('.interp-plotly .js-plotly-plot, .interp-plan-plot .js-plotly-plot');
+      }
+      if (!plot) return;
+
+      const title = card.dataset.downloadName
+        || (card.querySelector('h3') ? card.querySelector('h3').textContent : 'analysis-chart');
+      const fileName = `${slugifyFileName(title)}-${slugifyFileName(selectedFiscalYearLabel())}`;
+
+      try {
+        await window.Plotly.downloadImage(plot, {
+          format: 'png',
+          filename: fileName,
+          width: Math.max(plot.clientWidth || 1200, 900),
+          height: Math.max(plot.clientHeight || 420, 420),
+          scale: 2,
+        });
+      } catch (error) {
+        console.debug('Chart download skipped', error);
+      }
+    }
+
+    function setAnalysisRunControlsDisabled(disabled) {
+      if (analysisRunButton) {
+        analysisRunButton.disabled = disabled;
+        analysisRunButton.textContent = disabled ? 'Analysis Running...' : 'Run Analysis';
+      }
+      if (analysisFySelect) {
+        analysisFySelect.disabled = disabled;
+      }
+    }
+
+    function updateAnalysisJobCard(payload) {
+      if (!analysisJobCard || !payload) return;
+
+      const badge = analysisJobCard.querySelector('[data-analysis-job-badge]');
+      const message = analysisJobCard.querySelector('[data-analysis-job-message]');
+      const meta = analysisJobCard.querySelector('[data-analysis-job-meta]');
+      const classNames = ['is-good', 'is-warn', 'is-bad', 'is-neutral'];
+
+      analysisJobCard.dataset.running = payload.running ? '1' : '0';
+      analysisJobCard.dataset.status = payload.status || 'idle';
+      analysisJobCard.dataset.selectedFy = payload.selected_fiscal_year || analysisJobCard.dataset.selectedFy || '';
+      classNames.forEach((className) => analysisJobCard.classList.remove(className));
+      analysisJobCard.classList.add(payload.status_class || 'is-neutral');
+
+      if (badge) {
+        badge.classList.remove(...classNames);
+        badge.classList.add(payload.status_class || 'is-neutral');
+        badge.textContent = payload.status_label || 'Idle';
+      }
+      if (message) {
+        message.textContent = payload.detail || 'No background analysis has run yet.';
+      }
+      if (meta) {
+        const metaParts = [];
+        if (payload.selected_fiscal_year) {
+          metaParts.push(`Window: ${payload.selected_fiscal_year}`);
+        } else {
+          metaParts.push('No background run queued yet.');
+        }
+        if (payload.started_at) {
+          metaParts.push(`Started ${payload.started_at}`);
+        }
+        if (payload.finished_at) {
+          metaParts.push(`Finished ${payload.finished_at}`);
+        }
+        meta.textContent = metaParts.join('  •  ');
+      }
+
+      setAnalysisRunControlsDisabled(Boolean(payload.running));
+    }
+
+    async function pollAnalysisJobStatus() {
+      if (!analysisJobCard) return;
+
+      const endpoint = analysisJobCard.dataset.statusEndpoint;
+      const selectedFy = analysisFySelect ? analysisFySelect.value : (analysisJobCard.dataset.selectedFy || '');
+      if (!endpoint) return;
+
+      try {
+        const url = new URL(endpoint, window.location.origin);
+        if (selectedFy) {
+          url.searchParams.set('fy', selectedFy);
+        }
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload) return;
+
+        const wasRunning = analysisJobCard.dataset.running === '1';
+        updateAnalysisJobCard(payload);
+
+        if (
+          wasRunning
+          && !payload.running
+          && (payload.status === 'completed' || payload.status === 'failed')
+        ) {
+          const targetUrl = payload.view_url || window.location.href;
+          window.setTimeout(function () {
+            window.location.href = targetUrl;
+          }, 450);
+        }
+      } catch (error) {
+        console.debug('Data interpretation status poll skipped', error);
+      }
+    }
+
+    if (analysisJobCard) {
+      setAnalysisRunControlsDisabled(analysisJobCard.dataset.running === '1');
+      if (analysisJobCard.dataset.running === '1') {
+        pollAnalysisJobStatus();
+        window.setInterval(pollAnalysisJobStatus, 3000);
+      }
+    }
+
+    document.addEventListener('click', function (event) {
+      const chartButton = event.target.closest('[data-download-chart]');
+      if (chartButton) {
+        event.preventDefault();
+        downloadChartAsImage(chartButton);
+        return;
+      }
+
+      const tableButton = event.target.closest('[data-download-table]');
+      if (tableButton) {
+        event.preventDefault();
+        const shell = tableButton.closest('[data-analysis-table]');
+        downloadTableAsCsv(shell);
+      }
+    });
+
+    function resizeAllPlotlyCharts() {
+      if (!window.Plotly) return;
+      document.querySelectorAll('.interp-plotly .js-plotly-plot, .interp-plan-plot .js-plotly-plot').forEach(function (plot) {
+        try {
+          window.Plotly.Plots.resize(plot);
+        } catch (error) {
+          console.debug('Plot resize skipped', error);
+        }
+      });
+    }
+
+    let plotResizeTimer = null;
+    function queuePlotlyResize() {
+      window.clearTimeout(plotResizeTimer);
+      plotResizeTimer = window.setTimeout(resizeAllPlotlyCharts, 140);
+    }
+
+    if (window.Plotly) {
+      const readiness = {{ charts.readiness|tojson }};
+      const chapters = {{ charts.chapters|tojson }};
+      const sources = {{ charts.sources|tojson }};
+      const plotConfig = {
+        displayModeBar: false,
+        responsive: true,
+        scrollZoom: false
+      };
+
+      const sharedLayout = {
+        paper_bgcolor: 'white',
+        plot_bgcolor: 'white',
+        margin: { l: 44, r: 20, t: 34, b: 48 },
+        font: { color: '#17324d' }
+      };
+
+      Plotly.newPlot(
+        'planReadinessPlot',
+        [{
+          type: 'pie',
+          labels: readiness.labels,
+          values: readiness.values,
+          hole: 0.58,
+          marker: { colors: ['#0e8b7d', '#d18a00'] },
+          textinfo: 'label+percent',
+          hovertemplate: '<b>%{label}</b><br>%{value}<extra></extra>'
+        }],
+        {
+          ...sharedLayout,
+          margin: { l: 20, r: 20, t: 20, b: 20 },
+          showlegend: false
+        },
+        plotConfig
+      );
+
+      Plotly.newPlot(
+        'planChapterPlot',
+        [{
+          type: 'bar',
+          x: chapters.labels,
+          y: chapters.values,
+          marker: { color: ['#103a7d', '#3a6ab3', '#7aa4df'] },
+          text: chapters.values.map(String),
+          textposition: 'outside',
+          hovertemplate: '<b>%{x}</b><br>%{y} topics<extra></extra>'
+        }],
+        {
+          ...sharedLayout,
+          showlegend: false,
+          xaxis: { showgrid: false },
+          yaxis: { gridcolor: '#dfe7f1', zeroline: false, rangemode: 'tozero' }
+        },
+        plotConfig
+      );
+
+      Plotly.newPlot(
+        'planSourcePlot',
+        [{
+          type: 'bar',
+          orientation: 'h',
+          y: sources.labels,
+          x: sources.values,
+          marker: { color: ['#103a7d', '#275aa5', '#3a78ba', '#5d95cd', '#7caedd', '#9bc4e7', '#bedcf2'] },
+          text: sources.values.map(String),
+          textposition: 'outside',
+          hovertemplate: '<b>%{y}</b><br>%{x} topics<extra></extra>'
+        }],
+        {
+          ...sharedLayout,
+          margin: { l: 180, r: 24, t: 24, b: 42 },
+          showlegend: false,
+          xaxis: { gridcolor: '#dfe7f1', zeroline: false, rangemode: 'tozero' },
+          yaxis: { showgrid: false }
+        },
+        plotConfig
+      );
+
+      queuePlotlyResize();
+      window.setTimeout(queuePlotlyResize, 260);
+    }
+
+    window.addEventListener('resize', queuePlotlyResize);
+    window.addEventListener('orientationchange', queuePlotlyResize);
+
+    if (window.ResizeObserver) {
+      const plotResizeObserver = new ResizeObserver(function () {
+        queuePlotlyResize();
+      });
+      document.querySelectorAll('.interp-analysis-chart-card, .interp-plotly, .interp-plan-plot').forEach(function (element) {
+        plotResizeObserver.observe(element);
+      });
+    }
+
+    const tableShells = Array.from(document.querySelectorAll('[data-analysis-table]'));
+
+    tableShells.forEach(function (shell, shellIndex) {
+      const table = shell.querySelector('[data-table-element]');
+      const tbody = shell.querySelector('[data-table-body]');
+      const searchInput = shell.querySelector('[data-table-search]');
+      const pageSizeSelect = shell.querySelector('[data-table-page-size]');
+      const summary = shell.querySelector('[data-table-summary]');
+      const pageStatus = shell.querySelector('[data-table-page-status]');
+      const firstButton = shell.querySelector('[data-table-first]');
+      const prevButton = shell.querySelector('[data-table-prev]');
+      const nextButton = shell.querySelector('[data-table-next]');
+      const lastButton = shell.querySelector('[data-table-last]');
+      const headers = Array.from(shell.querySelectorAll('.interp-sortable'));
+      const storageKey = `dataInterpRowsPerPage:${shell.dataset.tableKey || shellIndex}`;
+
+      if (!table || !tbody || !pageSizeSelect || !summary || !pageStatus) {
+        return;
+      }
+
+      const storedPageSize = localStorage.getItem(storageKey);
+      if (storedPageSize && Array.from(pageSizeSelect.options).some((option) => option.value === storedPageSize)) {
+        pageSizeSelect.value = storedPageSize;
+      }
+
+      const rows = Array.from(tbody.querySelectorAll('tr'))
+        .filter((row) => !row.dataset.emptyRow)
+        .map((row, index) => ({ element: row, index }));
+
+      let filteredRows = rows.slice();
+      let currentPage = 1;
+      let sortState = { column: null, direction: 'asc' };
+
+      function getRowsPerPage() {
+        return pageSizeSelect.value === 'all'
+          ? Math.max(filteredRows.length, 1)
+          : Number(pageSizeSelect.value || 25);
+      }
+
+      function getCellValue(row, columnIndex) {
+        const cell = row.element.children[columnIndex];
+        return cell ? cell.textContent.trim() : '';
+      }
+
+      function normalizeValue(rawValue) {
+        const text = String(rawValue || '').trim();
+        if (!text) return '';
+        const numericCandidate = Number(
+          text
+            .replace(/KES\s*/ig, '')
+            .replace(/%/g, '')
+            .replace(/,/g, '')
+            .replace(/[^\d.\-]/g, '')
+        );
+        if (!Number.isNaN(numericCandidate) && /[\d]/.test(text)) {
+          return numericCandidate;
+        }
+        return text.toLowerCase();
+      }
+
+      function applySearch() {
+        const term = (searchInput ? searchInput.value : '').trim().toLowerCase();
+        filteredRows = rows.filter((row) => {
+          if (!term) return true;
+          return Array.from(row.element.children).some((cell) =>
+            cell.textContent.toLowerCase().includes(term)
+          );
+        });
+      }
+
+      function applySort() {
+        headers.forEach((header) => header.classList.remove('sort-asc', 'sort-desc'));
+
+        if (sortState.column === null) {
+          filteredRows.sort((a, b) => a.index - b.index);
+          return;
+        }
+
+        const activeHeader = headers.find((header) => Number(header.dataset.columnIndex) === sortState.column);
+        if (activeHeader) {
+          activeHeader.classList.add(sortState.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+        }
+
+        filteredRows.sort((a, b) => {
+          const aValue = normalizeValue(getCellValue(a, sortState.column));
+          const bValue = normalizeValue(getCellValue(b, sortState.column));
+          if (aValue < bValue) return sortState.direction === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortState.direction === 'asc' ? 1 : -1;
+          return a.index - b.index;
+        });
+      }
+
+      function render() {
+        applySearch();
+        applySort();
+
+        const totalRows = filteredRows.length;
+        const rowsPerPage = getRowsPerPage();
+        const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+        currentPage = Math.min(currentPage, totalPages);
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const visibleRows = filteredRows.slice(start, end);
+
+        rows.forEach((row) => {
+          row.element.style.display = 'none';
+        });
+        visibleRows.forEach((row) => {
+          row.element.style.display = '';
+        });
+
+        const startLabel = totalRows === 0 ? 0 : start + 1;
+        const endLabel = Math.min(end, totalRows);
+        summary.textContent = `Showing ${startLabel} to ${endLabel} of ${totalRows} rows`;
+        pageStatus.textContent = `Page ${currentPage} of ${totalPages}`;
+
+        if (firstButton) firstButton.disabled = currentPage === 1;
+        if (prevButton) prevButton.disabled = currentPage === 1;
+        if (nextButton) nextButton.disabled = currentPage === totalPages;
+        if (lastButton) lastButton.disabled = currentPage === totalPages;
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', function () {
+          currentPage = 1;
+          render();
+        });
+      }
+
+      pageSizeSelect.addEventListener('change', function () {
+        localStorage.setItem(storageKey, pageSizeSelect.value);
+        currentPage = 1;
+        render();
+      });
+
+      headers.forEach((header) => {
+        header.addEventListener('click', function () {
+          const columnIndex = Number(header.dataset.columnIndex);
+          if (sortState.column === columnIndex) {
+            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            sortState.column = columnIndex;
+            sortState.direction = 'asc';
+          }
+          render();
+        });
+      });
+
+      if (firstButton) {
+        firstButton.addEventListener('click', function () {
+          currentPage = 1;
+          render();
+        });
+      }
+
+      if (prevButton) {
+        prevButton.addEventListener('click', function () {
+          currentPage = Math.max(1, currentPage - 1);
+          render();
+        });
+      }
+
+      if (nextButton) {
+        nextButton.addEventListener('click', function () {
+          const rowsPerPage = getRowsPerPage();
+          const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+          currentPage = Math.min(totalPages, currentPage + 1);
+          render();
+        });
+      }
+
+      if (lastButton) {
+        lastButton.addEventListener('click', function () {
+          const rowsPerPage = getRowsPerPage();
+          currentPage = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+          render();
+        });
+      }
+
+      render();
+    });
+
+    queuePlotlyResize();
+  });
+</script>
+{% endblock %}

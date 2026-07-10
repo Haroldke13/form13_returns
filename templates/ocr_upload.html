@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% block title %}OCR Upload{% endblock %}
+{% block content %}
+<style>
+  .ocr-loader-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4px);
+    z-index: 4000;
+  }
+
+  .ocr-loader-overlay.is-visible {
+    display: flex;
+  }
+
+  .ocr-loader-card {
+    width: min(100%, 420px);
+    padding: 28px 24px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+    text-align: center;
+  }
+
+  .ocr-loader-spinner {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 18px;
+    border-radius: 999px;
+    border: 4px solid #cbd5e1;
+    border-top-color: #2563eb;
+    animation: ocr-loader-spin 0.9s linear infinite;
+  }
+
+  .ocr-loader-title {
+    margin: 0 0 8px 0;
+    font-size: 22px;
+    color: #0f172a;
+  }
+
+  .ocr-loader-copy {
+    margin: 0;
+    color: #475569;
+  }
+
+  .ocr-loader-seconds {
+    margin: 18px 0 10px;
+    font-size: 42px;
+    line-height: 1;
+    font-weight: 800;
+    color: #2563eb;
+  }
+
+  .ocr-loader-note {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  @keyframes ocr-loader-spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<div id="ocr-loader-overlay" class="ocr-loader-overlay" aria-hidden="true">
+  <div class="ocr-loader-card" role="status" aria-live="polite">
+    <div class="ocr-loader-spinner" aria-hidden="true"></div>
+    <h3 class="ocr-loader-title">Running OCR Upload</h3>
+    <p class="ocr-loader-copy">Your files are being uploaded, read, and written to the database.</p>
+    <div id="ocr-loader-seconds" class="ocr-loader-seconds">0s</div>
+    <p id="ocr-loader-message" class="ocr-loader-copy">Preparing OCR estimate.</p>
+    <p class="ocr-loader-note">Keep this tab open while the OCR pipeline completes.</p>
+  </div>
+</div>
+
+<div class="main-content-wrapper" style="gap: 24px;">
+  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+    <div>
+      <h2 class="mb-1">Scan to Database</h2>
+      <p class="text-muted mb-0">Upload up to 10 Form 14 images or PDFs, preview them first, then create a draft report from OCR.</p>
+    </div>
+    <div class="d-flex gap-2">
+      {% if current_user.is_authenticated and current_user.role == 'admin' %}
+      <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary">Back to Admin</a>
+      {% endif %}
+      <a href="{{ url_for('report_ocr_batch_export') }}" class="btn btn-outline-dark">Batch OCR to Excel</a>
+      <a href="{{ url_for('reports_list') if current_user.is_authenticated and current_user.role == 'admin' else url_for('home') }}" class="btn btn-outline-primary">Open Reports</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h4 class="card-title">Upload Pages</h4>
+          <p class="text-muted small">Supported formats: JPG, JPEG, PNG, PDF. The OCR pipeline straightens sideways pages, stores the original upload as a tracked file, and reads typed text plus clear handwriting on a best-effort basis.</p>
+
+          <form method="post" enctype="multipart/form-data" id="ocr-upload-form">
+            <div class="mb-3">
+              <label for="ocr-images" class="form-label">Form 14 page images or PDFs</label>
+              <input
+                id="ocr-images"
+                name="images"
+                type="file"
+                class="form-control"
+                accept="image/png,image/jpeg,application/pdf"
+                multiple
+                required>
+              <div class="form-text">Choose 1 to 10 JPG, PNG, or PDF files. Image previews and PDF file cards appear below before upload.</div>
+            </div>
+
+            <div id="ocr-preview-state" class="alert alert-secondary mb-3">
+              No images selected yet.
+            </div>
+
+            <div id="ocr-preview-grid" class="row g-3"></div>
+
+            <div class="d-flex flex-column flex-md-row gap-2 mt-4">
+              <button type="submit" id="ocr-submit-button" class="btn btn-primary" disabled>Upload to Database</button>
+              <button type="button" id="ocr-clear-button" class="btn btn-outline-secondary">Clear Selection</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h4 class="card-title">What Happens Next</h4>
+          <ol class="mb-0 ps-3">
+            <li>The source images or PDFs are stored as tracked uploads.</li>
+            <li>OCR straightens pages when needed, then combines text extracted from each page.</li>
+            <li>A draft report is created with the fields we can parse confidently.</li>
+            <li>You are redirected to the edit screen to verify the extracted values.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title">Recent OCR Uploads</h4>
+          {% if recent_uploads %}
+          <div class="list-group list-group-flush">
+            {% for uploaded_file in recent_uploads %}
+            <div class="list-group-item px-0">
+              <div class="fw-semibold">{{ uploaded_file.original_filename }}</div>
+              <div class="small text-muted">{{ uploaded_file.status }}{% if uploaded_file.report %} / report #{{ uploaded_file.report.id }}{% endif %}</div>
+              {% if uploaded_file.error_message %}
+              <div class="small text-danger mt-1">{{ uploaded_file.error_message }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No OCR uploads yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="card-title mb-0">Recent OCR Reports</h4>
+      </div>
+      {% if recent_reports %}
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Organization</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for report in recent_reports %}
+            <tr>
+              <td>#{{ report.id }}</td>
+              <td>{{ report.pbo_name or 'Unnamed OCR report' }}</td>
+              <td>{{ report.workflow_status }} / {{ report.review_status }}</td>
+              <td>{{ report.created_at|format_datetime }}</td>
+              <td class="text-nowrap">
+                <a href="{{ url_for('report_edit', report_id=report.id) }}" class="btn btn-sm btn-outline-primary">Review</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No OCR-created reports yet.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('ocr-upload-form');
+    const input = document.getElementById('ocr-images');
+    const grid = document.getElementById('ocr-preview-grid');
+    const state = document.getElementById('ocr-preview-state');
+    const submitButton = document.getElementById('ocr-submit-button');
+    const clearButton = document.getElementById('ocr-clear-button');
+    const loaderOverlay = document.getElementById('ocr-loader-overlay');
+    const loaderSeconds = document.getElementById('ocr-loader-seconds');
+    const loaderMessage = document.getElementById('ocr-loader-message');
+    let progressTimer = null;
+
+    const formatSeconds = (value) => {
+      const totalSeconds = Math.max(0, Number(value) || 0);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      if (minutes <= 0) {
+        return `${seconds}s`;
+      }
+      return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+    };
+
+    const estimateUploadSeconds = () => {
+      const files = Array.from(input.files || []);
+      if (!files.length) {
+        return 45;
+      }
+
+      return files.reduce((total, file) => {
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        const sizeMb = file.size / 1024 / 1024;
+        const base = isPdf ? 32 : 16;
+        const sizeFactor = Math.min(24, Math.ceil(sizeMb * (isPdf ? 4 : 2)));
+        return total + base + sizeFactor;
+      }, 0);
+    };
+
+    const showLoader = () => {
+      if (!loaderOverlay) {
+        return;
+      }
+      const estimatedSeconds = estimateUploadSeconds();
+      let elapsedSeconds = 0;
+      loaderSeconds.textContent = formatSeconds(elapsedSeconds);
+      loaderMessage.textContent = `Elapsed time. Estimated total: ${formatSeconds(estimatedSeconds)} for ${Array.from(input.files || []).length || 1} file(s).`;
+      loaderOverlay.classList.add('is-visible');
+      loaderOverlay.setAttribute('aria-hidden', 'false');
+      submitButton.disabled = true;
+      clearButton.disabled = true;
+
+      progressTimer = window.setInterval(() => {
+        elapsedSeconds += 1;
+        loaderSeconds.textContent = formatSeconds(elapsedSeconds);
+        if (elapsedSeconds < estimatedSeconds) {
+          loaderMessage.textContent = `Elapsed time. Estimated total: ${formatSeconds(estimatedSeconds)} for ${Array.from(input.files || []).length || 1} file(s).`;
+          return;
+        }
+        loaderMessage.textContent = 'Still processing. OCR is running longer than estimated, likely due to file size, PDFs, or extra page checks.';
+      }, 1000);
+    };
+
+    const renderPreview = () => {
+      const files = Array.from(input.files || []);
+      grid.innerHTML = '';
+
+      if (!files.length) {
+        state.className = 'alert alert-secondary mb-3';
+        state.textContent = 'No images selected yet.';
+        submitButton.disabled = true;
+        return;
+      }
+
+      if (files.length > 10) {
+        state.className = 'alert alert-danger mb-3';
+        state.textContent = 'Select at most 10 images for a single OCR import.';
+        submitButton.disabled = true;
+        return;
+      }
+
+      state.className = 'alert alert-success mb-3';
+      state.textContent = `${files.length} image(s) ready for preview.`;
+      submitButton.disabled = false;
+
+      files.forEach((file, index) => {
+        const col = document.createElement('div');
+        col.className = 'col-12 col-md-6';
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column justify-content-center" style="min-height: 220px;">
+                <div class="fw-semibold">${file.name}</div>
+                <div class="small text-muted mb-2">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                <span class="badge text-bg-secondary align-self-start">PDF ready for OCR</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const url = URL.createObjectURL(file);
+          col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+              <img src="${url}" class="card-img-top" alt="Preview ${index + 1}" style="aspect-ratio: 4 / 3; object-fit: cover;">
+              <div class="card-body">
+                <div class="fw-semibold">${file.name}</div>
+                <div class="small text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+              </div>
+            </div>
+          `;
+        }
+        grid.appendChild(col);
+      });
+    };
+
+    input.addEventListener('change', renderPreview);
+    form.addEventListener('submit', (event) => {
+      if (submitButton.disabled) {
+        event.preventDefault();
+        return;
+      }
+      showLoader();
+    });
+    clearButton.addEventListener('click', () => {
+      input.value = '';
+      renderPreview();
+    });
+  });
+</script>
+{% endblock %}

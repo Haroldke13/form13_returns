@@ -1,0 +1,534 @@
+{% extends "base.html" %}
+
+{% block title %}Sector Report Data{% endblock %}
+
+{% block content %}
+<div class="app-page-container">
+<style>
+    :root {
+        --sector-bg: #f8fafc;
+        --sector-panel: #ffffff;
+        --sector-line: #dbe2ea;
+        --sector-text: #0f172a;
+        --sector-muted: #64748b;
+        --sector-blue-bg: #eff6ff;
+        --sector-blue-text: #1e3a8a;
+        --sector-red-bg: #fef2f2;
+        --sector-red-text: #991b1b;
+    }
+
+    .sector-report-page {
+        width: 100%;
+        color: var(--sector-text);
+    }
+
+    .sector-report-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .sector-report-title {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+    }
+
+    .sector-report-subtitle,
+    .sector-report-meta {
+        margin: 0;
+        color: var(--sector-muted);
+    }
+
+    .sector-report-links {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .sector-report-card {
+        background: var(--sector-panel);
+        border: 1px solid var(--sector-line);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .sector-report-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 18px 20px 0;
+    }
+
+    .sector-report-controls-group {
+        display: flex;
+        gap: 12px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+
+    .sector-report-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--sector-muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    .sector-report-summary {
+        padding: 12px 20px 0;
+        color: var(--sector-muted);
+        font-size: 14px;
+    }
+
+    .sector-report-empty {
+        padding: 48px 24px;
+        text-align: center;
+    }
+
+    .sector-report-empty h2 {
+        margin: 0 0 12px 0;
+        font-size: 22px;
+    }
+
+    .sector-report-table-wrap {
+        overflow: auto;
+    }
+
+    .sector-report-top-scroll {
+        overflow-x: auto;
+        overflow-y: hidden;
+        height: 18px;
+        border-bottom: 1px solid var(--sector-line);
+        background: #f8fbfd;
+    }
+
+    .sector-report-top-scroll-inner {
+        height: 1px;
+    }
+
+    .sector-report-table {
+        width: 100%;
+        min-width: 2800px;
+        border-collapse: collapse;
+        background: #fff;
+    }
+
+    .sector-report-table th,
+    .sector-report-table td {
+        padding: 10px;
+        border-bottom: 1px solid var(--sector-line);
+        white-space: nowrap;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .sector-report-table td {
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sector-report-table td.sector-cell-text {
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .sector-empty-value {
+        color: var(--sector-muted);
+        font-style: italic;
+    }
+
+    .sector-report-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #fff;
+    }
+
+    .sector-report-table th.sortable {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .sector-report-table th.sortable::after {
+        content: "  ↕";
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+    .sector-report-table th.sort-asc::after {
+        content: "  ↑";
+        color: var(--sector-blue-text);
+        font-weight: 700;
+    }
+
+    .sector-report-table th.sort-desc::after {
+        content: "  ↓";
+        color: var(--sector-blue-text);
+        font-weight: 700;
+    }
+
+    .sector-group-edit {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .sector-group-allowed {
+        background: #dbeafe;
+        color: var(--sector-blue-text);
+    }
+
+    .sector-group-disabled {
+        background: #fee2e2;
+        color: var(--sector-red-text);
+    }
+
+    .sector-head-edit {
+        background: #f1f5f9;
+    }
+
+    .sector-head-allowed {
+        background: var(--sector-blue-bg);
+    }
+
+    .sector-head-disabled,
+    .sector-cell-disabled {
+        background: var(--sector-red-bg);
+        color: var(--sector-red-text);
+    }
+
+    .sector-edit-cell {
+        background: #f8fafc;
+        position: sticky;
+        left: 0;
+        z-index: 2;
+    }
+
+    .sector-report-table thead .sector-head-edit {
+        position: sticky;
+        left: 0;
+        z-index: 3;
+    }
+
+    .sector-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px 20px;
+        flex-wrap: wrap;
+    }
+
+    .sector-page-status {
+        color: var(--sector-muted);
+        font-size: 14px;
+    }
+
+</style>
+
+<div class="sector-report-page">
+    <div class="sector-report-topbar">
+        <div>
+            <h1 class="sector-report-title">Sector Report Data</h1>
+            <p class="sector-report-subtitle">Cleaned reporting view for analysis, reporting, and forecasting.</p>
+            <p class="sector-report-meta">Generated: {{ generated_at }}</p>
+        </div>
+        <div class="sector-report-links">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Form 14</a>
+            <a href="{{ url_for('reports_list') }}" class="btn btn-outline-secondary">Reports</a>
+            <a href="{{ url_for('sector_report_data_json') }}" class="btn btn-outline-primary">JSON Export</a>
+            <a href="{{ url_for('sector_report_data_download_xlsx') }}" class="btn btn-outline-success">Download Excel</a>
+        </div>
+    </div>
+
+    <div class="sector-report-card">
+        {% if total_reports == 0 %}
+        <div class="sector-report-empty">
+            <h2>No report data available yet.</h2>
+            <p class="sector-report-subtitle">This page will populate once reports exist.</p>
+        </div>
+        {% else %}
+        <div class="sector-report-controls">
+            <div class="sector-report-controls-group">
+                <div>
+                    <label class="sector-report-label" for="tableSearch">Search</label>
+                    <input id="tableSearch" type="search" class="form-control" placeholder="Search all columns">
+                </div>
+                <div>
+                    <label class="sector-report-label" for="rowsPerPage">Rows Per Page</label>
+                    <select id="rowsPerPage" class="form-select">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="sector-report-summary">
+            <span id="tableSummary">Showing all rows.</span>
+        </div>
+        <div class="sector-report-top-scroll" id="sectorReportTopScroll" aria-hidden="true">
+            <div class="sector-report-top-scroll-inner" id="sectorReportTopScrollInner"></div>
+        </div>
+        <div class="sector-report-table-wrap">
+            <table id="sector-report-table" class="sector-report-table">
+                <thead>
+                    <tr>
+                        <th colspan="1" class="sector-group-edit">Edit</th>
+                        <th colspan="{{ allowed_columns|length }}" class="sector-group-allowed">Allowed Data Collected</th>
+                        <th colspan="{{ disabled_columns|length }}" class="sector-group-disabled">Disabled Fields Returned As Null</th>
+                    </tr>
+                    <tr>
+                        <th class="sector-head-edit">Edit</th>
+                        {% for key, label in allowed_columns %}
+                        <th class="sector-head-allowed sortable" data-column-index="{{ loop.index0 + 1 }}">{{ label }}</th>
+                        {% endfor %}
+                        {% for key, label in disabled_columns %}
+                        <th class="sector-head-disabled sortable" data-column-index="{{ allowed_columns|length + loop.index0 + 1 }}">{{ label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="sector-report-body">
+                    {% for row in rows %}
+                    <tr>
+                        <td class="sector-edit-cell">
+                            <a href="{{ url_for('report_edit', report_id=row['report_id']) }}" class="btn btn-sm btn-outline-dark">Edit</a>
+                        </td>
+                        {% for key, label in allowed_columns %}
+                        <td class="{% if key in money_columns %}money-cell{% else %}sector-cell-text{% endif %}"{% if key in money_columns %} data-raw-value="{{ row[key] if row[key] is not none else '' }}"{% endif %} title="{{ row[key] if row[key] not in [None, ''] else 'No saved value' }}">
+                            {% if row[key] in [None, ""] %}
+                            <span class="sector-empty-value">No saved value</span>
+                            {% elif key in money_columns %}
+                            {{ "{:,.2f}".format(row[key]) }}
+                            {% else %}
+                            {{ row[key] }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        {% for key, label in disabled_columns %}
+                        <td class="sector-cell-disabled {% if key in money_columns %}money-cell{% else %}sector-cell-text{% endif %}"{% if key in money_columns %} data-raw-value="{{ row[key] if row[key] is not none else '' }}"{% endif %} title="{{ row[key] if row[key] not in [None, ''] else 'No saved value' }}">
+                            {% if row[key] in [None, ""] %}
+                            <span class="sector-empty-value">No saved value</span>
+                            {% elif key in money_columns %}
+                            {{ "{:,.2f}".format(row[key]) }}
+                            {% else %}
+                            {{ row[key] }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="sector-pagination">
+            <div class="sector-page-status" id="pageStatus">Page 1</div>
+            <div class="btn-group" role="group" aria-label="Pagination controls">
+                <button type="button" class="btn btn-outline-secondary" id="firstPage">First</button>
+                <button type="button" class="btn btn-outline-secondary" id="prevPage">Previous</button>
+                <button type="button" class="btn btn-outline-secondary" id="nextPage">Next</button>
+                <button type="button" class="btn btn-outline-secondary" id="lastPage">Last</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if total_reports != 0 %}
+<script>
+    (function () {
+        const table = document.getElementById("sector-report-table");
+        const tbody = document.getElementById("sector-report-body");
+        const searchInput = document.getElementById("tableSearch");
+        const rowsPerPageSelect = document.getElementById("rowsPerPage");
+        const summary = document.getElementById("tableSummary");
+        const topScroll = document.getElementById("sectorReportTopScroll");
+        const topScrollInner = document.getElementById("sectorReportTopScrollInner");
+        const tableWrap = document.querySelector(".sector-report-table-wrap");
+        const pageStatus = document.getElementById("pageStatus");
+        const firstPageBtn = document.getElementById("firstPage");
+        const prevPageBtn = document.getElementById("prevPage");
+        const nextPageBtn = document.getElementById("nextPage");
+        const lastPageBtn = document.getElementById("lastPage");
+        const rowsPerPageStorageKey = "sectorReportRowsPerPage";
+        const headers = Array.from(table.querySelectorAll("thead tr:nth-child(2) th.sortable"));
+        let rows = Array.from(tbody.querySelectorAll("tr")).map((row, index) => ({
+            element: row,
+            index,
+        }));
+        let filteredRows = [...rows];
+        let currentPage = 1;
+        const storedRowsPerPage = Number(localStorage.getItem(rowsPerPageStorageKey) || 0);
+        if (storedRowsPerPage && Array.from(rowsPerPageSelect.options).some((option) => Number(option.value) === storedRowsPerPage)) {
+            rowsPerPageSelect.value = String(storedRowsPerPage);
+        }
+        let rowsPerPage = Number(rowsPerPageSelect.value);
+        let sortState = { column: null, direction: "asc" };
+
+        function syncTopScrollWidth() {
+            if (!tableWrap || !topScroll || !topScrollInner) return;
+            topScrollInner.style.width = `${table.scrollWidth}px`;
+            topScroll.style.display = table.scrollWidth > tableWrap.clientWidth ? "block" : "none";
+        }
+
+        function getCellValue(row, columnIndex) {
+            const cell = row.element.children[columnIndex];
+            if (!cell) {
+                return "";
+            }
+            return cell.dataset.rawValue || cell.textContent.trim();
+        }
+
+        function normalizeValue(value) {
+            const numeric = Number(String(value).replace(/,/g, ""));
+            if (!Number.isNaN(numeric) && value !== "") {
+                return numeric;
+            }
+            return String(value).toLowerCase();
+        }
+
+        function applySearch() {
+            const term = searchInput.value.trim().toLowerCase();
+            filteredRows = rows.filter((row) => {
+                if (!term) return true;
+                return Array.from(row.element.children).some((cell) =>
+                    cell.textContent.toLowerCase().includes(term)
+                );
+            });
+        }
+
+        function applySort() {
+            headers.forEach((header) => {
+                header.classList.remove("sort-asc", "sort-desc");
+            });
+
+            if (sortState.column === null) {
+                filteredRows.sort((a, b) => a.index - b.index);
+                return;
+            }
+
+            const activeHeader = headers.find(
+                (header) => Number(header.dataset.columnIndex) === sortState.column
+            );
+            if (activeHeader) {
+                activeHeader.classList.add(sortState.direction === "asc" ? "sort-asc" : "sort-desc");
+            }
+
+            filteredRows.sort((a, b) => {
+                const aValue = normalizeValue(getCellValue(a, sortState.column));
+                const bValue = normalizeValue(getCellValue(b, sortState.column));
+                if (aValue < bValue) return sortState.direction === "asc" ? -1 : 1;
+                if (aValue > bValue) return sortState.direction === "asc" ? 1 : -1;
+                return a.index - b.index;
+            });
+        }
+
+        function render() {
+            applySearch();
+            applySort();
+
+            const totalRows = filteredRows.length;
+            const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const visibleRows = filteredRows.slice(start, end);
+
+            rows.forEach((row) => {
+                row.element.style.display = "none";
+            });
+            visibleRows.forEach((row) => {
+                row.element.style.display = "";
+            });
+
+            const startLabel = totalRows === 0 ? 0 : start + 1;
+            const endLabel = Math.min(end, totalRows);
+            summary.textContent = `Showing ${startLabel} to ${endLabel} of ${totalRows} rows`;
+            pageStatus.textContent = `Page ${currentPage} of ${totalPages}`;
+
+            firstPageBtn.disabled = currentPage === 1;
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages;
+            lastPageBtn.disabled = currentPage === totalPages;
+        }
+
+        searchInput.addEventListener("input", function () {
+            currentPage = 1;
+            render();
+        });
+
+        rowsPerPageSelect.addEventListener("change", function () {
+            rowsPerPage = Number(rowsPerPageSelect.value);
+            localStorage.setItem(rowsPerPageStorageKey, String(rowsPerPage));
+            currentPage = 1;
+            render();
+        });
+
+        headers.forEach((header) => {
+            header.addEventListener("click", function () {
+                const columnIndex = Number(header.dataset.columnIndex);
+                if (sortState.column === columnIndex) {
+                    sortState.direction = sortState.direction === "asc" ? "desc" : "asc";
+                } else {
+                    sortState.column = columnIndex;
+                    sortState.direction = "asc";
+                }
+                render();
+            });
+        });
+
+        firstPageBtn.addEventListener("click", function () {
+            currentPage = 1;
+            render();
+        });
+        prevPageBtn.addEventListener("click", function () {
+            currentPage = Math.max(1, currentPage - 1);
+            render();
+        });
+        nextPageBtn.addEventListener("click", function () {
+            const totalPages = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+            currentPage = Math.min(totalPages, currentPage + 1);
+            render();
+        });
+        lastPageBtn.addEventListener("click", function () {
+            currentPage = Math.max(1, Math.ceil(filteredRows.length / rowsPerPage));
+            render();
+        });
+
+        if (topScroll && tableWrap) {
+            let syncingFromTop = false;
+            let syncingFromBottom = false;
+
+            topScroll.addEventListener("scroll", function () {
+                if (syncingFromBottom) return;
+                syncingFromTop = true;
+                tableWrap.scrollLeft = topScroll.scrollLeft;
+                syncingFromTop = false;
+            });
+
+            tableWrap.addEventListener("scroll", function () {
+                if (syncingFromTop) return;
+                syncingFromBottom = true;
+                topScroll.scrollLeft = tableWrap.scrollLeft;
+                syncingFromBottom = false;
+            });
+
+            window.addEventListener("resize", syncTopScrollWidth);
+        }
+
+        syncTopScrollWidth();
+        render();
+    })();
+</script>
+{% endif %}
+</div>
+{% endblock %}

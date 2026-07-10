@@ -1,0 +1,3794 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Form 14 - Annual Returns Management System">
+  <meta name="theme-color" content="#0D2C6C">
+  <title>{% block title %}Organization Forms{% endblock %}</title>
+  {% set asset_version = config.get('ASSET_VERSION', '20260319') %}
+
+  {% if request.endpoint == 'home' %}
+  <script>
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  </script>
+  {% endif %}
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  {% block styles %}{% endblock %}
+  {% block script %}{% endblock %}
+
+  <script defer>
+
+    // Keystroke logging
+    let keystrokeCount = 0;
+    document.addEventListener('keydown', function (e) {
+      keystrokeCount++;
+    });
+    setInterval(function () {
+      if (keystrokeCount > 0) {
+        fetch('/log-keystrokes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keystrokes: keystrokeCount })
+        });
+        keystrokeCount = 0;
+      }
+    }, 60000); // send every 60 seconds
+  </script>
+
+  <style>
+    :root {
+      --app-primary: #0D2C6C;
+      --app-primary-ink: #123a87;
+      --app-success: #16A34A;
+      --app-warning: #C89512;
+      --app-danger: #DC2626;
+      --app-bg: #F8FAFC;
+      --app-panel: #FFFFFF;
+      --app-line: #D7E1EA;
+      --app-muted: #64748B;
+      --app-text: #102033;
+    }
+
+    body.app-shell-body {
+      margin: 0 !important;
+      padding: 0 !important;
+      font-family: "Roboto", "Segoe UI", sans-serif !important;
+      background: var(--app-bg) !important;
+      color: var(--app-text);
+    }
+
+    .app-shell {
+      min-height: 100vh;
+    }
+
+    .app-sidebar {
+      background: transparent;
+      border-right: 0;
+      box-shadow: none;
+      z-index: 1040;
+      padding: 0;
+      margin-top: 4px;
+    }
+
+    .app-sidebar-inner {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .app-sidebar-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .app-sidebar-toggle {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--app-line);
+      background: #fff;
+      color: var(--app-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      display: none !important;
+    }
+
+    .app-sidebar-toggle:hover {
+      background: #eef4fb;
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #ffffff;
+      padding: 4px 6px;
+      border-radius: 10px;
+      transition: background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+
+    .app-brand:hover {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+      color: #ffffff;
+    }
+
+    .app-brand-mark {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      object-fit: contain;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 5px;
+      flex-shrink: 0;
+    }
+
+    .app-brand-meta {
+      min-width: 0;
+    }
+
+    .app-brand-kicker {
+      margin: 0;
+      font-size: 0.52rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #f7cf6c;
+      font-weight: 800;
+    }
+
+    .app-brand-title {
+      margin: 0;
+      font-size: 0.93rem;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.05;
+    }
+
+    .app-brand-subtitle {
+      margin: 0;
+      font-size: 0.79rem;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.15;
+    }
+
+    .app-sidebar-nav {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      margin-top: 6px;
+      flex: 1 1 auto;
+      align-items: center;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      padding: 4px 2px 6px;
+    }
+
+    .app-sidebar-nav::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .app-sidebar-nav::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+    }
+
+    .app-nav-link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 7px;
+      width: auto;
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: rgba(255, 255, 255, 0.92);
+      font-weight: 700;
+      transition: background-color 0.18s ease, color 0.18s ease;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
+    .app-nav-link::before {
+      content: "";
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      bottom: 0;
+      height: 2px;
+      border-radius: 999px;
+      background: transparent;
+    }
+
+    .app-nav-link:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 10px rgba(255, 255, 255, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .app-nav-link.active {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+
+    .app-nav-link.active::before {
+      background: #f7cf6c;
+    }
+
+    .app-nav-link::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      bottom: 0;
+      height: 1px;
+      background: rgba(247, 207, 108, 0.0);
+      transition: background-color 0.18s ease;
+    }
+
+    .app-nav-link:hover::after,
+    .app-nav-link:focus-visible::after {
+      background: rgba(247, 207, 108, 0.7);
+    }
+
+    .app-nav-link.text-warning,
+    .app-nav-link.text-danger {
+      color: rgba(255, 255, 255, 0.92) !important;
+    }
+
+    .app-nav-link i {
+      font-size: 0.86rem;
+      width: 14px;
+      text-align: center;
+      color: inherit;
+      flex-shrink: 0;
+    }
+
+    .app-nav-link span {
+      display: inline;
+      font-size: 0.82rem;
+      text-transform: capitalize;
+      letter-spacing: 0.01em;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .app-nav-more {
+      position: relative;
+    }
+
+    .app-nav-more-toggle {
+      border: 0;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .app-nav-more-toggle:hover,
+    .app-nav-more-toggle:focus {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+    }
+
+    .app-nav-more-menu {
+      min-width: 220px;
+      border: 1px solid rgba(13, 44, 108, 0.12);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    }
+
+    .app-nav-more-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 10px;
+      padding: 9px 10px;
+      color: var(--app-text);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .app-nav-more-item:hover,
+    .app-nav-more-item:focus {
+      background: #eef4fb;
+      color: var(--app-primary);
+    }
+
+    .app-nav-more-item.active {
+      background: #e8f0fb;
+      color: var(--app-primary);
+    }
+
+    .app-main {
+      min-width: 0;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-main .main-content {
+      margin-left: 0 !important;
+      width: auto !important;
+      padding: 0 !important;
+      min-width: 0;
+    }
+
+    .app-main-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      background: var(--app-primary);
+      backdrop-filter: none;
+      border-bottom: 1px solid #0a2358;
+      padding: 4px 10px;
+    }
+
+    .app-topbar-shell {
+      display: grid;
+      gap: 6px;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+      align-items: center;
+    }
+
+    .app-topbar-head {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .app-topbar-copy {
+      min-width: 0;
+      flex: 1 1 320px;
+      align-self: center;
+    }
+
+    .app-topbar-menu {
+      flex: 0 1 auto;
+      align-self: center;
+      padding-left: 10px;
+      margin-left: 6px;
+      position: relative;
+      min-width: 0;
+    }
+
+    .app-topbar-menu::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10%;
+      bottom: 10%;
+      width: 1px;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0.2),
+        rgba(255, 255, 255, 0)
+      );
+    }
+
+    .app-main-title {
+      margin: 0;
+      font-size: 0.89rem;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.05;
+    }
+
+    .app-main-subtitle {
+      margin: 0;
+      font-size: 0.77rem;
+      color: rgba(255, 255, 255, 0.82);
+      line-height: 1.1;
+    }
+
+    .app-content {
+      padding: 4px;
+      min-width: 0;
+    }
+
+    /* Prevent legacy .main-content layout rules from shrinking app pages. */
+    .main-content.app-content {
+      margin-left: 0 !important;
+      width: 100% !important;
+    }
+
+    .app-page-container {
+      width: 100%;
+      margin: 0 auto;
+      padding: 4px;
+      border: 1px solid rgba(13, 44, 108, 0.08);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Neutralize legacy global width rules from static/css/style.css within the app shell. */
+    .app-content .container,
+    .app-content .section {
+      width: 100%;
+      max-width: none;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    .app-content input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+    .app-content select,
+    .app-content textarea {
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .app-page-loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(248, 250, 252, 0.92);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.18s ease, visibility 0.18s ease;
+      z-index: 3000;
+    }
+
+    .app-page-loader.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .app-page-loader-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 24px 28px;
+      border-radius: 18px;
+      border: 1px solid var(--app-line);
+      background: var(--app-panel);
+    }
+
+    .app-page-loader-logo {
+      width: 76px;
+      height: 76px;
+      object-fit: contain;
+      animation: appLoaderPulse 1.2s ease-in-out infinite;
+    }
+
+    .app-page-loader-title {
+      margin: 0;
+      color: var(--app-primary);
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
+    .app-page-loader-copy {
+      margin: 0;
+      color: var(--app-muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .app-nav-link.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .app-sidebar .navbar-toggler {
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      padding: 4px 7px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .app-sidebar .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.95%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    @keyframes appLoaderPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.04); opacity: 0.78; }
+    }
+
+    @media (min-width: 992px) {
+      .app-topbar-shell {
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        align-items: center;
+        gap: 10px;
+      }
+
+      .app-topbar-head {
+        flex-wrap: nowrap;
+      }
+
+      .app-sidebar .navbar-collapse {
+        display: block !important;
+      }
+
+      .app-sidebar {
+        margin-top: 0;
+      }
+
+      .app-sidebar-nav {
+        margin-top: 0;
+        justify-content: flex-end;
+      }
+
+      .app-nav-more {
+        display: none;
+      }
+    }
+
+    @media (max-width: 1199px) {
+      .app-nav-link--overflow {
+        display: none;
+      }
+
+      .app-nav-more {
+        display: block;
+      }
+    }
+
+    @media (max-width: 991px) {
+      .app-topbar-shell {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .app-topbar-head {
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .app-sidebar {
+        margin-top: 4px;
+      }
+
+      .app-topbar-menu {
+        padding-left: 0;
+        margin-left: 0;
+        width: 100%;
+      }
+
+      .app-topbar-menu::before {
+        display: none;
+      }
+
+      .app-sidebar-nav {
+        margin-top: 6px;
+        gap: 10px;
+        justify-content: flex-start;
+        padding: 10px 2px 12px;
+        scroll-snap-type: x mandatory;
+      }
+
+      .app-content {
+        padding: 18px 14px 32px;
+      }
+
+      .app-page-container {
+        padding: 14px;
+        border-radius: 14px;
+      }
+
+      .app-nav-link {
+        width: auto;
+        height: 38px;
+        padding: 0 14px;
+        font-size: 0.9rem;
+        border-radius: 12px;
+        scroll-snap-align: start;
+      }
+
+      .app-nav-link--overflow {
+        display: none;
+      }
+    }
+
+    /* Subtle fade/slide-in animation for hero and cards */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeInUp 1s cubic-bezier(.23, 1.01, .32, 1) forwards;
+    }
+
+    .fade-in.delay-1 {
+      animation-delay: 0.2s;
+    }
+
+    .fade-in.delay-2 {
+      animation-delay: 0.4s;
+    }
+
+    .fade-in.delay-3 {
+      animation-delay: 0.6s;
+    }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* Progress bar styles */
+    .progress-bar-fixed {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      background: var(--app-primary);
+      z-index: 2000;
+      transition: width 0.2s;
+    }
+
+    .scroll-btn {
+      position: fixed;
+      right: 32px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--app-primary);
+      color: #fff;
+      border: none;
+      box-shadow: none;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2001;
+      opacity: 0.88;
+      transition: background 0.2s, opacity 0.2s;
+      touch-action: manipulation;
+    }
+
+    .scroll-btn:hover,
+    .scroll-btn:focus {
+      opacity: 1;
+      background: var(--app-primary-ink);
+      outline: 2px solid #D7E1EA;
+    }
+
+    .scroll-btn.top {
+      bottom: 96px;
+    }
+
+    .scroll-btn.bottom {
+      bottom: 36px;
+    }
+
+    @media (max-width: 600px) {
+      .scroll-btn {
+        right: 10px;
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+        box-shadow: 0 1px 6px #2563eb22;
+      }
+
+      .scroll-btn.top {
+        bottom: 70px;
+      }
+
+      .scroll-btn.bottom {
+        bottom: 18px;
+      }
+    }
+  </style>
+  <script defer>
+    // Animate on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      body.classList.remove('sidebar-collapsed', 'sidebar-auto-collapsed');
+
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+
+      document.querySelectorAll('.fade-in').forEach(el => {
+        el.style.visibility = 'visible';
+      });
+
+      document.querySelectorAll('.nav-link.active[data-prevent-reload="true"]').forEach(link => {
+        link.addEventListener('click', event => {
+          event.preventDefault();
+        });
+      });
+
+      const pageLoader = document.getElementById('app-page-loader');
+      let pageLoaderDownloadTimer = null;
+      const showPageLoader = () => {
+        if (!pageLoader) return;
+        pageLoader.classList.add('is-visible');
+        pageLoader.setAttribute('aria-hidden', 'false');
+      };
+      const hidePageLoader = () => {
+        if (!pageLoader) return;
+        window.clearTimeout(pageLoaderDownloadTimer);
+        pageLoaderDownloadTimer = null;
+        pageLoader.classList.remove('is-visible');
+        pageLoader.setAttribute('aria-hidden', 'true');
+      };
+      const showPageLoaderForDownload = () => {
+        showPageLoader();
+        window.clearTimeout(pageLoaderDownloadTimer);
+        pageLoaderDownloadTimer = window.setTimeout(() => {
+          hidePageLoader();
+        }, 1800);
+      };
+      const isLikelyDownloadUrl = (url) => {
+        if (!(url instanceof URL)) {
+          return false;
+        }
+
+        const path = (url.pathname || '').toLowerCase();
+        return (
+          path.includes('/download') ||
+          path.includes('/files/') ||
+          /\.(csv|xlsx?|pdf|zip|json|txt|docx?)$/.test(path) ||
+          url.searchParams.has('download') ||
+          (url.search || '').toLowerCase().includes('export=download')
+        );
+      };
+
+      window.addEventListener('pageshow', event => {
+        hidePageLoader();
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
+      window.addEventListener('load', hidePageLoader);
+      window.addEventListener('focus', hidePageLoader);
+      window.addEventListener('pagehide', hidePageLoader);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          hidePageLoader();
+        }
+      });
+
+      document.addEventListener('click', event => {
+        const disabledLink = event.target.closest('a[aria-disabled="true"], .app-nav-link.disabled, .dropdown-item.disabled');
+        if (disabledLink) {
+          event.preventDefault();
+        }
+      });
+
+      document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', event => {
+          if (
+            event.defaultPrevented ||
+            link.hasAttribute('data-prevent-reload') ||
+            link.hasAttribute('data-skip-page-loader') ||
+            link.target === '_blank' ||
+            link.hasAttribute('download')
+          ) {
+            return;
+          }
+
+          const href = link.getAttribute('href') || '';
+          if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+            return;
+          }
+
+          const url = new URL(link.href, window.location.href);
+          if (url.origin !== window.location.origin) {
+            return;
+          }
+
+          if (isLikelyDownloadUrl(url)) {
+            showPageLoaderForDownload();
+            return;
+          }
+
+          if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash === '') {
+            return;
+          }
+
+          showPageLoader();
+        });
+      });
+
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', () => {
+          if (form.hasAttribute('data-skip-page-loader')) {
+            return;
+          }
+          if ((form.target || '').toLowerCase() === '_blank') {
+            showPageLoaderForDownload();
+            return;
+          }
+          try {
+            const actionUrl = new URL(form.getAttribute('action') || window.location.href, window.location.href);
+            if (isLikelyDownloadUrl(actionUrl)) {
+              showPageLoaderForDownload();
+              return;
+            }
+          } catch (_error) {
+            // Ignore malformed action attributes and use the normal loader path.
+          }
+          showPageLoader();
+        });
+      });
+    });
+
+    // Progress bar logic
+    window.addEventListener('scroll', () => {
+      const bar = document.getElementById('progress-bar-fixed');
+      if (!bar) return;
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      bar.style.width = percent + '%';
+    });
+    // Scroll to top/bottom
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function scrollToBottom() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
+  </script>
+  <script defer>
+    (function () {
+      const nativeParseFloat = window.parseFloat;
+
+      const parseLooseFloat = function (value) {
+        if (typeof value === "string") {
+          value = value.replace(/,/g, "").trim();
+        }
+        return nativeParseFloat(value);
+      };
+
+      function isAmountField(input) {
+        if (!(input instanceof HTMLInputElement)) return false;
+        const name = (input.name || "").toLowerCase();
+        const id = (input.id || "").toLowerCase();
+        const cls = (input.className || "").toLowerCase();
+        const title = (input.title || "").toLowerCase();
+        const placeholder = (input.placeholder || "").toLowerCase();
+        const text = [name, id, cls, title, placeholder].join(" ");
+
+        return (
+          text.includes("amount") ||
+          text.includes("value") ||
+          text.includes("balance") ||
+          text.includes("spending") ||
+          text.includes("tax waived") ||
+          text.includes("receipts-total") ||
+          text.includes("contributions_total") ||
+          text.includes("exemption_total") ||
+          (input.getAttribute("step") === "0.01")
+        );
+      }
+
+      function formatAmountValue(rawValue) {
+        if (rawValue === null || rawValue === undefined) return "";
+        const normalized = String(rawValue).replace(/,/g, "").trim();
+        if (normalized === "" || normalized === "-") return "";
+        const number = parseLooseFloat(normalized);
+        if (Number.isNaN(number)) return rawValue;
+        return number.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function stripAmountFormatting(input) {
+        if (!isAmountField(input)) return;
+        input.value = String(input.value || "").replace(/,/g, "");
+      }
+
+      function applyAmountFormatting(input) {
+        if (!isAmountField(input)) return;
+        const formatted = formatAmountValue(input.value);
+        if (formatted !== "") {
+          input.value = formatted;
+        }
+      }
+
+      function prepareAmountInput(input) {
+        if (!isAmountField(input) || input.dataset.amountFormatted === "true") return;
+        if ((input.type || "").toLowerCase() === "number") return;
+        input.dataset.amountFormatted = "true";
+        input.type = "text";
+        input.inputMode = "decimal";
+        input.autocomplete = "off";
+
+        if (!input.readOnly && !input.disabled) {
+          input.addEventListener("focus", function () {
+            stripAmountFormatting(input);
+          });
+          input.addEventListener("blur", function () {
+            applyAmountFormatting(input);
+          });
+        }
+
+        applyAmountFormatting(input);
+      }
+
+      function prepareAllAmountInputs(root) {
+        (root || document).querySelectorAll("input").forEach(prepareAmountInput);
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        prepareAllAmountInputs(document);
+
+        document.querySelectorAll("form").forEach(function (form) {
+          form.addEventListener("submit", function () {
+            form.querySelectorAll("input[data-amount-formatted='true']").forEach(function (input) {
+              stripAmountFormatting(input);
+            });
+          });
+        });
+
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            mutation.addedNodes.forEach(function (node) {
+              if (!(node instanceof Element)) return;
+              if (node.matches && node.matches("input")) {
+                prepareAmountInput(node);
+              }
+              prepareAllAmountInputs(node);
+            });
+          });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    })();
+  </script>
+
+
+
+
+
+
+  <script defer
+    src="https://apis.google.com/_/scs/abc-static/_/js/k=gapi.lb.en.2kN9-TZiXrM.O/m=auth2/rt=j/sv=1/d=1/ed=1/rs=AHpOoo_B4hu0FeWRuWHfxnZ3V0WubwN7Qw/cb=gapi.loaded_0?le=scs,fedcm_migration_mod"
+    async=""></script>
+
+  <script defer type="text/javascript" async=""
+    src="https://analytics.tiktok.com/i18n/pixel/static/identify_31760074.js">
+    </script>
+  <script defer type="text/javascript" async=""
+    src="https://analytics.tiktok.com/i18n/pixel/static/main.MWIwNzUxMTllMQ.js" data-id="D0VVQ3BC77U53580QC7G">
+    </script>
+  <script defer type="text/javascript" async=""
+    src="https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=D0VVQ3BC77U53580QC7G&amp;lib=ttq">
+    </script>
+  <script defer src="https://www.googletagmanager.com/gtag/js?id=AW-965268020" async="">
+  </script>
+
+  <script defer src="https://www.googletagmanager.com/gtag/js?id=G-MBL06JR793" async="">
+  </script>
+
+  <script defer src="{{ url_for('static', filename='js/regions-pwa.min.js') }}" async="">
+  </script>
+
+  <script defer src="https://code.jquery.com/jquery-3.7.1.js">
+  </script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js">
+  </script>
+  <script defer src="https://cdn.datatables.net/2.3.7/js/dataTables.js">
+  </script>
+  <script defer src="https://cdn.datatables.net/2.3.7/js/dataTables.bootstrap5.js">
+  </script>
+
+
+
+
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/2.3.7/css/dataTables.bootstrap5.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+  <!-- Select2 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/static/img/PBORA%20FINAL%20LOGO_0.png">
+
+  <!-- jQuery already loaded above for DataTables and Select2 -->
+  <script defer type="text/javascript" async="" src="https://accounts.google.com/gsi/client">
+  </script>
+  <link rel="stylesheet" href="https://img.kilimall.com/c/h5/_nuxt/2026020410/404.DN5TtwEd.css">
+  <script defer src="https://apis.google.com/js/api.js" gapi_processed="true">
+  </script>
+  <link id="googleidentityservice" type="text/css" media="all" href="https://accounts.google.com/gsi/style"
+    rel="stylesheet">
+  <style id="googleidentityservice_button_styles">
+    .abcGza {
+      display: inline-block;
+      position: relative;
+      box-sizing: border-box;
+      outline: none;
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .abcGza:hover {
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .abcGza:active {
+      box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .abcGza .abcGza__icon {
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .abcGza .abcGza__text {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  </style>
+  <!-- Select2 JS -->
+  <script defer src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+  <!-- Popper.js (required by Bootstrap) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+
+
+
+  <style>
+    /* ================================
+           GLOBAL RESET & BASE STYLES
+           ================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body:not(.app-shell-body) {
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background-color: #f4f6f8;
+      color: #1f2937;
+      padding: 20px;
+    }
+
+    .app-notifications {
+      position: fixed;
+      top: 90px;
+      left: 20px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: min(380px, calc(100vw - 40px));
+      pointer-events: none;
+    }
+
+    .app-toast {
+      pointer-events: auto;
+      border-radius: 18px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      padding: 14px 16px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.96);
+      border-left: 6px solid #2563eb;
+      animation: toastSlideIn 0.28s ease;
+    }
+
+    .app-toast-success { border-left-color: #16a34a; }
+    .app-toast-danger { border-left-color: #dc2626; }
+    .app-toast-warning { border-left-color: #d97706; }
+    .app-toast-info { border-left-color: #0891b2; }
+
+    .app-toast-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .app-toast-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #0f172a;
+    }
+
+    .app-toast-body {
+      font-size: 0.95rem;
+      color: #334155;
+      word-break: break-word;
+    }
+
+    .app-toast-close {
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 1rem;
+      padding: 0;
+      min-width: auto;
+      min-height: auto;
+      line-height: 1;
+    }
+
+    @keyframes toastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-14px) translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) translateY(0);
+      }
+    }
+
+    /* ================================
+           FORM CONTAINER
+           ================================ */
+    /* Unified main content wrapper for all pages */
+    .main-content-wrapper {
+      width: 100%;
+      min-height: 100vh;
+      box-sizing: border-box;
+      padding: 100px;
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.15), 0 1.5px 8px 0 rgba(0, 0, 0, 0.08);
+      margin: 0 auto;
+      overflow-x: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 1024px) {
+      .main-content-wrapper {
+        padding: 40px 10px 40px 10px;
+        border-radius: 18px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .main-content-wrapper {
+        padding: 12px 2% 12px 2%;
+        border-radius: 10px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-size: 1.1em !important;
+        word-break: break-word;
+      }
+
+      .info-cards,
+      .card-container {
+        flex-direction: column !important;
+        gap: 18px !important;
+      }
+
+      .info-card,
+      .card {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        padding: 18px 8px !important;
+      }
+
+      .hero-section {
+        padding: 24px 4% 18px 4% !important;
+        min-height: 180px !important;
+      }
+
+      .cta-btn,
+      .scroll-btn {
+        font-size: 1rem !important;
+        padding: 12px 18px !important;
+        min-width: 44px;
+        min-height: 44px;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font-size: 1em !important;
+        padding: 10px 8px !important;
+        min-width: 44px;
+        min-height: 44px;
+      }
+    }
+
+    form {
+      width: 100%;
+      max-width: 100%;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    form h1,
+    form h2,
+    form h3 {
+      margin-bottom: 20px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* ================================
+           FIELD GROUPS & ROWS
+           ================================ */
+    .form-group,
+    .form-row {
+      margin-bottom: 18px;
+    }
+
+    @media (min-width: 768px) {
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+    }
+
+    /* ================================
+           LABELS
+           ================================ */
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+
+    label span.required {
+      color: #dc2626;
+      margin-left: 4px;
+    }
+
+    /* ================================
+           INPUTS, SELECTS, TEXTAREAS
+           ================================ */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="tel"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+      color: #0f172a;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    /* ================================
+           FOCUS & ACCESSIBILITY
+           ================================ */
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    /* ================================
+           VALIDATION STATES (OPTIONAL)
+           ================================ */
+    .input-error,
+    input:invalid,
+    select:invalid,
+    textarea:invalid {
+      border-color: #dc2626;
+    }
+
+    .input-success {
+      border-color: #16a34a;
+    }
+
+    .county-checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #f8fafc;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .county-checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid #dbe4f0;
+      border-radius: 8px;
+      background: #ffffff;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+
+    .county-checkbox-option input[type="checkbox"] {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+    }
+
+    /* ================================
+           CHECKBOXES & RADIOS
+           ================================ */
+    input[type="checkbox"],
+    input[type="radio"] {
+      margin-right: 6px;
+      transform: scale(1.1);
+    }
+
+    .checkbox-group,
+    .radio-group {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* ================================
+           BUTTONS
+           ================================ */
+    button,
+    input[type="submit"] {
+      background-color: #2563eb;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 18px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease,
+        box-shadow 0.1s ease;
+    }
+
+    button:hover,
+    input[type="submit"]:hover {
+      background-color: #1e40af;
+    }
+
+    button:active,
+    input[type="submit"]:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 600px) {
+
+      button,
+      input[type="submit"] {
+        width: 100%;
+      }
+    }
+
+    /* ================================
+           HELPER TEXT & TOOLTIPS
+           ================================ */
+    .help-text,
+    small {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    /* ================================
+           TABLES (IF YOUR FORM HAS TABLE SECTIONS)
+           ================================ */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #e2e8f0;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    table th {
+      background-color: #f1f5f9;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    /* ================================
+           FOOTER / NOTES
+           ================================ */
+    .form-footer {
+      margin-top: 24px;
+      font-size: 14px;
+      color: #475569;
+    }
+
+    /* ===== NAVBAR ===== */
+    .navbar-blue {
+      background: linear-gradient(90deg, #2a48aa, #2a48aa);
+    }
+
+    .navbar-brand {
+      color: #ffc107 !important;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .navbar-brand img {
+      transition: transform 0.25s ease;
+    }
+
+    .navbar-brand:hover img {
+      transform: scale(1.08);
+    }
+
+    .nav-link {
+      color: #ffffff !important;
+      font-weight: 500;
+      margin-right: 8px;
+      border-radius: 6px;
+      padding: 6px 12px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .nav-link.text-warning {
+      font-weight: 600;
+    }
+
+
+
+    .site-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+    }
+
+    .site-logo {
+      height: 60px;
+      /* adjust as needed */
+      width: auto;
+    }
+
+    .table-title-row {
+      font-weight: 600;
+      background: linear-gradient(90deg,
+          #eefafa,
+          #dff3f3);
+      color: #0f3d3e;
+      border-bottom: 2px solid #b9e3e3;
+    }
+
+    .group-label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .checkbox-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .checkbox-wrapper:hover {
+      border-color: #007BFF;
+      background-color: #f0f8ff;
+    }
+
+    .checkbox-wrapper input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .custom-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      margin-right: 8px;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-wrapper input:checked+.custom-checkbox {
+      background-color: #007BFF;
+      border-color: #007BFF;
+    }
+
+    .custom-checkbox::after {
+      content: "";
+      position: absolute;
+      display: none;
+      left: 4px;
+      top: 0px;
+      width: 5px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .checkbox-wrapper input:checked+.custom-checkbox::after {
+      display: block;
+    }
+
+    .other-input {
+      margin-top: 6px;
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
+      width: 100%;
+      max-width: 300px;
+      transition: border-color 0.2s ease;
+    }
+
+    .other-input:focus {
+      border-color: #007BFF;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    }
+
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .checkbox-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .checkbox-wrapper:hover {
+      border-color: #007BFF;
+      background-color: #f0f8ff;
+    }
+
+    .checkbox-wrapper input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .custom-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      margin-right: 8px;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-wrapper input:checked+.custom-checkbox {
+      background-color: #007BFF;
+      border-color: #007BFF;
+    }
+
+    .custom-checkbox::after {
+      content: "";
+      position: absolute;
+      display: none;
+      left: 4px;
+      top: 0px;
+      width: 5px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .checkbox-wrapper input:checked+.custom-checkbox::after {
+      display: block;
+    }
+
+
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .radio-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 8px 16px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .radio-wrapper:hover {
+      border-color: #007BFF;
+      background-color: #f0f8ff;
+    }
+
+    .radio-wrapper input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .custom-radio {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      margin-right: 8px;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .radio-wrapper input:checked+.custom-radio {
+      border-color: #007BFF;
+      background-color: #007BFF;
+    }
+
+    .custom-radio::after {
+      content: "";
+      position: absolute;
+      display: none;
+      top: 3px;
+      left: 3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .radio-wrapper input:checked+.custom-radio::after {
+      display: block;
+    }
+
+    .multi-select-wrapper {
+      position: relative;
+      width: 300px;
+      font-size: medium;
+      font-family: sans-serif;
+    }
+
+    .multi-select-wrapper select {
+      width: 100%;
+      height: auto;
+      min-height: 120px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      background-color: #fff;
+      color: #333;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .multi-select-wrapper select:focus {
+      border-color: #007BFF;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    }
+
+    .selected-tags {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .selected-tags .tag {
+      background-color: #007BFF;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .selected-tags .tag .remove-tag {
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .radio-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .radio-wrapper:hover {
+      border-color: #007BFF;
+      background-color: #f0f8ff;
+    }
+
+    .radio-wrapper input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .custom-radio {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ccc;
+      border-radius: 50%;
+      margin-right: 8px;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .radio-wrapper input:checked+.custom-radio {
+      border-color: #007BFF;
+      background-color: #007BFF;
+    }
+
+    .custom-radio::after {
+      content: "";
+      position: absolute;
+      display: none;
+      top: 3px;
+      left: 3px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .radio-wrapper input:checked+.custom-radio::after {
+      display: block;
+    }
+
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .checkbox-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .checkbox-wrapper:hover {
+      border-color: #007BFF;
+      background-color: #f0f8ff;
+    }
+
+    .checkbox-wrapper input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .custom-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      margin-right: 8px;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-wrapper input:checked+.custom-checkbox {
+      background-color: #007BFF;
+      border-color: #007BFF;
+    }
+
+    .custom-checkbox::after {
+      content: "";
+      position: absolute;
+      display: none;
+    }
+
+    .checkbox-wrapper input:checked+.custom-checkbox::after {
+      display: block;
+      left: 4px;
+      top: 0px;
+      width: 5px;
+      height: 10px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    label {
+      text-transform: uppercase;
+    }
+
+
+    h2 {
+      text-align: center;
+    }
+
+    /* Remove duplicate/legacy form container rules */
+    /* Global table borders */
+    table,
+    th,
+    td {
+      border: 1px solid #ccc;
+    }
+
+    .required-wrapper {
+      position: relative;
+      display: inline-block;
+      /* can also use block */
+      width: 100%;
+      /* ensure wrapper takes full width */
+    }
+
+    .required-wrapper input,
+    .required-wrapper select,
+    .required-wrapper textarea {
+      width: 100%;
+      /* input stretches inside wrapper */
+      box-sizing: border-box;
+      /* include padding/border in width */
+    }
+
+    .required-asterisk {
+      position: absolute;
+      top: -6px;
+      right: 6px;
+      color: red;
+      font-weight: bold;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    :root {
+      --a11y-font-scale: 1;
+    }
+
+    body {
+      font-size: calc(16px * var(--a11y-font-scale));
+    }
+
+    .floating-actions {
+      position: fixed;
+      right: 16px;
+      top: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1050;
+    }
+
+    .floating-action-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: #0d6efd;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px rgba(13, 110, 253, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .floating-action-btn:active {
+      cursor: grabbing;
+    }
+
+    .floating-action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 24px rgba(13, 110, 253, 0.3);
+    }
+
+    .floating-action-btn i {
+      font-size: 22px;
+    }
+
+    #scroll-to-top {
+      position: fixed;
+      right: 16px;
+      bottom: 25px;
+    }
+
+    .accessibility-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      position: fixed;
+      right: 72px;
+      top: 120px;
+      max-width: 520px;
+      z-index: 1050;
+    }
+
+    .accessibility-panel button {
+      margin: 0;
+    }
+
+    .a11y-grayscale {
+      filter: grayscale(100%);
+    }
+
+    .a11y-high-contrast {
+      background-color: #000;
+      color: #fff;
+    }
+
+    .a11y-high-contrast a {
+      color: #ffeb3b;
+    }
+
+    .a11y-high-contrast input,
+    .a11y-high-contrast select,
+    .a11y-high-contrast textarea,
+    .a11y-high-contrast button,
+    .a11y-high-contrast .btn {
+      background-color: #000 !important;
+      color: #fff !important;
+      border-color: #fff !important;
+    }
+
+    .a11y-negative-contrast {
+      background-color: #fff;
+      color: #000;
+    }
+
+    .a11y-negative-contrast a {
+      color: #0b5ed7;
+    }
+
+    .a11y-negative-contrast input,
+    .a11y-negative-contrast select,
+    .a11y-negative-contrast textarea,
+    .a11y-negative-contrast button,
+    .a11y-negative-contrast .btn {
+      background-color: #fff !important;
+      color: #000 !important;
+      border-color: #000 !important;
+    }
+
+    .a11y-light-background {
+      background-color: #fff;
+      color: #111;
+    }
+
+    .a11y-links-underline a {
+      text-decoration: underline !important;
+    }
+
+    .a11y-readable-font {
+      font-family: Verdana, Arial, sans-serif;
+    }
+
+    .a11y-dark-background {
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+
+    .a11y-dark-background a {
+      color: #7dd3fc;
+    }
+
+    .a11y-dark-background input,
+    .a11y-dark-background select,
+    .a11y-dark-background textarea,
+    .a11y-dark-background button,
+    .a11y-dark-background .btn {
+      background-color: #111827 !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+
+    @media (max-width: 768px) {
+      .floating-actions {
+        top: auto;
+        bottom: 20px;
+      }
+
+      .accessibility-panel {
+        right: 16px;
+        left: 16px;
+        top: auto;
+        bottom: 90px;
+        max-width: none;
+      }
+
+      /* Mobile Navbar Fixes */
+      .navbar-brand {
+        font-size: 0.9rem;
+        max-width: 70%;
+      }
+
+      .navbar-brand img {
+        height: 32px !important;
+      }
+
+      .navbar-brand span {
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .navbar-toggler {
+        padding: 4px 8px;
+        font-size: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .navbar-collapse {
+        background: linear-gradient(180deg, #2a48aa, #1e3a8a);
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 8px;
+      }
+
+      .nav-link {
+        padding: 10px 15px !important;
+        margin: 2px 0 !important;
+        border-radius: 6px;
+        font-size: 0.95rem;
+      }
+
+      /* Mobile Container */
+      .container {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      /* Mobile Form Styles */
+      /* Remove mobile form override, handled by .main-content-wrapper */
+
+      label {
+        font-size: 0.85rem;
+        margin-top: 10px;
+      }
+
+      input,
+      select,
+      textarea {
+        font-size: 16px !important;
+        /* Prevents iOS zoom on focus */
+        padding: 10px 8px;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+      }
+
+      /* Mobile Table Responsiveness */
+      .table-responsive {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+
+      .table-responsive table {
+        display: table;
+        width: max-content;
+        min-width: 100%;
+        margin-top: 0;
+      }
+
+      .table-responsive table th,
+      .table-responsive table td {
+        white-space: normal;
+        vertical-align: middle;
+      }
+
+      .table-responsive table input,
+      .table-responsive table select,
+      .table-responsive table textarea {
+        min-width: 0;
+      }
+
+      th {
+        font-size: 0.7rem;
+        padding: 8px 5px;
+      }
+
+      /* Mobile Checkbox/Radio Groups */
+      .checkbox-group,
+      .radio-group {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .checkbox-wrapper,
+      .radio-wrapper {
+        width: 100%;
+        padding: 10px 12px;
+      }
+
+      /* Mobile Multi-Select */
+      .multi-select-wrapper {
+        width: 100%;
+      }
+
+      .multi-select-wrapper select {
+        min-height: 100px;
+      }
+
+      .selected-tags .tag {
+        font-size: 14px;
+        padding: 6px 10px;
+      }
+
+      /* Mobile Headers */
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+      }
+
+      h3 {
+        font-size: 1.1rem;
+      }
+
+      h4 {
+        font-size: 1rem;
+      }
+
+      /* Mobile Card-like sections */
+      .section,
+      .card,
+      .accordion-item {
+        margin-bottom: 15px;
+        border-radius: 8px;
+      }
+
+      /* Mobile Signature Canvas */
+      canvas {
+        max-width: 100%;
+        height: auto !important;
+      }
+    }
+
+    /* Extra small devices (phones, 480px and down) */
+    @media (max-width: 480px) {
+      .navbar-brand span {
+        font-size: 1.1rem;
+        letter-spacing: 0.02em;
+      }
+
+      .navbar-brand img {
+        height: 36px !important;
+        max-width: 90%;
+      }
+
+      .navbar {
+        padding: 12px 24px;
+        font-size: 1.1rem;
+      }
+
+      .navbar-toggler {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 1.5rem;
+        border-radius: 8px;
+      }
+
+      @media (max-width: 600px) {
+        .navbar {
+          flex-direction: column;
+          padding: 8px 4%;
+        }
+
+        .navbar-brand {
+          flex-direction: row;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .navbar-brand img {
+          height: 28px !important;
+        }
+
+        .navbar-brand span {
+          font-size: 0.95rem;
+        }
+      }
+
+      /* Remove mobile form override, handled by .main-content-wrapper */
+
+      input,
+      select,
+      textarea {
+        padding: 8px 6px;
+      }
+
+      table td {
+        padding: 6px 4px;
+        font-size: 0.85rem;
+      }
+
+      th {
+        font-size: 0.65rem;
+        padding: 6px 4px;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      h2 {
+        font-size: 1.1rem;
+      }
+
+      h3 {
+        font-size: 1rem;
+      }
+
+      h4 {
+        font-size: 0.9rem;
+      }
+
+      .btn,
+      button {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+    }
+
+    /* Landscape mode adjustments */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .navbar {
+        padding: 5px 10px;
+      }
+
+      .navbar-brand img {
+        height: 28px !important;
+      }
+
+      /* Remove landscape form override, handled by .main-content-wrapper */
+    }
+
+    /* Touch-friendly improvements */
+    @media (hover: none) and (pointer: coarse) {
+
+      input,
+      select,
+      textarea,
+      button,
+      .btn {
+        min-height: 44px;
+        /* Apple's recommended touch target size */
+      }
+
+      .checkbox-wrapper,
+      .radio-wrapper {
+        min-height: 44px;
+      }
+
+      .nav-link {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Remove hover effects on touch devices */
+      h4:hover,
+      th:hover,
+      label:hover,
+      input:hover {
+        color: inherit;
+      }
+
+      .checkbox-wrapper:hover,
+      .radio-wrapper:hover {
+        border-color: #ccc;
+        background-color: #fff;
+      }
+    }
+  </style>
+
+  <script defer>
+    const initRequiredWrappers = () => {
+      document.querySelectorAll("input[required], select[required], textarea[required]")
+        .forEach((field) => {
+          const fieldType = (field.type || "").toLowerCase();
+          if (["radio", "checkbox", "hidden"].includes(fieldType)) return;
+          if (field.closest(".radio-wrapper, .checkbox-wrapper")) return;
+          if (field.parentElement.classList.contains("required-wrapper")) return;
+
+          const wrapper = document.createElement("div");
+          wrapper.className = "required-wrapper";
+
+          field.parentNode.insertBefore(wrapper, field);
+          wrapper.appendChild(field);
+
+          const star = document.createElement("span");
+          star.textContent = "*";
+          star.className = "required-asterisk";
+
+          wrapper.appendChild(star);
+        });
+    };
+
+    window.initRequiredWrappers = initRequiredWrappers;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initRequiredWrappers();
+    });
+  </script>
+
+  <script defer>
+    const DATE_DISPLAY_PATTERN = /^\d{2}\/\d{2}\/\d{4}$/;
+    const DATE_ISO_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+    const toDisplayDate = (value) => {
+      if (!value) return "";
+      if (DATE_DISPLAY_PATTERN.test(value)) return value;
+      if (DATE_ISO_PATTERN.test(value)) {
+        const [year, month, day] = value.split("-");
+        return `${day}/${month}/${year}`;
+      }
+
+      const parts = value.split("/");
+      if (parts.length === 3) {
+        let [day, month, year] = parts;
+        if (year.length === 2) {
+          year = `20${year}`;
+        }
+        return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+      }
+
+      return value;
+    };
+
+    const enhanceDateInputs = () => {
+      document.querySelectorAll('input[type="date"]:not([hidden])').forEach((input) => {
+        if (input.dataset.dateEnhanced === "true") return;
+
+        input.dataset.dateEnhanced = "true";
+        input.type = "text";
+        input.inputMode = "numeric";
+        input.placeholder = "DD/MM/YYYY";
+        input.pattern = "\\d{2}/\\d{2}/\\d{4}";
+        input.autocomplete = "off";
+        input.value = toDisplayDate(input.value);
+
+        input.addEventListener("blur", () => {
+          input.value = toDisplayDate(input.value.trim());
+        });
+
+        if (typeof flatpickr === "function" && input.dataset.flatpickrEnhanced !== "true") {
+          flatpickr(input, {
+            dateFormat: "d/m/Y",
+            allowInput: true,
+            disableMobile: true,
+          });
+          input.dataset.flatpickrEnhanced = "true";
+        }
+      });
+    };
+
+    window.enhanceDateInputs = enhanceDateInputs;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      enhanceDateInputs();
+    });
+  </script>
+
+
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=asset_version) }}">
+  <script defer src="{{ url_for('static', filename='js/script.js', v=asset_version) }}"></script>
+</head>
+
+<body class="app-shell-body">
+  <div id="app-page-loader" class="app-page-loader" aria-hidden="true">
+    <div class="app-page-loader-card">
+      <img src="{{ url_for('static', filename='img/PBORA FINAL LOGO_0.png') }}" alt="PBORA Loader" class="app-page-loader-logo">
+      <p class="app-page-loader-title">Loading PBORA Workspace</p>
+      <p class="app-page-loader-copy">Preparing the next page for secure reporting and review.</p>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <div class="app-main">
+      <div class="app-main-topbar">
+        <div class="app-topbar-shell">
+          <div class="app-topbar-head">
+            <a class="app-brand" href="{{ url_for('home') if current_user.is_authenticated else url_for('login') }}" title="{{ 'Go to Home' if current_user.is_authenticated else 'Go to Login' }}">
+              <img src="{{ url_for('static', filename='img/PBORA FINAL LOGO_0.png') }}" alt="PBORA Logo" class="app-brand-mark">
+              <div class="app-brand-meta">
+                <p class="app-brand-title">PBO Sector Report</p>
+                <p class="app-brand-subtitle">Digital governance, compliance, and sector oversight.</p>
+              </div>
+            </a>
+            <div class="app-topbar-copy">
+              <p class="app-main-title">Public Benefit Organizations Regulatory Authority</p>
+              <p class="app-main-subtitle">Annual returns, sector intelligence, and compliance oversight.</p>
+            </div>
+          </div>
+
+          <nav class="app-sidebar navbar navbar-expand-lg app-topbar-menu" title="Main Navigation">
+            <div class="app-sidebar-inner">
+              <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#appSidebarNav"
+                aria-controls="appSidebarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+              </button>
+
+              <div class="collapse navbar-collapse" id="appSidebarNav" title="Navigation Links">
+                <div class="app-sidebar-nav w-100">
+                  <a class="app-nav-link{% if request.endpoint == 'home' %} active{% endif %}{% if not current_user.is_authenticated %} disabled{% endif %}" href="{{ url_for('home') if current_user.is_authenticated else url_for('login') }}" title="Form 14" aria-label="Form 14"{% if request.endpoint == 'home' %} data-prevent-reload="true" aria-current="page"{% endif %}{% if not current_user.is_authenticated %} aria-disabled="true"{% endif %}>
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Form 14</span>
+                  </a>
+                  {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized %}
+                  <a class="app-nav-link{% if request.endpoint == 'reports_list' %} active{% endif %}" href="{{ url_for('reports_list') }}" title="Reports" aria-label="Reports">
+                    <i class="bi bi-collection-text"></i>
+                    <span>Reports</span>
+                  </a>
+                  {% if visual_analysis_enabled %}
+                  <a class="app-nav-link{% if request.endpoint == 'analysis.analysis' %} active{% endif %}" href="{{ url_for('analysis.analysis') }}" title="Analysis Table" aria-label="Analysis Table">
+                    <i class="bi bi-grid-1x2"></i>
+                    <span>Analysis Table</span>
+                  </a>
+                  {% endif %}
+                  {% if sector_analytics_enabled %}
+                  <a class="app-nav-link app-nav-link--overflow{% if request.endpoint == 'data_interpretations' %} active{% endif %}" href="{{ url_for('data_interpretations') }}" title="Data Interpretations" aria-label="Data Interpretations">
+                    <i class="bi bi-bar-chart-steps"></i>
+                    <span>Data Interpretations</span>
+                  </a>
+                  <a class="app-nav-link app-nav-link--overflow{% if request.endpoint in ['sector_report_data', 'sector_report_data_json', 'sector_report_data_download_xlsx'] %} active{% endif %}" href="{{ url_for('sector_report_data') }}" title="Sector Report Data" aria-label="Sector Report Data">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>Sector Report Data</span>
+                  </a>
+                  {% endif %}
+                  {% if tf_risk_enabled %}
+                  <a class="app-nav-link app-nav-link--overflow{% if request.endpoint == 'admin_tf_risk' %} active{% endif %}" href="{{ url_for('admin_tf_risk') }}" title="TF Risk Scores" aria-label="TF Risk Scores">
+                    <i class="bi bi-shield-exclamation"></i>
+                    <span>TF Risk Scores</span>
+                  </a>
+                  {% endif %}
+                  {% endif %}
+
+                  {% if current_user.is_authenticated %}
+                  <a class="app-nav-link{% if request.endpoint in ['my_files', 'my_file_open'] %} active{% endif %}" href="{{ url_for('my_files') }}" title="My Files" aria-label="My Files">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>My Files</span>
+                  </a>
+                  {% if current_user.is_authenticated and current_user.is_superadmin and current_user.is_authorized %}
+                  <a class="app-nav-link app-nav-link--overflow{% if request.endpoint in ['authorize_accounts', 'edit_user_account'] %} active{% endif %}" href="{{ url_for('authorize_accounts') }}" title="Accounts" aria-label="Accounts">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Accounts</span>
+                  </a>
+                  {% endif %}
+                  {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized %}
+                  <a class="app-nav-link app-nav-link--overflow{% if request.endpoint == 'admin_view' %} active{% endif %}" href="{{ url_for('admin_view') }}" title="Admin" aria-label="Admin">
+                    <i class="bi bi-person-gear"></i>
+                    <span>Admin</span>
+                  </a>
+                  {% endif %}
+                  <form method="post" action="{{ url_for('logout') }}" class="d-inline">
+                    <button type="submit" class="app-nav-link app-nav-link--overflow border-0 bg-transparent w-100 text-start" title="Logout" aria-label="Logout">
+                      <i class="bi bi-box-arrow-right"></i>
+                      <span>Logout</span>
+                    </button>
+                  </form>
+                  <div class="dropdown app-nav-more">
+                    <button class="app-nav-link app-nav-more-toggle{% if request.endpoint in ['admin_view', 'authorize_accounts', 'edit_user_account'] or (sector_analytics_enabled and request.endpoint in ['data_interpretations', 'sector_report_data', 'sector_report_data_json', 'sector_report_data_download_xlsx']) or (tf_risk_enabled and request.endpoint == 'admin_tf_risk') %} active{% endif %}" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More" aria-label="More navigation options">
+                      <i class="bi bi-three-dots"></i>
+                      <span>More</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end app-nav-more-menu">
+                      {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized %}
+                      {% if current_user.is_superadmin %}
+                      <a class="dropdown-item app-nav-more-item{% if request.endpoint in ['authorize_accounts', 'edit_user_account'] %} active{% endif %}" href="{{ url_for('authorize_accounts') }}">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Accounts</span>
+                      </a>
+                      {% endif %}
+                      {% if sector_analytics_enabled %}
+                      <a class="dropdown-item app-nav-more-item{% if request.endpoint == 'data_interpretations' %} active{% endif %}" href="{{ url_for('data_interpretations') }}">
+                        <i class="bi bi-bar-chart-steps"></i>
+                        <span>Data Interpretations</span>
+                      </a>
+                      <a class="dropdown-item app-nav-more-item{% if request.endpoint in ['sector_report_data', 'sector_report_data_json', 'sector_report_data_download_xlsx'] %} active{% endif %}" href="{{ url_for('sector_report_data') }}">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Sector Report Data</span>
+                      </a>
+                      {% endif %}
+                      {% if tf_risk_enabled %}
+                      <a class="dropdown-item app-nav-more-item{% if request.endpoint == 'admin_tf_risk' %} active{% endif %}" href="{{ url_for('admin_tf_risk') }}">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <span>TF Risk Scores</span>
+                      </a>
+                      {% endif %}
+                      <a class="dropdown-item app-nav-more-item{% if request.endpoint == 'admin_view' %} active{% endif %}" href="{{ url_for('admin_view') }}">
+                        <i class="bi bi-person-gear"></i>
+                        <span>Admin</span>
+                      </a>
+                      {% endif %}
+                      <form method="post" action="{{ url_for('logout') }}">
+                        <button type="submit" class="dropdown-item app-nav-more-item">
+                          <i class="bi bi-box-arrow-right"></i>
+                          <span>Logout</span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% else %}
+                  <a class="app-nav-link{% if request.endpoint == 'login' %} active{% endif %}" href="{{ url_for('login') }}" title="Login" aria-label="Login">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Login</span>
+                  </a>
+                  <a class="app-nav-link app-nav-link--overflow disabled" href="#" aria-disabled="true" tabindex="-1" title="Sign Up" aria-label="Sign Up">
+                    <i class="bi bi-person-plus"></i>
+                    <span>Sign Up</span>
+                  </a>
+                  <div class="dropdown app-nav-more">
+                    <button class="app-nav-link app-nav-more-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More" aria-label="More navigation options">
+                      <i class="bi bi-three-dots"></i>
+                      <span>More</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end app-nav-more-menu">
+                      <a class="dropdown-item app-nav-more-item disabled" href="#" aria-disabled="true" tabindex="-1">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Sign Up</span>
+                      </a>
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </nav>
+        </div>
+      </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="app-notifications" aria-live="polite" aria-atomic="true">
+      {% for category, message in messages %}
+      {% set normalized_category = 'danger' if category in ['error', 'danger'] else ('warning' if category in ['warning', 'message'] else category) %}
+      <div class="app-toast app-toast-{{ normalized_category }}" data-notification>
+        <div class="app-toast-head">
+          <span class="app-toast-title">{{ normalized_category }}</span>
+          <button type="button" class="app-toast-close" aria-label="Dismiss notification" data-notification-close>&times;</button>
+        </div>
+        <div class="app-toast-body">{{ message }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="main-content app-content">
+    {% block content %}{% endblock %}
+  </div>
+  </div>
+  </div>
+  <style>
+    .global-field-help-chat h4 {
+      margin: 0;
+      color: #0d2c6c;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .global-field-help-chat p {
+      margin: 6px 0 0;
+      color: #475569;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .global-field-help-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .global-field-help-btn {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 8px 12px;
+    }
+
+    .global-field-help-btn.primary {
+      border-color: #0d2c6c;
+      background: #0d2c6c;
+      color: #fff;
+    }
+
+    .global-field-help-chat {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: min(430px, calc(100vw - 24px));
+      max-height: min(78vh, 760px);
+      border-radius: 18px;
+      border: 1px solid #d7e1ea;
+      background: #fff;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.2);
+      display: none;
+      overflow: hidden;
+      z-index: 2301;
+    }
+
+    .global-field-help-icon {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      min-width: 120px;
+      height: 42px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 999px;
+      background: #0d2c6c;
+      color: #ffffff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.24);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      z-index: 2299;
+      cursor: grab;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .global-field-help-icon i {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+
+    .global-field-help-chat.is-open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .global-field-help-chat-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      cursor: grab;
+    }
+
+    .global-field-help-chat-body {
+      padding: 14px;
+      overflow-y: auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .global-field-help-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .global-field-help-chip {
+      border-radius: 999px;
+      border: 1px solid #dbe3f4;
+      background: #f8fbff;
+      color: #1e3a8a;
+      padding: 4px 9px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .global-field-help-chip.disabled {
+      background: #f8fafc;
+      color: #475569;
+      border-color: #cbd5e1;
+    }
+
+    .global-field-help-log {
+      border: 1px solid #dbe3f4;
+      background: #f8fbff;
+      border-radius: 12px;
+      padding: 10px;
+      min-height: 130px;
+      max-height: 210px;
+      overflow-y: auto;
+      display: grid;
+      gap: 8px;
+    }
+
+    .global-field-help-message {
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .global-field-help-message.user {
+      background: #dbeafe;
+      color: #1e3a8a;
+      justify-self: end;
+      max-width: 92%;
+    }
+
+    .global-field-help-message.bot {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #dbe3f4;
+      max-width: 100%;
+    }
+
+    .global-field-help-chat-footer {
+      border-top: 1px solid #e2e8f0;
+      padding: 12px 14px 14px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .global-field-help-chat-footer textarea {
+      min-height: 88px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      resize: vertical;
+      padding: 8px 10px;
+    }
+
+    .global-field-help-status {
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+
+    .global-field-help-icon.is-dragging,
+    .global-field-help-chat-header.is-dragging,
+    .admin-analysis-bot-icon.is-dragging,
+    .admin-analysis-bot-head.is-dragging {
+      cursor: grabbing;
+    }
+
+    @media (max-width: 640px) {
+      .global-field-help-chat {
+        right: 12px;
+        bottom: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .global-field-help-icon {
+        right: 12px;
+        bottom: 12px;
+        min-width: 98px;
+        height: 36px;
+        padding: 0 10px;
+        font-size: 0.74rem;
+      }
+
+      .global-field-help-icon i {
+        font-size: 0.82rem;
+      }
+    }
+  </style>
+  <div id="global-field-help-chat" class="global-field-help-chat" aria-hidden="true">
+    <div class="global-field-help-chat-header">
+      <div>
+        <h4>Field Help Assistant</h4>
+        <p>Auto-preloaded from local DB cache and decision model.</p>
+      </div>
+      <button type="button" id="global-field-help-chat-close" class="global-field-help-btn">Close</button>
+    </div>
+    <div class="global-field-help-chat-body">
+      <div>
+        <p><strong>Required</strong></p>
+        <div id="global-field-help-required" class="global-field-help-chip-list"></div>
+      </div>
+      <div>
+        <p><strong>Allowed (All)</strong></p>
+        <div id="global-field-help-allowed" class="global-field-help-chip-list"></div>
+      </div>
+      <div>
+        <p><strong>Disabled/Locked</strong></p>
+        <div id="global-field-help-disabled" class="global-field-help-chip-list"></div>
+      </div>
+      <div id="global-field-help-log" class="global-field-help-log">
+        <div class="global-field-help-message bot">Ask a field question. This assistant uses local rules, local cache, local retrieval, and a small local intent model.</div>
+      </div>
+    </div>
+    <div class="global-field-help-chat-footer">
+      <label for="global-field-help-input" style="margin:0;">Ask about this page fields</label>
+      <textarea id="global-field-help-input" placeholder="Example: Why is this field disabled?"></textarea>
+      <div class="global-field-help-actions">
+        <button type="button" id="global-field-help-send" class="global-field-help-btn primary">Ask</button>
+      </div>
+      <div id="global-field-help-status" class="global-field-help-status"></div>
+    </div>
+  </div>
+  <button type="button" id="global-field-help-icon" class="global-field-help-icon" aria-label="Open field help" title="Open field help">
+    <i class="bi bi-chat-dots-fill" aria-hidden="true"></i>
+    <span>Field Help</span>
+  </button>
+  {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized and data_analysis_bot_enabled and show_admin_analysis_floating_bot %}
+  <style>
+    .admin-analysis-bot-icon {
+      position: fixed;
+      left: 18px;
+      bottom: 18px;
+      width: 52px;
+      height: 52px;
+      border: 0;
+      border-radius: 999px;
+      background: #0f766e;
+      color: #ffffff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.24);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2299;
+      cursor: grab;
+    }
+    .admin-analysis-bot-panel {
+      position: fixed;
+      left: 18px;
+      bottom: 80px;
+      width: min(440px, calc(100vw - 24px));
+      max-height: min(80vh, 760px);
+      border-radius: 16px;
+      border: 1px solid #cde7e3;
+      background: #ffffff;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.2);
+      z-index: 2302;
+      display: none;
+      overflow: hidden;
+    }
+    .admin-analysis-bot-panel.is-open {
+      display: flex;
+      flex-direction: column;
+    }
+    .admin-analysis-bot-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: flex-start;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      padding: 12px;
+      cursor: grab;
+    }
+    .admin-analysis-bot-body {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    .admin-analysis-bot-log {
+      border: 1px solid #dbe3f4;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 110px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: grid;
+      gap: 8px;
+    }
+    .admin-analysis-bot-msg {
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      border-radius: 10px;
+      padding: 8px 10px;
+      max-width: 96%;
+      line-height: 1.45;
+    }
+    .admin-analysis-bot-msg.user {
+      justify-self: end;
+      background: #dbeafe;
+      color: #1e3a8a;
+      max-width: 90%;
+    }
+    .admin-analysis-bot-msg.bot {
+      justify-self: start;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #dbe3f4;
+    }
+    .admin-analysis-bot-msg .msg-label {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .admin-analysis-bot-msg.bot .msg-text {
+      text-transform: uppercase;
+    }
+    .admin-analysis-bot-routing {
+      border: 1px solid #d9e2ec;
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: #334155;
+    }
+    .admin-analysis-bot-factor {
+      border: 1px solid #dbe3f4;
+      background: #f8fbff;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .admin-analysis-bot-footer {
+      border-top: 1px solid #e2e8f0;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .admin-analysis-bot-footer textarea {
+      min-height: 82px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      resize: vertical;
+      padding: 8px 10px;
+    }
+    @media (max-width: 640px) {
+      .admin-analysis-bot-icon {
+        left: 12px;
+        bottom: 12px;
+      }
+      .admin-analysis-bot-panel {
+        left: 12px;
+        bottom: 70px;
+        width: calc(100vw - 24px);
+      }
+    }
+  </style>
+  <button type="button" id="admin-analysis-bot-icon" class="admin-analysis-bot-icon" aria-label="Open admin data analysis bot" title="Open admin data analysis bot">
+    <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+  </button>
+  <div id="admin-analysis-bot-panel" class="admin-analysis-bot-panel" aria-hidden="true">
+    <div class="admin-analysis-bot-head">
+      <div>
+        <h4 style="margin:0;font-size:0.95rem;color:#0f172a;">Admin Data Analysis Bot</h4>
+        <p style="margin:6px 0 0;font-size:0.82rem;color:#64748b;">Offline model + local retrieval + temporary HTML reports.</p>
+      </div>
+      <button type="button" id="admin-analysis-bot-close" class="global-field-help-btn">Close</button>
+    </div>
+    <div class="admin-analysis-bot-body">
+      <div class="admin-analysis-bot-log" id="admin-analysis-bot-log">
+        <div class="admin-analysis-bot-msg bot"><span class="msg-label">Bot</span><span class="msg-text">Ask an enabled-field data analysis question. Example: "Show county distribution and top donor ranking."</span></div>
+      </div>
+      <div id="admin-analysis-bot-link" class="small"></div>
+      <div id="admin-analysis-bot-routing" class="small text-muted"></div>
+    </div>
+    <div class="admin-analysis-bot-footer">
+      <textarea id="admin-analysis-bot-input" placeholder="Ask an analysis question..."></textarea>
+      <div class="d-flex gap-2">
+        <button type="button" id="admin-analysis-bot-send" class="global-field-help-btn primary">Analyze</button>
+      </div>
+      <div id="admin-analysis-bot-status" class="global-field-help-status"></div>
+    </div>
+  </div>
+  {% endif %}
+  <style>
+    /* Responsive Table Container */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 1.5rem;
+    }
+
+    .table-container table {
+      min-width: 900px;
+      border-collapse: collapse;
+    }
+
+    /* Expandable details row */
+    .details-row {
+      display: none;
+      background: #f5f5f5;
+    }
+
+    .details-content {
+      padding: 12px 18px;
+      font-size: 1rem;
+      color: #222;
+    }
+
+    /* Mobile: keep tables in a scroll container instead of stacking headers */
+    @media (max-width: 600px) {
+      .table-container,
+      .table-responsive {
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .table-container table,
+      .table-responsive table {
+        display: table;
+        width: max-content;
+        min-width: 100%;
+      }
+
+      .details-content {
+        padding: 10px 4px;
+      }
+    }
+  </style>
+  <script defer>
+    document.addEventListener("DOMContentLoaded", () => {
+      const navbarCollapse = document.getElementById("appSidebarNav");
+      const navbarToggler = document.querySelector(".app-sidebar .navbar-toggler");
+      let isNavbarTransitioning = false;
+
+      const syncNavbarToggleState = () => {
+        if (!navbarCollapse || !navbarToggler) return;
+        const isExpanded = navbarCollapse.classList.contains("show");
+        navbarToggler.setAttribute("aria-expanded", String(isExpanded));
+        navbarToggler.classList.toggle("collapsed", !isExpanded);
+      };
+
+      const closeNavbarOnMobile = () => {
+        if (!navbarCollapse || window.innerWidth >= 576) return;
+        if (window.bootstrap?.Collapse) {
+          window.bootstrap.Collapse.getOrCreateInstance(navbarCollapse).hide();
+          return;
+        }
+        navbarCollapse.classList.remove("show");
+        syncNavbarToggleState();
+      };
+
+      if (navbarCollapse && navbarToggler) {
+        syncNavbarToggleState();
+
+        navbarCollapse.addEventListener("show.bs.collapse", () => {
+          isNavbarTransitioning = true;
+        });
+
+        navbarCollapse.addEventListener("shown.bs.collapse", () => {
+          isNavbarTransitioning = false;
+          syncNavbarToggleState();
+        });
+
+        navbarCollapse.addEventListener("hide.bs.collapse", () => {
+          isNavbarTransitioning = true;
+        });
+
+        navbarCollapse.addEventListener("hidden.bs.collapse", () => {
+          isNavbarTransitioning = false;
+          syncNavbarToggleState();
+        });
+
+        navbarToggler.addEventListener("click", (event) => {
+          if (!window.bootstrap?.Collapse) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (isNavbarTransitioning) return;
+          window.bootstrap.Collapse.getOrCreateInstance(navbarCollapse).toggle();
+        });
+
+        navbarCollapse.querySelectorAll(".nav-link").forEach((link) => {
+          link.addEventListener("click", () => {
+            closeNavbarOnMobile();
+          });
+        });
+
+        window.addEventListener("resize", () => {
+          if (window.innerWidth >= 576) {
+            isNavbarTransitioning = false;
+          }
+          syncNavbarToggleState();
+        });
+      }
+    });
+  </script>
+  <script defer>
+    (() => {
+      let updateTimer = null;
+
+      const runAutoUpdate = () => {
+        if (window.initRequiredWrappers) {
+          window.initRequiredWrappers();
+        }
+        if (window.refreshFloatingActions) {
+          window.refreshFloatingActions();
+        }
+      };
+
+      const scheduleUpdate = () => {
+        if (updateTimer) return;
+        updateTimer = window.setTimeout(() => {
+          updateTimer = null;
+          runAutoUpdate();
+        }, 50);
+      };
+
+      ["click", "input", "keydown"].forEach((eventName) => {
+        document.addEventListener(eventName, scheduleUpdate, true);
+      });
+    })();
+  </script>
+  <script defer>
+    window.enableFloatingDrag = (target, options = {}) => {
+      if (!target) return;
+      if (target.dataset.dragEnabled === "true") return;
+      target.dataset.dragEnabled = "true";
+
+      const handle = options.handle || target;
+      if (!handle) return;
+      const storageKey = options.storageKey || (target.id ? `floating-drag:${target.id}` : null);
+
+      let pointerId = null;
+      let startX = 0;
+      let startY = 0;
+      let originLeft = 0;
+      let originTop = 0;
+      let moved = false;
+
+      const savePosition = (left, top) => {
+        if (!storageKey) return;
+        try {
+          window.localStorage.setItem(storageKey, JSON.stringify({ left, top }));
+        } catch (error) {
+          // Ignore storage access errors.
+        }
+      };
+
+      const loadPosition = () => {
+        if (!storageKey) return null;
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed.left !== "number" || typeof parsed.top !== "number") {
+            return null;
+          }
+          return parsed;
+        } catch (error) {
+          return null;
+        }
+      };
+
+      const applyPosition = (left, top) => {
+        target.style.position = "fixed";
+        target.style.left = `${left}px`;
+        target.style.top = `${top}px`;
+        target.style.right = "auto";
+        target.style.bottom = "auto";
+      };
+
+      const clampToViewport = (left, top) => {
+        const rect = target.getBoundingClientRect();
+        const maxLeft = Math.max(0, window.innerWidth - rect.width);
+        const maxTop = Math.max(0, window.innerHeight - rect.height);
+        return {
+          left: Math.min(Math.max(0, left), maxLeft),
+          top: Math.min(Math.max(0, top), maxTop),
+        };
+      };
+
+      const pinToCurrentPosition = () => {
+        const rect = target.getBoundingClientRect();
+        applyPosition(rect.left, rect.top);
+      };
+
+      const clampCurrentPosition = () => {
+        if (!target.style.left || !target.style.top) return;
+        const left = parseFloat(target.style.left);
+        const top = parseFloat(target.style.top);
+        if (Number.isNaN(left) || Number.isNaN(top)) return;
+        const bounded = clampToViewport(left, top);
+        applyPosition(bounded.left, bounded.top);
+        savePosition(bounded.left, bounded.top);
+      };
+
+      const storedPos = loadPosition();
+      if (storedPos) {
+        applyPosition(storedPos.left, storedPos.top);
+      }
+      target._clampFloatingDrag = clampCurrentPosition;
+
+      const onPointerMove = (event) => {
+        if (pointerId === null || event.pointerId !== pointerId) return;
+        const nextLeft = originLeft + (event.clientX - startX);
+        const nextTop = originTop + (event.clientY - startY);
+        const bounded = clampToViewport(nextLeft, nextTop);
+        applyPosition(bounded.left, bounded.top);
+        if (!moved && (Math.abs(event.clientX - startX) > 4 || Math.abs(event.clientY - startY) > 4)) {
+          moved = true;
+        }
+      };
+
+      const stopDragging = () => {
+        if (pointerId === null) return;
+        pointerId = null;
+        handle.classList.remove("is-dragging");
+        if (moved) {
+          const finalLeft = parseFloat(target.style.left);
+          const finalTop = parseFloat(target.style.top);
+          if (!Number.isNaN(finalLeft) && !Number.isNaN(finalTop)) {
+            savePosition(finalLeft, finalTop);
+          }
+          target.dataset.dragJustMoved = "true";
+          window.setTimeout(() => {
+            target.dataset.dragJustMoved = "";
+          }, 180);
+        }
+        moved = false;
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", stopDragging);
+        window.removeEventListener("pointercancel", stopDragging);
+      };
+
+      handle.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        const interactiveTarget = event.target.closest("button, a, input, textarea, select, label");
+        if (interactiveTarget && interactiveTarget !== handle) return;
+
+        pinToCurrentPosition();
+        const rect = target.getBoundingClientRect();
+        pointerId = event.pointerId;
+        startX = event.clientX;
+        startY = event.clientY;
+        originLeft = rect.left;
+        originTop = rect.top;
+        moved = false;
+        handle.classList.add("is-dragging");
+        handle.setPointerCapture(event.pointerId);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", stopDragging);
+        window.addEventListener("pointercancel", stopDragging);
+      });
+
+      handle.addEventListener("click", (event) => {
+        if (target.dataset.dragJustMoved === "true") {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+
+      handle.style.touchAction = "none";
+      window.addEventListener("resize", () => {
+        clampCurrentPosition();
+      });
+    };
+  </script>
+  <script defer>
+    window.useGlobalFieldHelp = true;
+    document.addEventListener('DOMContentLoaded', () => {
+      const chatEl = document.getElementById('global-field-help-chat');
+      const chatCloseBtn = document.getElementById('global-field-help-chat-close');
+      const iconBtn = document.getElementById('global-field-help-icon');
+      const sendBtn = document.getElementById('global-field-help-send');
+      const inputEl = document.getElementById('global-field-help-input');
+      const statusEl = document.getElementById('global-field-help-status');
+      const logEl = document.getElementById('global-field-help-log');
+      const requiredListEl = document.getElementById('global-field-help-required');
+      const allowedListEl = document.getElementById('global-field-help-allowed');
+      const disabledListEl = document.getElementById('global-field-help-disabled');
+      const pageKey = {{ (request.endpoint or 'global')|tojson }};
+      const contextEndpoint = {{ url_for('global_field_help_context')|tojson }};
+      const chatEndpoint = {{ url_for('global_field_help_chat')|tojson }};
+
+      if (typeof window.enableFloatingDrag === 'function') {
+        const chatHeader = chatEl ? chatEl.querySelector('.global-field-help-chat-header') : null;
+        window.enableFloatingDrag(iconBtn, { storageKey: 'bot-pos:global-field-help-icon' });
+        window.enableFloatingDrag(chatEl, { handle: chatHeader || chatEl, storageKey: 'bot-pos:global-field-help-chat' });
+      }
+
+      function appendMessage(role, text) {
+        if (!logEl) return;
+        const item = document.createElement('div');
+        item.className = `global-field-help-message ${role}`;
+        item.textContent = text;
+        logEl.appendChild(item);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function renderChipList(targetEl, values, isDisabled = false) {
+        if (!targetEl) return;
+        targetEl.innerHTML = '';
+        (values || []).forEach((label) => {
+          const chip = document.createElement('span');
+          chip.className = `global-field-help-chip${isDisabled ? ' disabled' : ''}`;
+          chip.textContent = label;
+          targetEl.appendChild(chip);
+        });
+      }
+
+      function showIcon() {
+        if (!iconBtn) return;
+        iconBtn.style.display = 'inline-flex';
+        if (typeof iconBtn._clampFloatingDrag === 'function') {
+          window.setTimeout(() => iconBtn._clampFloatingDrag(), 0);
+        }
+      }
+
+      function hideIcon() {
+        if (!iconBtn) return;
+        iconBtn.style.display = 'none';
+      }
+
+      function openChat() {
+        hideIcon();
+        if (chatEl) {
+          chatEl.classList.add('is-open');
+          chatEl.setAttribute('aria-hidden', 'false');
+          if (typeof chatEl._clampFloatingDrag === 'function') {
+            window.setTimeout(() => chatEl._clampFloatingDrag(), 0);
+          }
+        }
+        if (inputEl) {
+          window.setTimeout(() => inputEl.focus(), 60);
+        }
+      }
+
+      function closeChat() {
+        if (!chatEl) return;
+        chatEl.classList.remove('is-open');
+        chatEl.setAttribute('aria-hidden', 'true');
+        showIcon();
+      }
+
+      async function preloadContext() {
+        try {
+          const response = await fetch(`${contextEndpoint}?page_key=${encodeURIComponent(pageKey)}`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const payload = await response.json();
+          if (!response.ok) return;
+          renderChipList(requiredListEl, payload.required_fields || []);
+          renderChipList(allowedListEl, payload.allowed_fields || []);
+          renderChipList(disabledListEl, payload.disabled_fields || [], true);
+        } catch (error) {
+          return;
+        }
+      }
+
+      async function sendQuestion() {
+        if (!inputEl || !sendBtn) return;
+        const question = inputEl.value.trim();
+        if (!question) {
+          if (statusEl) statusEl.textContent = 'Type a short question first.';
+          return;
+        }
+
+        appendMessage('user', question);
+        inputEl.value = '';
+        sendBtn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Checking help context...';
+
+        try {
+          const response = await fetch(chatEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({
+              question,
+              page_key: pageKey,
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || 'Field help request failed.');
+          }
+          appendMessage('bot', payload.answer || 'No answer returned.');
+          renderChipList(requiredListEl, payload.required_fields || []);
+          renderChipList(allowedListEl, payload.allowed_fields || []);
+          renderChipList(disabledListEl, payload.disabled_fields || [], true);
+          if (statusEl) {
+            const source = payload.source ? `Source: ${payload.source}` : 'Field help ready.';
+            statusEl.textContent = source;
+          }
+        } catch (error) {
+          appendMessage('bot', error.message || 'Field help is temporarily unavailable.');
+          if (statusEl) statusEl.textContent = 'Could not complete that request cleanly.';
+        } finally {
+          sendBtn.disabled = false;
+        }
+      }
+
+      if (chatCloseBtn) chatCloseBtn.addEventListener('click', closeChat);
+      if (iconBtn) iconBtn.addEventListener('click', openChat);
+      if (sendBtn) sendBtn.addEventListener('click', sendQuestion);
+      if (inputEl) {
+        inputEl.addEventListener('keydown', (event) => {
+          if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            sendQuestion();
+          }
+        });
+      }
+
+      preloadContext();
+      showIcon();
+    });
+  </script>
+  {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized and data_analysis_bot_enabled and show_admin_analysis_floating_bot %}
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      const icon = document.getElementById('admin-analysis-bot-icon');
+      const panel = document.getElementById('admin-analysis-bot-panel');
+      const closeBtn = document.getElementById('admin-analysis-bot-close');
+      const sendBtn = document.getElementById('admin-analysis-bot-send');
+      const inputEl = document.getElementById('admin-analysis-bot-input');
+      const logEl = document.getElementById('admin-analysis-bot-log');
+      const linkEl = document.getElementById('admin-analysis-bot-link');
+      const routingEl = document.getElementById('admin-analysis-bot-routing');
+      const statusEl = document.getElementById('admin-analysis-bot-status');
+      const endpoint = {{ url_for('admin_data_analysis_bot_ask')|tojson }};
+      if (!icon || !panel || !sendBtn || !inputEl || !logEl || !routingEl) return;
+
+      if (typeof window.enableFloatingDrag === 'function') {
+        const panelHead = panel.querySelector('.admin-analysis-bot-head');
+        window.enableFloatingDrag(icon, { storageKey: 'bot-pos:admin-analysis-icon' });
+        window.enableFloatingDrag(panel, { handle: panelHead || panel, storageKey: 'bot-pos:admin-analysis-panel' });
+        if (typeof icon._clampFloatingDrag === 'function') {
+          window.setTimeout(() => icon._clampFloatingDrag(), 0);
+        }
+      }
+
+      const appendMessage = (role, text) => {
+        const line = document.createElement('div');
+        const safeRole = role === 'user' ? 'user' : 'bot';
+        line.className = `admin-analysis-bot-msg ${safeRole}`;
+        line.innerHTML = `
+          <span class="msg-label">${safeRole === 'user' ? 'You' : 'Bot'}</span>
+          <span class="msg-text"></span>
+        `;
+        const textEl = line.querySelector('.msg-text');
+        if (textEl) {
+          textEl.textContent = text || '';
+        }
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+
+      const appendFactorPanel = (factorSummary) => {
+        const factor = factorSummary || {};
+        if (Number(factor.total || 0) <= 0) return;
+        const panel = document.createElement('div');
+        panel.className = 'admin-analysis-bot-factor';
+        const noDataMatches = (factor.no_data_matches || []).slice(0, 2).join(', ');
+        panel.innerHTML = `
+          <div><strong>Coverage check:</strong> ${factor.explanation || `Checked ${factor.total || 0} metrics. ${factor.available || 0} have data and ${factor.no_data || 0} currently have no data.`}</div>
+          <div><strong>Matched missing topics:</strong> ${noDataMatches || 'none'}</div>
+        `;
+        logEl.appendChild(panel);
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+
+      const openPanel = () => {
+        panel.classList.add('is-open');
+        panel.setAttribute('aria-hidden', 'false');
+        if (typeof panel._clampFloatingDrag === 'function') {
+          window.setTimeout(() => panel._clampFloatingDrag(), 0);
+        }
+        window.setTimeout(() => inputEl.focus(), 40);
+      };
+
+      const closePanel = () => {
+        panel.classList.remove('is-open');
+        panel.setAttribute('aria-hidden', 'true');
+      };
+
+      const sendQuestion = async () => {
+        const question = inputEl.value.trim();
+        if (!question) {
+          if (statusEl) statusEl.textContent = 'Type a question first.';
+          return;
+        }
+        appendMessage('user', question);
+        inputEl.value = '';
+        sendBtn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Analyzing...';
+        if (linkEl) linkEl.innerHTML = '';
+        if (routingEl) routingEl.textContent = '';
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({question}),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || 'Analysis failed.');
+          appendMessage('bot', payload.answer || 'Done.');
+          appendFactorPanel(payload.factor_summary || {});
+          if (statusEl) {
+            const domainText = payload.domain ? ` | Domain: ${payload.domain}` : '';
+            statusEl.textContent = `Intent: ${payload.intent || 'n/a'} | Confidence: ${(payload.confidence || 0).toFixed(2)}${domainText}`;
+          }
+          if (routingEl) {
+            const terms = (payload.domain_terms || []).slice(0, 6).join(', ');
+            const columns = (payload.domain_columns || []).slice(0, 6).join(', ');
+            if (payload.domain || terms || columns) {
+              const source = payload.domain_source ? `source: ${payload.domain_source}` : 'source: keyword routing';
+              routingEl.innerHTML = `
+                <div><strong>Detected:</strong> ${payload.domain || 'n/a'} (${source})</div>
+                <div><strong>Keywords:</strong> ${terms || 'none'}</div>
+                <div><strong>Columns:</strong> ${columns || 'none'}</div>
+              `;
+            } else {
+              routingEl.textContent = '';
+            }
+          }
+          if (linkEl && payload.result_url) {
+            linkEl.innerHTML = `<a href="${payload.result_url}" target="_blank" rel="noopener">Open temporary HTML analysis report</a>`;
+          }
+        } catch (error) {
+          appendMessage('bot', error.message || 'Could not complete analysis.');
+          if (statusEl) statusEl.textContent = 'Analysis failed.';
+          if (routingEl) routingEl.textContent = '';
+        } finally {
+          sendBtn.disabled = false;
+        }
+      };
+
+      icon.addEventListener('click', openPanel);
+      if (closeBtn) closeBtn.addEventListener('click', closePanel);
+      sendBtn.addEventListener('click', sendQuestion);
+      inputEl.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          sendQuestion();
+        }
+      });
+    });
+  </script>
+  {% endif %}
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-notification]').forEach((toast) => {
+        const dismiss = () => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-10px)';
+          window.setTimeout(() => toast.remove(), 180);
+        };
+
+        const closeButton = toast.querySelector('[data-notification-close]');
+        if (closeButton) {
+          closeButton.addEventListener('click', dismiss);
+        }
+
+        window.setTimeout(dismiss, 7000);
+      });
+    });
+  </script>
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      const formatNumberText = (raw) => {
+        const text = (raw || '').trim();
+        if (!text) return raw;
+        if (text.includes(',')) return raw;
+        if (!/^-?\d+(\.\d+)?$/.test(text)) return raw;
+        if (/^0\d+$/.test(text)) return raw; // Keep leading-zero values (e.g., phone-like values) unchanged.
+
+        const isNegative = text.startsWith('-');
+        const unsigned = isNegative ? text.slice(1) : text;
+        const parts = unsigned.split('.');
+        const intPart = parts[0] || '0';
+        const decPart = parts.length > 1 ? parts[1] : '';
+        if (intPart.length < 4) return raw;
+
+        const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const combined = decPart ? `${grouped}.${decPart}` : grouped;
+        return isNegative ? `-${combined}` : combined;
+      };
+
+      const applyFormatting = (selector) => {
+        document.querySelectorAll(selector).forEach((cell) => {
+          if (cell.hasAttribute('data-no-number-format')) return;
+          if (cell.querySelector('input, textarea, select')) return;
+          if (cell.childElementCount > 0) return;
+          const text = cell.textContent;
+          const formatted = formatNumberText(text);
+          if (formatted !== text) {
+            cell.textContent = formatted;
+          }
+        });
+      };
+
+      // Tables (only explicitly numeric cells to avoid touching identifiers, phones, etc).
+      applyFormatting('table td[data-type="numeric"], table th[data-type="numeric"], table td[data-number-format], table th[data-number-format]');
+
+      // Non-table counters/summary cards.
+      applyFormatting([
+        '.my-files-stat-value',
+        '.report-detail-stat-value',
+        '.report-detail-mini-value',
+        '.login-metric strong',
+        '[data-number-format]',
+      ].join(','));
+      document.querySelectorAll('.report-detail-nav-meta').forEach((el) => {
+        if (el.hasAttribute('data-no-number-format')) return;
+        el.textContent = (el.textContent || '').replace(/\b\d{4,}\b/g, (match) => {
+          const grouped = match.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return grouped;
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>

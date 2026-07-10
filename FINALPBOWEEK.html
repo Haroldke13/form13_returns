@@ -1,0 +1,593 @@
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
+
+
+
+<style>
+  #pbora-pbo-week-2026 {
+    --pbo-body-size: 0.875rem;
+    --pbo-heading-size: 1.125rem;
+    --pbo-label-size: 0.8125rem;
+    color: #1f1f1f;
+    font-size: 10px;
+  }
+
+  #pbora-pbo-week-2026 .row {
+    align-items: stretch;
+    row-gap: 1.5rem;
+  }
+
+  #pbora-pbo-week-2026 .border,
+  #pbora-pbo-week-2026 .countdown-card,
+  #pbora-pbo-week-2026 .countdown-bar,
+  #pbora-pbo-week-2026 .media-meta {
+    border: none !important;
+    border-top: none !important;
+    border-bottom: none !important;
+  }
+
+
+
+
+  #pbora-pbo-week-2026 .media-carousel {
+    width: 100%;
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  #pbora-pbo-week-2026 .media-stage {
+    position: relative;
+    flex: 1 1 auto;
+    height: 100%;
+    max-height: calc(100vh - 2rem);
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  #pbora-pbo-week-2026 .media-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateX(32px);
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  #pbora-pbo-week-2026 .media-slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    z-index: 1;
+  }
+
+  #pbora-pbo-week-2026 .media-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    background: #0d1424;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  #pbora-pbo-week-2026 .media-frame img,
+  #pbora-pbo-week-2026 .media-frame video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  #pbora-pbo-week-2026 .media-carousel-badge {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    background: #c32430;
+    color: #fff;
+    padding: 6px 12px;
+    font-size: var(--pbo-label-size);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    z-index: 2;
+  }
+
+  #pbora-pbo-week-2026 .media-meta {
+    padding: 18px 20px 22px;
+    background: #ffffff;
+    border-top: 1px solid #ececec;
+  }
+
+  #pbora-pbo-week-2026 .media-meta-date {
+    display: block;
+    margin-bottom: 10px;
+    color: #bf962d;
+    font-size: var(--pbo-label-size);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #pbora-pbo-week-2026 .media-meta-title {
+    margin: 0;
+    color: #22387d;
+    font-weight: 700;
+  }
+
+  #pbora-pbo-week-2026 .media-meta-copy {
+    margin: 10px 0 0;
+    color: #555;
+  }
+
+  @media (max-width: 991.98px) {
+    #pbora-pbo-week-2026 .media-stage {
+      min-height: min(640px, calc(100vh - 2rem));
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    #pbora-pbo-week-2026 .media-stage {
+      min-height: min(480px, calc(100vh - 1.5rem));
+      max-height: calc(100vh - 1.5rem);
+    }
+
+    #pbora-pbo-week-2026 .media-meta {
+      padding: 16px 16px 20px;
+    }
+  }
+
+  @media (min-width: 992px) and (max-height: 800px) {
+    #pbora-pbo-week-2026 {
+      --pbo-body-size: 0.78rem;
+      --pbo-heading-size: 0.9rem;
+      --pbo-label-size: 0.72rem;
+      padding-top: 0.75rem !important;
+      padding-bottom: 0.75rem !important;
+    }
+
+
+    #pbora-pbo-week-2026 .pbo-left-column {
+      gap: 0.75rem !important;
+    }
+
+    #pbora-pbo-week-2026 .pbo-banner-panel {
+      padding: 0.75rem !important;
+    }
+
+    #pbora-pbo-week-2026 .pbo-countdown-panel {
+      padding: 0.5rem !important;
+    }
+
+    #pbora-pbo-week-2026 .pbo-copy-panel {
+      padding: 0.9rem !important;
+    }
+
+
+    #pbora-pbo-week-2026 .media-stage {
+      max-height: calc(100vh - 0.9rem);
+    }
+
+    #pbora-pbo-week-2026 .media-frame {
+      padding: 0.5rem;
+    }
+
+    #pbora-pbo-week-2026 .media-carousel-badge {
+      top: 12px;
+      left: 12px;
+      padding: 4px 10px;
+    }
+
+    #pbora-pbo-week-2026 .media-meta {
+      padding: 14px 16px 16px;
+    }
+
+    #pbora-pbo-week-2026 .media-meta-copy {
+      margin-top: 6px;
+    }
+
+    #pbora-pbo-week-2026 .countdown-bar {
+      min-height: 82px;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    #pbora-pbo-week-2026 .countdown-card {
+      width: 72px;
+      height: 72px;
+    }
+
+    #pbora-pbo-week-2026 .countdown-value {
+      font-size: 1.45rem;
+    }
+
+    #pbora-pbo-week-2026 .countdown-label {
+      font-size: 0.65rem;
+      margin-top: 2px;
+    }
+
+    #pbora-pbo-week-2026 .imeg {
+      width: auto !important;
+      max-width: 100%;
+      max-height: 150px;
+    }
+
+    #pbora-pbo-week-2026 .pbo-cta {
+      padding: 0.75rem 0.9rem;
+      font-size: 0.9rem;
+      line-height: 1.25;
+    }
+  }
+
+  .imeg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    border-top: #22387d 3px solid;
+  }
+</style>
+
+
+<style>
+  /* OUTER CONTAINER */
+  .countdown-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    /* light neutral */
+    border-top: 4px solid #bf962d;
+    /* PBORA gold */
+    border-bottom: 2px solid #d6d6d6;
+
+
+
+
+    background-image: url("https://pbora.go.ke/sites/default/files/2026-03/Screenshot_2026-03-25_04-42-06.png");
+    background-size: cover;
+    /* fills entire section */
+    background-position: center;
+    /* keeps it centered */
+    background-repeat: no-repeat;
+    /* no tiling */
+    background-attachment: scroll;
+    /* or fixed for parallax */
+
+    min-height: 100px;
+    /* adjust height */
+    width: 100%;
+    position: relative;
+  }
+
+  /* EACH CARD */
+  .countdown-card {
+    width: 90px;
+    height: 90px;
+    background-color: #ffffff;
+    border: 1px solid #d6d6d6;
+    border-radius: 4px;
+    /* minimal rounding (gov style) */
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+  }
+
+  /* NUMBERS */
+  .countdown-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #22387d;
+    /* PBORA blue */
+    line-height: 1;
+  }
+
+  /* LABELS */
+  .countdown-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #555;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+  }
+
+  .pbo-cta-wrap {
+    width: 100%;
+  }
+
+  .pbo-cta {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: 0.95rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 767.98px) {
+    .pbo-cta {
+      font-size: 0.9rem;
+      padding: 0.85rem 0.9rem;
+    }
+  }
+</style>
+
+
+<div id="pbora-pbo-week-2026" class="container py-4">
+
+  <!-- MAIN ROW -->
+  <div class="row g-4 align-items-stretch pbo-main-grid">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-6 d-flex flex-column gap-3 pbo-left-column">
+
+      <!-- BANNER -->
+      <div class="p-3 border text-center pbo-banner-panel">
+        <div class="image-infomercial">
+
+
+          <img class="imeg"
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-21%20at%2021.03.54.jpeg"
+            alt="PBORA Partnership Packages ">
+
+
+        </div>
+      </div>
+
+      <!-- COUNTDOWN -->
+      <div class="p-2 border text-center pbo-countdown-panel">
+        <div class="countdown-bar" aria-label="Countdown to PBO Week 2026">
+
+          <div class="countdown-card">
+            <span class="countdown-value" data-unit="days">00</span>
+            <span class="countdown-label">Days</span>
+          </div>
+
+          <div class="countdown-card">
+            <span class="countdown-value" data-unit="hours">00</span>
+            <span class="countdown-label">Hours</span>
+          </div>
+
+          <div class="countdown-card">
+            <span class="countdown-value" data-unit="minutes">00</span>
+            <span class="countdown-label">Minutes</span>
+          </div>
+
+          <div class="countdown-card">
+            <span class="countdown-value" data-unit="seconds">00</span>
+            <span class="countdown-label">Seconds</span>
+          </div>
+
+        </div>
+      </div>
+
+      
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-6 d-flex">
+
+
+      <div class="media-carousel">
+        <div class="media-stage">
+
+          <div class="media-carousel-badge">Featured Media</div>
+
+          <div class="media-slide active">
+            <div class="media-frame">
+              <img
+                src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-23%20at%2013.07.56.jpeg"
+                alt="PBO Week Highlights">
+            </div>
+            <!--div class="media-meta">
+              <span class="media-meta-date">Media • 23 Mar, 2026</span>
+              <h4 class="media-meta-title">PBO Week Highlights</h4>
+              <p class="media-meta-copy">PBO WEEK 2026 is strategically designed to commemorate A NEW DAWN of renewal,
+                reform, opportunity and collective action under the PBO Act.</p>
+            </div-->
+          </div>
+
+          <div class="media-slide">
+            <div class="media-frame">
+              <video muted playsinline preload="metadata">
+                <source
+                  src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Video%202026-03-22%20at%2023.35.19.mp4"
+                  type="video/mp4">
+              </video>
+            </div>
+            <!--div class="media-meta">
+              <span class="media-meta-date">Media • 22 Mar, 2026</span>
+              <h4 class="media-meta-title">Motion Reel</h4>
+              <p class="media-meta-copy">Multi-stakeholder engagement, inter-sectoral connection, collaboration and
+                partnership building</p>
+            </div-->
+          </div>
+
+          <div class="media-slide">
+            <div class="media-frame">
+              <img
+                src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-21%20at%2021.04.02.jpeg"
+                alt="National Reach">
+            </div>
+            <!--div class="media-meta">
+              <span class="media-meta-date">Media • 21 Mar, 2026</span>
+              <h4 class="media-meta-title">National Reach</h4>
+              <p class="media-meta-copy">Showcasing the critical role, impact and and contribution of PBOs in Kenya’s
+                development agenda</p>
+            </div-->
+          </div>
+
+        </div>
+      </div>
+
+
+
+    </div>
+  </div>
+  <div class="row g-4 align-items-stretch pbo-main-grid">
+
+    <!-- WELCOME TEXT -->
+      <div class="p-4 border flex-grow-1 text-start pbo-copy-panel">
+        <div class="intro-brief">
+          <p style=" font-size: 0.9rem;">
+            <strong style="color: #c32430; font-size: 0.9rem;">PBO WEEK</strong> is <span style="color: #2f499f; font-weight: bold;">A
+              Flagship Annual
+              Partnership</span>
+            event anchored in
+            Celebrating, Connecting and Collaborating public benefit
+            organizations (PBOs).
+          </p>
+
+          <p style=" font-size: 0.9rem;"><strong style="color: #bf962d; font-weight: bold;">A Premier National Platform</strong> for:</p>
+          <ul style=" font-size: 0.9rem;">
+            <li>Showcasing the critical role, impact and contribution of PBOs in Kenya's development agenda</li>
+            <li>Multi-stakeholder engagement, inter-sectoral connection, collaboration and partnership building
+            </li>
+            <li>Knowledge and Innovation exchange</li>
+          </ul>
+
+          <p style =" font-size: 0.9rem;">
+            <strong style="color: #2f499f; font-size: 0.9rem;">PBO WEEK 2026</strong> is strategically designed to commemorate
+            <strong>A NEW DAWN</strong> of renewal, reform, opportunity and collective action under the PBO Act.
+          </p>
+        </div>
+
+
+
+      </div>
+
+      <h4 style="text-align: center; color: #c32430;">KEY EVENT HIGHLIGHTS</h4>
+
+      <!-- BUTTON -->
+      <!--div class="text-center pbo-cta-wrap">
+        <a href="/form/pbo-week-registration" class="btn btn-warning btn-lg pbo-cta">
+          RESERVE your spot as A VALUED PARTNER and step into the SPOTLIGHT!
+        </a>
+      </div-->
+  </div>
+
+</div>
+
+
+
+
+
+<script>
+  (function () {
+    var target = new Date("2026-04-13T09:00:00+03:00").getTime();
+    var root = document.querySelector("#pbora-pbo-week-2026");
+    if (!root) return;
+
+    var nodes = {
+      days: root.querySelector('[data-unit="days"]'),
+      hours: root.querySelector('[data-unit="hours"]'),
+      minutes: root.querySelector('[data-unit="minutes"]'),
+      seconds: root.querySelector('[data-unit="seconds"]')
+    };
+
+    function pad(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function updateCountdown() {
+      var now = new Date().getTime();
+      var distance = target - now;
+
+      if (distance <= 0) {
+        nodes.days.textContent = "00";
+        nodes.hours.textContent = "00";
+        nodes.minutes.textContent = "00";
+        nodes.seconds.textContent = "00";
+        return;
+      }
+
+      var days = Math.floor(distance / 86400000);
+      var hours = Math.floor((distance % 86400000) / 3600000);
+      var minutes = Math.floor((distance % 3600000) / 60000);
+      var seconds = Math.floor((distance % 60000) / 1000);
+
+      nodes.days.textContent = pad(days);
+      nodes.hours.textContent = pad(hours);
+      nodes.minutes.textContent = pad(minutes);
+      nodes.seconds.textContent = pad(seconds);
+    }
+
+    updateCountdown();
+    window.setInterval(updateCountdown, 1000);
+  })();
+</script>
+
+
+
+<script>
+  (function () {
+    const carousel = document.querySelector('#pbora-pbo-week-2026 .media-stage');
+    if (!carousel) return;
+
+    const slides = Array.from(carousel.querySelectorAll('.media-slide'));
+    if (!slides.length) return;
+
+    let i = 0;
+    let nextTimer = null;
+
+    function queueNext(delay) {
+      window.clearTimeout(nextTimer);
+      nextTimer = window.setTimeout(next, delay);
+    }
+
+    function stopVideo(slide) {
+      const v = slide.querySelector('video');
+      if (!v) return;
+      v.pause();
+      v.currentTime = 0;
+      v.onended = null;
+    }
+
+    function showSlide(index) {
+      slides.forEach((s, idx) => {
+        const isActive = idx === index;
+        s.classList.toggle('active', isActive);
+        s.setAttribute('aria-hidden', String(!isActive));
+        if (!isActive) stopVideo(s);
+      });
+
+      const active = slides[index];
+      const video = active.querySelector('video');
+
+      if (video) {
+        video.muted = true;
+        video.onended = next;
+        video.play().catch(() => queueNext(3500));
+      } else {
+        queueNext(3500);
+      }
+    }
+
+    function next() {
+      i = (i + 1) % slides.length;
+      showSlide(i);
+    }
+
+    showSlide(0);
+  })();
+</script>

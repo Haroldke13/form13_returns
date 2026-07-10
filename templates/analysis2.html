@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}PBO Data Analysis & Visualization
+{% endblock %}
+
+{% block styles %}
+<style>
+    .summary-box {
+        background: #f8f8f8;
+        border: 1px solid #ddd;
+        padding: 1em;
+        margin-bottom: 1em;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2em;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #ccc;
+        padding: 6px;
+        text-align: left;
+    }
+
+    .table th {
+        background: #f2f2f2;
+    }
+
+    h2 {
+        margin-top: 2em;
+    }
+
+    .chart-container {
+        margin-bottom: 2em;
+    }
+</style>
+{% endblock %}
+
+{% block script %}
+  <script defer>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('table').forEach(function (tbl) {
+        if (!tbl.dataset.datatableInitialized) {
+          new DataTable(tbl, {
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
+            responsive: true
+          });
+          tbl.dataset.datatableInitialized = "true";
+        }
+      });
+    });
+  </script>
+{% endblock %}
+
+{% block content %}
+
+
+<h1 title="PBO Data Analysis & Visualization">PBO Data Analysis & Visualization</h1>
+
+<div class="summary-box">
+    <label title="Total PBOs"><strong>Total PBOs:</strong> {{ summary.total_pbos }}<br></label>
+    <label title="Total Assets"><strong>Total Assets:</strong> {{ summary.total_assets }}<br></label>
+    <label title="Total Donations"><strong>Total Donations:</strong> {{ summary.total_donations }}<br></label>
+    <label title="Total Cash (Previous Year)"><strong>Total Cash (Previous Year):</strong> {{ summary.total_cash
+        }}<br></label>
+    <label title="Total Staff"><strong>Total Staff:</strong> {{ summary.total_staff }}<br></label>
+    <label title="Total Projects"><strong>Total Projects:</strong> {{ summary.total_projects }}<br></label>
+    <label title="Top County (by PBO count)"><strong>Top County (by PBO count):</strong> {{ summary.top_county
+        }}</label>
+</div>
+
+<h2 title="Location Analysis">Location Analysis</h2>
+<div class="chart-container">{{ county_graph|safe }}</div>
+
+<h2 title="PBO Category Distribution">PBO Category Distribution</h2>
+<div class="chart-container">{{ category_graph|safe }}</div>
+
+<h2 title="Financial Overview">Financial Overview</h2>
+<div class="chart-container">{{ fin_graph|safe }}</div>
+
+<h2 title="Governance Metrics">Governance Metrics</h2>
+<div class="chart-container">{{ gov_graph|safe }}</div>
+
+<h2 title="Raw Data Table">Raw Data Table</h2>
+<div>{{ table|safe }}</div>
+
+
+{%endblock %}

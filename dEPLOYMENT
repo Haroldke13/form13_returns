@@ -1,0 +1,8 @@
+dEPLOYMENT 
+
+
+python3 form14_training_loader.py --replace --page-key report_edit
+
+
+FLASK DB-INIT
+

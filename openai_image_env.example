@@ -1,0 +1,10 @@
+# Copy this file to .env.openai or openai_image.env, then fill in your key.
+# Both .env.openai and openai_image.env are ignored by git in this workspace.
+
+OPENAI_API_KEY=
+
+# Optional overrides used by scripts/run_openai_bg_remove.py
+OPENAI_IMAGE_MODEL=gpt-image-1.5
+OPENAI_IMAGE_QUALITY=high
+OPENAI_IMAGE_API_SIZE=1024x1536
+OPENAI_IMAGE_WALLPAPER_SIZE=1080x1920

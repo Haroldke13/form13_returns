@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}Batch OCR Export{% endblock %}
+{% block content %}
+<div class="main-content-wrapper" style="gap: 24px;">
+  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+    <div>
+      <h2 class="mb-1">Batch OCR to Excel</h2>
+      <p class="text-muted mb-0">Upload up to 50 images or PDFs, run OCR in bulk, and download one Excel sheet with extracted text plus the fields this app can already parse.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('report_ocr_upload') }}" class="btn btn-outline-secondary">Single OCR Import</a>
+      {% if current_user.is_authenticated and current_user.role == 'admin' %}
+      <a href="{{ url_for('admin_view') }}" class="btn btn-outline-primary">Back to Admin</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h4 class="card-title">Upload Documents</h4>
+          <p class="text-muted small">Supported formats: JPG, JPEG, PNG, PDF. This first version exports one row per uploaded file with OCR text and parsed Form 14 fields where available.</p>
+
+          <form method="post" enctype="multipart/form-data" id="ocr-batch-form">
+            <div class="mb-3">
+              <label for="ocr-batch-documents" class="form-label">Images or PDFs</label>
+              <input
+                id="ocr-batch-documents"
+                name="documents"
+                type="file"
+                class="form-control"
+                accept="image/png,image/jpeg,application/pdf"
+                multiple
+                required>
+              <div class="form-text">Choose 1 to 50 documents. The download starts after OCR finishes.</div>
+            </div>
+
+            <div id="ocr-batch-preview-state" class="alert alert-secondary mb-3">
+              No documents selected yet.
+            </div>
+
+            <div id="ocr-batch-preview-grid" class="row g-3"></div>
+
+            <div class="d-flex flex-column flex-md-row gap-2 mt-4">
+              <button type="submit" id="ocr-batch-submit-button" class="btn btn-primary" disabled>Run Batch OCR and Download Excel</button>
+              <button type="button" id="ocr-batch-clear-button" class="btn btn-outline-secondary">Clear Selection</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h4 class="card-title">What You Get</h4>
+          <ol class="mb-0 ps-3">
+            <li>Each uploaded document is OCR processed individually.</li>
+            <li>The sheet includes filename, OCR status, warnings, and raw extracted text.</li>
+            <li>Core fields already supported by this app are mapped into columns.</li>
+            <li>Template-specific field mapping can be expanded later without changing the upload workflow.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title">Recent Batch OCR Uploads</h4>
+          {% if recent_uploads %}
+          <div class="list-group list-group-flush">
+            {% for uploaded_file in recent_uploads %}
+            <div class="list-group-item px-0">
+              <div class="fw-semibold">{{ uploaded_file.original_filename }}</div>
+              <div class="small text-muted">{{ uploaded_file.status }}</div>
+              {% if uploaded_file.error_message %}
+              <div class="small text-danger mt-1">{{ uploaded_file.error_message }}</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No batch OCR uploads yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('ocr-batch-documents');
+    const grid = document.getElementById('ocr-batch-preview-grid');
+    const state = document.getElementById('ocr-batch-preview-state');
+    const submitButton = document.getElementById('ocr-batch-submit-button');
+    const clearButton = document.getElementById('ocr-batch-clear-button');
+
+    const renderPreview = () => {
+      const files = Array.from(input.files || []);
+      grid.innerHTML = '';
+
+      if (!files.length) {
+        state.className = 'alert alert-secondary mb-3';
+        state.textContent = 'No documents selected yet.';
+        submitButton.disabled = true;
+        return;
+      }
+
+      if (files.length > 50) {
+        state.className = 'alert alert-danger mb-3';
+        state.textContent = 'Select at most 50 documents for one batch OCR export.';
+        submitButton.disabled = true;
+        return;
+      }
+
+      state.className = 'alert alert-success mb-3';
+      state.textContent = `${files.length} document(s) ready.`;
+      submitButton.disabled = false;
+
+      files.forEach((file, index) => {
+        const col = document.createElement('div');
+        col.className = 'col-12 col-md-6';
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column justify-content-center" style="min-height: 180px;">
+                <div class="fw-semibold">${file.name}</div>
+                <div class="small text-muted mb-2">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                <span class="badge text-bg-secondary align-self-start">PDF</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const url = URL.createObjectURL(file);
+          col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+              <img src="${url}" class="card-img-top" alt="Preview ${index + 1}" style="aspect-ratio: 4 / 3; object-fit: cover;">
+              <div class="card-body">
+                <div class="fw-semibold">${file.name}</div>
+                <div class="small text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+              </div>
+            </div>
+          `;
+        }
+        grid.appendChild(col);
+      });
+    };
+
+    input.addEventListener('change', renderPreview);
+    clearButton.addEventListener('click', () => {
+      input.value = '';
+      renderPreview();
+    });
+  });
+</script>
+{% endblock %}

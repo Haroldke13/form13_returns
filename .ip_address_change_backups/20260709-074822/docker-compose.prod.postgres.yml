@@ -1,0 +1,48 @@
+services:
+  web:
+    build:
+      context: .
+    container_name: form14_web
+    env_file:
+      - .env.production
+    environment:
+      PORT: ${PORT:-8000}
+      HOST_PORT: ${HOST_PORT:-8000}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-8}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-360}
+      EXTERNAL_POSTGRES: ${EXTERNAL_POSTGRES:-1}
+      INTERNAL_DATABASE_URL: ${INTERNAL_DATABASE_URL:-postgresql+psycopg2://pbora:pbora@10.107.20.230:5432/pbora}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg2://pbora:pbora@10.107.20.230:5432/pbora}
+      DATABASE_DIALECT: ${DATABASE_DIALECT:-postgresql}
+      DB_HOST: ${DB_HOST:-10.107.20.230}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-pbora}
+      DB_USER: ${DB_USER:-pbora}
+      DB_PASSWORD: ${DB_PASSWORD:-pbora}
+      DB_SSL_MODE: ${DB_SSL_MODE:-disable}
+      POSTGRES_HOST: ${POSTGRES_HOST:-10.107.20.230}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-pbora}
+      POSTGRES_USER: ${POSTGRES_USER:-pbora}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pbora}
+      POSTGRES_SSL_MODE: ${POSTGRES_SSL_MODE:-disable}
+      RUN_SCHEMA_SYNC_ON_STARTUP: ${RUN_SCHEMA_SYNC_ON_STARTUP:-1}
+    ports:
+      - "0.0.0.0:${HOST_PORT:-8000}:8000"
+    volumes:
+      - ./instance:/app/instance
+      - ./backups:/app/backups
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import socket; s = socket.create_connection(('127.0.0.1', 8000), 5); s.close()\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped

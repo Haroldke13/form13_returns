@@ -1,0 +1,920 @@
+<div id="pbo-program-page" class="container py-5">
+  <style>
+    #pbo-program-page {
+      --pbora-blue: #2f499f;
+      --pbora-red: #c32430;
+      --pbora-gold: #bf962d;
+      --pbora-white: #ffffff;
+      --pbora-text: #1f2937;
+      --pbora-muted: #4b5563;
+      --pbora-soft: #f8fafc;
+
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--pbora-text);
+    }
+
+    #pbo-program-page .hero-section {
+      background: var(--pbora-blue);
+      color: var(--pbora-white);
+      border-radius: 20px;
+      padding: 50px 30px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+      margin-bottom: 35px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #pbo-program-page .hero-section::before,
+    #pbo-program-page .hero-section::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.08;
+      background: var(--pbora-white);
+    }
+
+    #pbo-program-page .hero-section::before {
+      width: 220px;
+      height: 220px;
+      top: -60px;
+      right: -50px;
+    }
+
+    #pbo-program-page .hero-section::after {
+      width: 140px;
+      height: 140px;
+      bottom: -40px;
+      left: -25px;
+    }
+
+    #pbo-program-page .hero-title {
+      font-size: 2.3rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      animation: pboFadeUp 0.8s ease forwards;
+    }
+
+    #pbo-program-page .hero-subtitle {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      max-width: 900px;
+      animation: pboFadeUp 1s ease forwards;
+    }
+
+    #pbo-program-page .section-title {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--pbora-blue);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    #pbo-program-page .section-text {
+      text-align: center;
+      color: var(--pbora-muted);
+      max-width: 900px;
+      margin: 0 auto 35px auto;
+      line-height: 1.7;
+    }
+
+    #pbo-program-page .schedule-card {
+      border: 2px solid var(--pbora-blue);
+      border-radius: 18px;
+      overflow: hidden;
+      background: var(--pbora-white);
+      box-shadow: 0 10px 24px rgba(47, 73, 159, 0.09);
+      transition: transform 0.35s ease, box-shadow 0.35s ease, opacity 0.7s ease;
+      height: 100%;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    #pbo-program-page .schedule-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #pbo-program-page .schedule-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 18px 34px rgba(47, 73, 159, 0.16);
+    }
+
+    #pbo-program-page .card-top {
+      background: var(--pbora-blue);
+      color: var(--pbora-white);
+      padding: 20px 20px 16px;
+      position: relative;
+    }
+
+    #pbo-program-page .day-badge {
+      display: inline-block;
+      background: var(--pbora-gold);
+      color: var(--pbora-white);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    #pbo-program-page .schedule-card h3 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: var(--pbora-gold);
+      font-weight: 800;
+    }
+
+    #pbo-program-page .date-line {
+      margin-top: 8px;
+      color: var(--pbora-white);
+      font-size: 0.95rem;
+      opacity: 0.95;
+    }
+
+    #pbo-program-page .countdown-box {
+      background: var(--pbora-soft);
+      border: 1px solid rgba(47, 73, 159, 0.18);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+
+    #pbo-program-page .countdown-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--pbora-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+    }
+
+    #pbo-program-page .countdown-timer {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--pbora-red);
+    }
+
+    #pbo-program-page .schedule-card .card-body {
+      padding: 22px;
+    }
+
+    #pbo-program-page .activity-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--pbora-text);
+    }
+
+    #pbo-program-page .activity-list li {
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+
+    #pbo-program-page .explanation-box {
+      background: var(--pbora-white);
+      border-left: 4px solid var(--pbora-gold);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-top: 16px;
+      color: var(--pbora-muted);
+      line-height: 1.7;
+      font-size: 0.95rem;
+      box-shadow: inset 0 0 0 1px rgba(47, 73, 159, 0.08);
+    }
+
+    #pbo-program-page .summary-strip {
+      margin-top: 45px;
+      background-color: var(--pbora-gold);
+      color: var(--pbora-white);
+      border-radius: 18px;
+      padding: 30px 24px;
+      box-shadow: 0 12px 28px rgba(47, 73, 159, 0.16);
+    }
+
+    #pbo-program-page .summary-strip h2 {
+      font-size: 1.7rem;
+      color: var(--pbora-gold);
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    #pbo-program-page .summary-strip p {
+      margin-bottom: 0;
+      line-height: 1.8;
+      opacity: 0.96;
+    }
+
+    @keyframes pboFadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(25px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 767px) {
+      #pbo-program-page .hero-title {
+        font-size: 1.8rem;
+      }
+
+      #pbo-program-page .hero-subtitle {
+        font-size: 1rem;
+      }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    .hero-image-strip {
+      position: relative;
+      margin-top: 20px;
+      padding: 0.35rem 0;
+      overflow: hidden;
+      background-color: var(--pbora-blue);
+      border-top: 1px solid rgba(47, 73, 159, 0.08);
+      border-bottom: 1px solid rgba(47, 73, 159, 0.08);
+      isolation: isolate;
+    }
+
+
+
+
+
+    .hero-image-strip::before,
+    .hero-image-strip::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 90px;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .hero-image-strip::before {
+      left: 0;
+      background: linear-gradient(to right, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+    }
+
+    .hero-image-strip::after {
+      right: 0;
+      background: linear-gradient(to left, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0));
+    }
+
+
+    .hero-image-track {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: max-content;
+      animation: scrollRight 36s linear infinite;
+      will-change: transform;
+    }
+
+    .hero-image-strip:hover .hero-image-track {
+      animation-play-state: paused;
+    }
+
+    .hero-image-card {
+      position: relative;
+      flex: 0 0 calc(25vw - 1rem);
+      min-width: 220px;
+      max-width: 360px;
+      height: 120px;
+      overflow: hidden;
+      border-radius: var(--pbora-radius);
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: var(--pbora-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateZ(0);
+    }
+
+    .hero-image-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 50%),
+        linear-gradient(180deg, transparent 62%, rgba(47, 73, 159, 0.08));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-image-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 14px 0 14px;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--pbora-gold), var(--pbora-blue), var(--pbora-red));
+      z-index: 2;
+    }
+
+    .hero-image-card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transition: transform 0.5s ease, filter 0.5s ease;
+    }
+
+    .hero-image-card:hover img {
+      transform: scale(1.06);
+      filter: saturate(1.05) contrast(1.02);
+    }
+
+
+    .hero-image-track {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      width: max-content;
+      animation: scrollRight 36s linear infinite;
+      will-change: transform;
+    }
+
+    .hero-image-strip:hover .hero-image-track {
+      animation-play-state: paused;
+    }
+
+    .hero-image-card {
+      position: relative;
+      flex: 0 0 calc(25vw - 1rem);
+      min-width: 220px;
+      max-width: 360px;
+      height: 120px;
+      overflow: hidden;
+      border-radius: var(--pbora-radius);
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      box-shadow: var(--pbora-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateZ(0);
+    }
+
+    .hero-image-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 50%),
+        linear-gradient(180deg, transparent 62%, rgba(47, 73, 159, 0.08));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-image-card::after {
+      content: "";
+      position: absolute;
+      inset: auto 14px 0 14px;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--pbora-gold), var(--pbora-blue), var(--pbora-red));
+      z-index: 2;
+    }
+
+    .hero-image-card img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transition: transform 0.5s ease, filter 0.5s ease;
+    }
+
+    .hero-image-card:hover img {
+      transform: scale(1.06);
+      filter: saturate(1.05) contrast(1.02);
+    }
+
+
+
+    @keyframes scrollRight {
+      from {
+        transform: translateX(-50%);
+      }
+
+      to {
+        transform: translateX(0);
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .hero-image-strip {
+        margin-top: 20px;
+        padding: 0.25rem 0;
+      }
+
+      .hero-image-card {
+        min-width: 170px;
+        max-width: 170px;
+        height: 88px;
+        border-radius: 16px;
+      }
+
+      .hero-image-track {
+        gap: 0.7rem;
+        animation-duration: 24s;
+      }
+
+      .hero-image-strip::before,
+      .hero-image-strip::after {
+        width: 38px;
+      }
+    }
+
+    @media (min-width: 576px) and (max-width: 991.98px) {
+      .hero-image-card {
+        min-width: 230px;
+        max-width: 230px;
+        height: 110px;
+      }
+
+      .hero-image-track {
+        animation-duration: 30s;
+      }
+    }
+
+    @media (min-width: 992px) {
+      .hero-image-card {
+        min-width: 290px;
+        max-width: 290px;
+        height: 140px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-image-track {
+        animation: none;
+      }
+
+      .hero-image-card img {
+        transition: none;
+      }
+    }
+  </style>
+
+
+
+
+
+  <div class="hero-section">
+    <div class="hero-title">PBO Week 2026 Programme Schedule</div>
+    <div class="hero-subtitle">
+      Explore the official week-long programme for PBO Week 2026, themed <strong>“A New Dawn in Action”</strong>.
+      The week combines a high-level national launch, a three-day national exhibition, thematic forums, and customized
+      regional or county activities designed to celebrate impact, strengthen compliance, and deepen collaboration across
+      the sector.
+    </div>
+  </div>
+
+  <h2 class="section-title">Week Programme Overview</h2>
+  <p class="section-text">
+    The schedule below presents the day-by-day structure for PBO Week 2026, including the national launch, exhibition
+    days, thematic forums, and continuing regional activities. Each card includes a live countdown to the start of that
+    day’s programme.
+  </p>
+
+  <div class="row">
+    <section class="hero-image-strip" aria-label="PBO Week image highlights">
+      <div class="hero-image-track">
+        <div class="hero-image-card">
+          <img src=" https://pbora.go.ke/sites/default/files/PBORA%20FINAL%20LOGO_0.png"
+            alt="PBO Week event highlight image 2">
+        </div>
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%282%29.jpeg"
+            alt="PBO Week event highlight image 1">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20CEO%20Dr.%20Laxmana%20Kiptoo%20addressing%20participants%20at%20the%20Eldoret%20Multipurpose%20Hall%20during%20the%20public%20participation%20exercise%20on%20the%20Harmonized%20Draft%20PBO%20Regulations%2C%202025%20in%20Eldoret%20on%20July%208%2C%202025.jpg"
+            alt="PBORA CEO addressing participants in Eldoret">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20Board%20Chairman%2C%20Hon.%20Mwambu%20Mabonga%2C%20addressing%20participants%20during%20a%20public%20participation%20forum%20on%20the%20HArmonized%20Draft%20PBO%20Regulations%2C%202025%20at%20Ufungamano%20House%2C%20Nairobi%20on%20July%2018%2C%202025..jpg"
+            alt="PBORA Board Chairman addressing participants in Nairobi">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%281%29.jpeg"
+            alt="PBO Week event highlight image 2">
+        </div>
+
+
+
+        <div class="hero-image-card">
+          <img src=" https://pbora.go.ke/sites/default/files/PBORA%20FINAL%20LOGO_0.png"
+            alt="PBO Week event highlight image 2">
+        </div>
+
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04.jpeg"
+            alt="PBO Week event highlight image 3">
+        </div>
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/PBO%20WEEK.png" alt="PBO Week 2026 banner">
+        </div>
+
+        <!-- duplicate set for seamless looping -->
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%282%29.jpeg"
+            alt="PBO Week event highlight image 1 duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20CEO%20Dr.%20Laxmana%20Kiptoo%20addressing%20participants%20at%20the%20Eldoret%20Multipurpose%20Hall%20during%20the%20public%20participation%20exercise%20on%20the%20Harmonized%20Draft%20PBO%20Regulations%2C%202025%20in%20Eldoret%20on%20July%208%2C%202025.jpg"
+            alt="PBORA CEO addressing participants in Eldoret duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20Board%20Chairman%2C%20Hon.%20Mwambu%20Mabonga%2C%20addressing%20participants%20during%20a%20public%20participation%20forum%20on%20the%20HArmonized%20Draft%20PBO%20Regulations%2C%202025%20at%20Ufungamano%20House%2C%20Nairobi%20on%20July%2018%2C%202025..jpg"
+            alt="PBORA Board Chairman addressing participants in Nairobi duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%281%29.jpeg"
+            alt="PBO Week event highlight image 2 duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04.jpeg"
+            alt="PBO Week event highlight image 3 duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/PBO%20WEEK.png"
+            alt="PBO Week 2026 banner duplicate">
+        </div>
+        <div class="hero-image-card">
+          <img src=" https://pbora.go.ke/sites/default/files/PBORA%20FINAL%20LOGO_0.png"
+            alt="PBO Week event highlight image 2">
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6 col-md-6">
+      <div class="schedule-card">
+        <div class="card-top">
+          <span class="day-badge">Day 1</span>
+          <h3>High-Level National Launch</h3>
+          <div class="date-line">13 April 2026</div>
+        </div>
+        <div class="card-body">
+          <div class="countdown-box">
+            <div class="countdown-label">Countdown to 13 April 2026</div>
+            <div class="countdown-timer" data-date="2026-04-13T00:00:00">Loading...</div>
+          </div>
+          <ul class="activity-list">
+            <li>High-Level National Launch</li>
+            <li>National Exhibition (Day 1)</li>
+            <li>Regional and County Launch Activities</li>
+          </ul>
+          <div class="explanation-box">
+            The opening day is designed as a major national launch bringing together diverse stakeholders. It also
+            begins the national exhibition and kicks off county and regional activities, setting the tone for the week’s
+            celebration, visibility, and collaboration.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 col-md-6">
+      <div class="schedule-card">
+        <div class="card-top">
+          <span class="day-badge">Day 2</span>
+          <h3>Exhibition &amp; Self-Regulation Forum</h3>
+          <div class="date-line">14 April 2026</div>
+        </div>
+        <div class="card-body">
+          <div class="countdown-box">
+            <div class="countdown-label">Countdown to 14 April 2026</div>
+            <div class="countdown-timer" data-date="2026-04-14T00:00:00">Loading...</div>
+          </div>
+          <ul class="activity-list">
+            <li>National Exhibition (Day 2)</li>
+            <li>Thematic Forum: Self-Regulation</li>
+            <li>Customized Regional and County Activities</li>
+          </ul>
+          <div class="explanation-box">
+            Day 2 deepens public engagement through continued exhibition activity while opening a thematic conversation
+            on self-regulation and sector coordination. It also extends outreach through customized local activities
+            across regions and counties.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 col-md-6">
+      <div class="schedule-card">
+        <div class="card-top">
+          <span class="day-badge">Day 3</span>
+          <h3>Exhibition &amp; Regulator Forum</h3>
+          <div class="date-line">15 April 2026</div>
+        </div>
+        <div class="card-body">
+          <div class="countdown-box">
+            <div class="countdown-label">Countdown to 15 April 2026</div>
+            <div class="countdown-timer" data-date="2026-04-15T00:00:00">Loading...</div>
+          </div>
+          <ul class="activity-list">
+            <li>National Exhibition (Day 3)</li>
+            <li>Thematic Forum: Talk to Your Regulator</li>
+            <li>Customized Regional and County Activities</li>
+          </ul>
+          <div class="explanation-box">
+            Day 3 combines the final national exhibition day with a regulator-facing forum that gives stakeholders space
+            for practical dialogue on implementation, compliance, and governance issues under the PBO framework.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+
+    <section class="hero-image-strip" aria-label="PBO Week image highlights">
+      <div class="hero-image-track">
+        <div class="hero-image-card">
+          <img src=" https://pbora.go.ke/sites/default/files/PBORA%20FINAL%20LOGO_0.png"
+            alt="PBO Week event highlight image 2">
+        </div>
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%282%29.jpeg"
+            alt="PBO Week event highlight image 1">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20CEO%20Dr.%20Laxmana%20Kiptoo%20addressing%20participants%20at%20the%20Eldoret%20Multipurpose%20Hall%20during%20the%20public%20participation%20exercise%20on%20the%20Harmonized%20Draft%20PBO%20Regulations%2C%202025%20in%20Eldoret%20on%20July%208%2C%202025.jpg"
+            alt="PBORA CEO addressing participants in Eldoret">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20Board%20Chairman%2C%20Hon.%20Mwambu%20Mabonga%2C%20addressing%20participants%20during%20a%20public%20participation%20forum%20on%20the%20HArmonized%20Draft%20PBO%20Regulations%2C%202025%20at%20Ufungamano%20House%2C%20Nairobi%20on%20July%2018%2C%202025..jpg"
+            alt="PBORA Board Chairman addressing participants in Nairobi">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%281%29.jpeg"
+            alt="PBO Week event highlight image 2">
+        </div>
+
+
+
+        <div class="hero-image-card">
+          <img src=" https://pbora.go.ke/sites/default/files/PBORA%20FINAL%20LOGO_0.png"
+            alt="PBO Week event highlight image 2">
+        </div>
+
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04.jpeg"
+            alt="PBO Week event highlight image 3">
+        </div>
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/PBO%20WEEK.png" alt="PBO Week 2026 banner">
+        </div>
+
+        <!-- duplicate set for seamless looping -->
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%282%29.jpeg"
+            alt="PBO Week event highlight image 1 duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20CEO%20Dr.%20Laxmana%20Kiptoo%20addressing%20participants%20at%20the%20Eldoret%20Multipurpose%20Hall%20during%20the%20public%20participation%20exercise%20on%20the%20Harmonized%20Draft%20PBO%20Regulations%2C%202025%20in%20Eldoret%20on%20July%208%2C%202025.jpg"
+            alt="PBORA CEO addressing participants in Eldoret duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2025-10/PBORA%20Board%20Chairman%2C%20Hon.%20Mwambu%20Mabonga%2C%20addressing%20participants%20during%20a%20public%20participation%20forum%20on%20the%20HArmonized%20Draft%20PBO%20Regulations%2C%202025%20at%20Ufungamano%20House%2C%20Nairobi%20on%20July%2018%2C%202025..jpg"
+            alt="PBORA Board Chairman addressing participants in Nairobi duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img
+            src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04%20%281%29.jpeg"
+            alt="PBO Week event highlight image 2 duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/WhatsApp%20Image%202026-03-18%20at%2022.43.04.jpeg"
+            alt="PBO Week event highlight image 3 duplicate">
+        </div>
+
+        <div class="hero-image-card">
+          <img src="https://pbora.go.ke/sites/default/files/2026-03/PBO%20WEEK.png"
+            alt="PBO Week 2026 banner duplicate">
+        </div>
+        <div class="hero-image-card">
+          <img src=" https://pbora.go.ke/sites/default/files/PBORA%20FINAL%20LOGO_0.png"
+            alt="PBO Week event highlight image 2">
+        </div>
+      </div>
+    </section>
+
+
+  </div>
+  <div class="row g-4">
+
+    <div class="col-lg-6 col-md-6">
+      <div class="schedule-card">
+        <div class="card-top">
+          <span class="day-badge">Day 4</span>
+          <h3>Regional &amp; County Activities</h3>
+          <div class="date-line">16 April 2026</div>
+        </div>
+        <div class="card-body">
+          <div class="countdown-box">
+            <div class="countdown-label">Countdown to 16 April 2026</div>
+            <div class="countdown-timer" data-date="2026-04-16T00:00:00">Loading...</div>
+          </div>
+          <ul class="activity-list">
+            <li>Customized Regional and County Activities</li>
+          </ul>
+          <div class="explanation-box">
+            This day focuses on locally tailored regional and county engagements, allowing the programme to reach wider
+            audiences through forums, exhibitions, outreach activities, processions, and community-based interaction.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 col-md-6">
+      <div class="schedule-card">
+        <div class="card-top">
+          <span class="day-badge">Day 5</span>
+          <h3>Regional &amp; County Activities</h3>
+          <div class="date-line">17 April 2026</div>
+        </div>
+        <div class="card-body">
+          <div class="countdown-box">
+            <div class="countdown-label">Countdown to 17 April 2026</div>
+            <div class="countdown-timer" data-date="2026-04-17T00:00:00">Loading...</div>
+          </div>
+          <ul class="activity-list">
+            <li>Customized Regional and County Activities</li>
+          </ul>
+          <div class="explanation-box">
+            Day 5 continues decentralized engagement and supports collaborative programming between PBORA regional
+            offices, county governments, PBO networks, and private sector stakeholders.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 col-md-6">
+      <div class="schedule-card">
+        <div class="card-top">
+          <span class="day-badge">Day 6</span>
+          <h3>Regional &amp; County Activities</h3>
+          <div class="date-line">18 April 2026</div>
+        </div>
+        <div class="card-body">
+          <div class="countdown-box">
+            <div class="countdown-label">Countdown to 18 April 2026</div>
+            <div class="countdown-timer" data-date="2026-04-18T00:00:00">Loading...</div>
+          </div>
+          <ul class="activity-list">
+            <li>Customized Regional and County Activities</li>
+          </ul>
+          <div class="explanation-box">
+            The closing day sustains localized engagement and reinforces the week’s broader goals of awareness,
+            connection, partnership-building, and sector transformation under the PBO Act.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="color: #1f2937;" class="summary-strip">
+    <h2 style="color: #1f2937;" >Programme Context</h2>
+    <p style="color: #1f2937;">
+      Across the week, PBO Week 2026 combines national visibility, thematic discussion, exhibitions, and regional
+      activation. The concept note also frames the event within a wider 30-day multimedia communication strategy
+      intended to build awareness, educate stakeholders, maximize outreach, and strengthen PBORA brand visibility.
+    </p>
+  </div>
+  <div>
+
+    <script>
+      (function () {
+        function updateCountdowns() {
+          const now = new Date().getTime();
+          const timers = document.querySelectorAll('#pbo-program-page .countdown-timer');
+
+          timers.forEach(function (timer) {
+            const targetDate = new Date(timer.getAttribute('data-date')).getTime();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+              timer.textContent = 'Programme day is live / started';
+              return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            timer.textContent = days + 'd ' + hours + 'h ' + minutes + 'm ' + seconds + 's';
+          });
+        }
+
+        function revealCards() {
+          const cards = document.querySelectorAll('#pbo-program-page .schedule-card');
+          const trigger = window.innerHeight * 0.92;
+
+          cards.forEach(function (card) {
+            const top = card.getBoundingClientRect().top;
+            if (top < trigger) {
+              card.classList.add('visible');
+            }
+          });
+        }
+
+        updateCountdowns();
+        setInterval(updateCountdowns, 1000);
+
+        revealCards();
+        window.addEventListener('scroll', revealCards);
+        window.addEventListener('load', revealCards);
+      })();
+    </script>
+  </div>

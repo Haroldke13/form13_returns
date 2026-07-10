@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h2 class="mb-1">Edit User Account</h2>
+    <p class="text-muted mb-0">Update account details only. Role and privilege changes are managed from the user management page.</p>
+  </div>
+  <a href="{{ url_for('authorize_accounts') }}" class="btn btn-outline-secondary">Back to User Management</a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post" class="row g-3">
+      <div class="col-md-6">
+        <label for="full_name" class="form-label">Full Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="full_name"
+          name="full_name"
+          value="{{ request.form.get('full_name', user.full_name or '') }}"
+          placeholder="e.g. Amy Mugeni"
+        >
+      </div>
+
+      <div class="col-md-6">
+        <label for="phone" class="form-label">Phone</label>
+        <input
+          type="text"
+          class="form-control"
+          id="phone"
+          name="phone"
+          value="{{ request.form.get('phone', user.phone or '') }}"
+          placeholder="e.g. 0740358087"
+        >
+      </div>
+
+      <div class="col-md-6">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text"
+          class="form-control"
+          id="username"
+          name="username"
+          value="{{ request.form.get('username', user.email.split('@', 1)[0] if user.email and '@' in user.email else '') }}"
+          placeholder="e.g. jdoe"
+        >
+        <div class="form-text">This updates the part before the <code>@</code> in the login email.</div>
+      </div>
+
+      <div class="col-md-6">
+        <label for="email" class="form-label">Email</label>
+        <input
+          type="text"
+          class="form-control"
+          id="email"
+          name="email"
+          value="{{ request.form.get('email', user.email or '') }}"
+          placeholder="e.g. aabdi"
+          
+        >
+      </div>
+
+      <div class="col-md-6">
+        <label for="department" class="form-label">Department</label>
+        <input
+          type="text"
+          class="form-control"
+          id="department"
+          name="department"
+          value="{{ request.form.get('department', user.department or '') }}"
+          placeholder="e.g. FINANCE"
+        >
+      </div>
+
+      <div class="col-md-6">
+        <label for="password" class="form-label">New Password</label>
+        <input
+          type="password"
+          class="form-control"
+          id="password"
+          name="password"
+          placeholder="Leave blank to keep current password"
+        >
+      </div>
+
+      <div class="col-md-6">
+        <label for="confirm_password" class="form-label">Confirm New Password</label>
+        <input
+          type="password"
+          class="form-control"
+          id="confirm_password"
+          name="confirm_password"
+          placeholder="Repeat the new password"
+        >
+      </div>
+
+      <div class="col-12">
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            value="1"
+            id="generate_password"
+            name="generate_password"
+            {% if request.form.get('generate_password') == '1' %}checked{% endif %}
+          >
+          <label class="form-check-label" for="generate_password">
+            Auto-generate a new password for this user
+          </label>
+        </div>
+        <div class="form-text">Leave the password fields blank if you want the system to generate one instead.</div>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-dark">Save Changes</button>
+        <a href="{{ url_for('authorize_accounts') }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

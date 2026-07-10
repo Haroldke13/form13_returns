@@ -1,0 +1,100 @@
+<div class="table-responsive">
+  {% if activity_search_query %}
+  <div class="small text-muted mb-2">
+    File search results for "{{ activity_search_query }}". Clear the search box to return to the user summary table.
+  </div>
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Updated By</th>
+        <th>Updated At</th>
+        <th>Open</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if user_activity_file_rows %}
+      {% for row in user_activity_file_rows %}
+      <tr>
+        <td>
+          <div><a href="{{ url_for('report_detail', report_id=row.report.id) }}">#{{ row.report.id }}</a> {{ row.report.pbo_name or 'Unnamed PBO' }}</div>
+          <small class="text-muted">{{ row.report.pbo_registration_number or row.report.form_14 or 'No registration/file label' }}</small>
+        </td>
+        <td>{{ row.updated_by }}</td>
+        <td>{{ row.updated_at|format_datetime if row.updated_at else 'Unknown' }}</td>
+        <td>
+          <a href="{{ url_for('report_detail', report_id=row.report.id) }}" class="btn btn-outline-primary btn-sm">Open</a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr>
+        <td colspan="4" class="text-muted">
+          No files found for "{{ activity_search_query }}"{% if selected_activity_date %} on {{ selected_activity_date }}{% endif %}.
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% else %}
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Status</th>
+        <th>Last Seen</th>
+        <th>Files Submitted</th>
+        <th>Recent Submissions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if user_activity_rows %}
+      {% for row in user_activity_rows %}
+      <tr>
+        <td>
+          <div>{{ row.display_email or row.user.email or ('User #' ~ row.user.id) }}</div>
+          {% if row.display_full_name %}
+          <div class="small text-muted">{{ row.display_full_name }}</div>
+          {% endif %}
+          <small class="text-muted">
+            {{ row.display_role or row.user.role }}
+            {% if not row.display_is_authorized %} / pending{% endif %}
+            {% if row.group_size and row.group_size > 1 %} / grouped {{ row.group_size }} accounts{% endif %}
+          </small>
+        </td>
+        <td>
+          {% if row.display_last_login_at %}
+          <div class="small">Login {{ row.display_last_login_at|format_datetime }}</div>
+          {% endif %}
+          <div class="small">Failed attempts: {{ row.display_failed_attempts or 0 }}</div>
+        </td>
+        <td>{{ row.last_seen_at|format_datetime if row.last_seen_at else 'No activity yet' }}</td>
+        <td>
+          <a href="{{ url_for('admin_user_worked_files', user_id=row.user.id, email=row.group_email or None) }}" class="fw-semibold">
+            {{ row.worked_file_count }}
+          </a>
+        </td>
+        <td>
+          {% for report in row.touched_reports[:3] %}
+          <div><a href="{{ url_for('report_detail', report_id=report.id) }}">#{{ report.id }}</a> {{ report.pbo_name or 'Unnamed PBO' }}</div>
+          {% else %}
+          <span class="text-muted">No Form 14 submissions</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr>
+        <td colspan="5" class="text-muted">
+          {% if selected_activity_date %}
+          No user activity found for {{ selected_activity_date }}.
+          {% else %}
+          No user activity found.
+          {% endif %}
+        </td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>

@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Frequency Analysis Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      background: #f4f7fb;
+      color: #10233f;
+    }
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 20px 0 28px;
+    }
+    .card {
+      background: white;
+      border: 1px solid #d9e2f3;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card strong {
+      font-size: 0.85rem;
+      color: #365072;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .card span {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    .section {
+      background: white;
+      border: 1px solid #d9e2f3;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 22px;
+    }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .section h2 {
+      margin: 0 0 6px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: 1px solid #1f4e79;
+      background: #1f4e79;
+      color: white;
+      border-radius: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 0.92rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:hover {
+      background: #163a5c;
+      border-color: #163a5c;
+    }
+    .btn-secondary {
+      background: white;
+      color: #1f4e79;
+    }
+    .btn-secondary:hover {
+      background: #eef4fb;
+      border-color: #1f4e79;
+      color: #1f4e79;
+    }
+    .top-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 14px 0 24px;
+    }
+    .report-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.92rem;
+      margin-top: 10px;
+    }
+    .report-table th, .report-table td {
+      border: 1px solid #d9e2f3;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .report-table th {
+      background: #1f4e79;
+      color: white;
+    }
+    .note {
+      color: #4b5f7a;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Frequency Analysis Report</h1>
+    <p class="note">This report covers the <strong>01 Jul 24-30 Jun 25</strong> sheet from the NGO workbook. For multi-value variables, percentages are shown as the share of NGOs mentioning each category, and the detailed tables also include the share of total mentions.</p>
+    <div class="top-actions">
+      <a class="btn" href="ngo_frequency_tables_01_jul_24_30_jun_25.xlsx" download>Download All Tables Workbook</a>
+    </div>
+    
+    <div class="cards">
+      <div class="card"><strong>Sheet</strong><span>01 Jul 24-30 Jun 25</span></div>
+      <div class="card"><strong>Total NGOs</strong><span>685</span></div>
+      <div class="card"><strong>Distinct Scope Values</strong><span>2</span></div>
+      <div class="card"><strong>Distinct Scope Of Operation Tags</strong><span>24</span></div>
+      <div class="card"><strong>Distinct Counties Of Operation</strong><span>47</span></div>
+    </div>
+    
+    
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <h2>Scope Frequency</h2>
+          <p class="note">Distribution of NGO registration scope values for the target sheet.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" onclick="downloadPlot('scope-chart', 'scope_frequency_01_jul_24_30_jun_25')">Download Chart PNG</button>
+          <button class="btn btn-secondary" onclick="downloadTableCsv('scope_table', 'scope_frequency_01_jul_24_30_jun_25.csv')">Download Table CSV</button>
+        </div>
+      </div>
+      <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.4.0.min.js" integrity="sha256-KEmPoupLpFyGMyGAiOsiNDbKDKAvxXAn/W+oQa0ZAfk=" crossorigin="anonymous"></script>                <div id="scope-chart" class="plotly-graph-div" style="height:420px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("scope-chart")) {                    Plotly.newPlot(                        "scope-chart",                        [{"hovertemplate":"frequency=%{x}\u003cbr\u003evalue=%{y}\u003cbr\u003epercentage=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"","marker":{"color":"#1f4e79","pattern":{"shape":""}},"name":"","orientation":"h","showlegend":false,"text":{"dtype":"f8","bdata":"cT0K16NwJEBSuB6F63FWQA=="},"textposition":"outside","x":{"dtype":"i2","bdata":"RgBnAg=="},"xaxis":"x","y":["INGO","NNGO"],"yaxis":"y","type":"bar","texttemplate":"%{text}%"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Frequency"},"showgrid":true,"gridcolor":"#d9e2f3"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Category"},"categoryorder":"total ascending"},"legend":{"tracegroupgap":0},"title":{"text":"Scope Frequency and Percentage"},"barmode":"relative","margin":{"l":40,"r":40,"t":70,"b":40},"height":420,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"responsive": true}                    )                };            </script>        </div>
+      <h3>Scope Frequency Table</h3><table border="1" class="dataframe report-table" id="scope-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>value</th>
+      <th>frequency</th>
+      <th>percentage</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NNGO</td>
+      <td>615</td>
+      <td>89.78</td>
+    </tr>
+    <tr>
+      <td>INGO</td>
+      <td>70</td>
+      <td>10.22</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <h2>Scope Of Operation Frequency</h2>
+          <p class="note">Sector labels extracted from the objective text and standardized to the approved sector list.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" onclick="downloadPlot('scope-operation-chart', 'scope_of_operation_frequency_01_jul_24_30_jun_25')">Download Chart PNG</button>
+          <button class="btn btn-secondary" onclick="downloadTableCsv('scope_of_operation_table', 'scope_of_operation_frequency_01_jul_24_30_jun_25.csv')">Download Table CSV</button>
+        </div>
+      </div>
+      <div>                            <div id="scope-operation-chart" class="plotly-graph-div" style="height:780px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("scope-operation-chart")) {                    Plotly.newPlot(                        "scope-operation-chart",                        [{"hovertemplate":"frequency=%{x}\u003cbr\u003evalue=%{y}\u003cbr\u003epercentage_of_ngos=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"","marker":{"color":"#2f7d4a","pattern":{"shape":""}},"name":"","orientation":"h","showlegend":false,"text":{"dtype":"f8","bdata":"AAAAAAAA\u002fD8zMzMzMzMNQEjhehSuRxNA16NwPQrXE0BxPQrXo3AUQMP1KFyPwhZA9ihcj8L1F0BxPQrXo3AbQIXrUbgehSFAcT0K16NwJEBSuB6F61ElQFK4HoXrUSVAj8L1KFwPJ0BSuB6F61EsQD0K16Nw\u002fTlAzczMzMwMQ0CF61G4HiVEQOF6FK5HoUZAH4XrUbj+RkCamZmZmVlKQA=="},"textposition":"outside","x":{"dtype":"i2","bdata":"DAAZACEAIgAjACcAKQAvADwARgBJAEkATwBhALIABQEUATYBOwFpAQ=="},"xaxis":"x","y":["Animal welfare","Energy","Disability","Population and Reproductive Health","Sports","ICT","Drug and Alcohol Addiction","Culture","HIV\u002fAIDS awareness\u002fmitigation","Promotion of Good Governance","Relief\u002fDisaster Management","Peace building","Agriculture","Water and Sanitation","Promotion of Human Rights","Welfare","Environmental Conservation","Health","Relief of Poverty","Education"],"yaxis":"y","type":"bar","texttemplate":"%{text}%"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Frequency"},"showgrid":true,"gridcolor":"#d9e2f3"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Category"},"categoryorder":"total ascending"},"legend":{"tracegroupgap":0},"title":{"text":"Top Scope Of Operation Tags"},"barmode":"relative","margin":{"l":40,"r":40,"t":70,"b":40},"height":780,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"responsive": true}                    )                };            </script>        </div>
+      <h3>Scope Of Operation Frequency Table</h3><table border="1" class="dataframe report-table" id="scope-operation-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>value</th>
+      <th>frequency</th>
+      <th>percentage_of_ngos</th>
+      <th>percentage_of_mentions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Education</td>
+      <td>361</td>
+      <td>52.70</td>
+      <td>14.75</td>
+    </tr>
+    <tr>
+      <td>Relief of Poverty</td>
+      <td>315</td>
+      <td>45.99</td>
+      <td>12.87</td>
+    </tr>
+    <tr>
+      <td>Health</td>
+      <td>310</td>
+      <td>45.26</td>
+      <td>12.66</td>
+    </tr>
+    <tr>
+      <td>Environmental Conservation</td>
+      <td>276</td>
+      <td>40.29</td>
+      <td>11.27</td>
+    </tr>
+    <tr>
+      <td>Welfare</td>
+      <td>261</td>
+      <td>38.10</td>
+      <td>10.66</td>
+    </tr>
+    <tr>
+      <td>Promotion of Human Rights</td>
+      <td>178</td>
+      <td>25.99</td>
+      <td>7.27</td>
+    </tr>
+    <tr>
+      <td>Water and Sanitation</td>
+      <td>97</td>
+      <td>14.16</td>
+      <td>3.96</td>
+    </tr>
+    <tr>
+      <td>Agriculture</td>
+      <td>79</td>
+      <td>11.53</td>
+      <td>3.23</td>
+    </tr>
+    <tr>
+      <td>Peace building</td>
+      <td>73</td>
+      <td>10.66</td>
+      <td>2.98</td>
+    </tr>
+    <tr>
+      <td>Relief/Disaster Management</td>
+      <td>73</td>
+      <td>10.66</td>
+      <td>2.98</td>
+    </tr>
+    <tr>
+      <td>Promotion of Good Governance</td>
+      <td>70</td>
+      <td>10.22</td>
+      <td>2.86</td>
+    </tr>
+    <tr>
+      <td>HIV/AIDS awareness/mitigation</td>
+      <td>60</td>
+      <td>8.76</td>
+      <td>2.45</td>
+    </tr>
+    <tr>
+      <td>Culture</td>
+      <td>47</td>
+      <td>6.86</td>
+      <td>1.92</td>
+    </tr>
+    <tr>
+      <td>Drug and Alcohol Addiction</td>
+      <td>41</td>
+      <td>5.99</td>
+      <td>1.67</td>
+    </tr>
+    <tr>
+      <td>ICT</td>
+      <td>39</td>
+      <td>5.69</td>
+      <td>1.59</td>
+    </tr>
+    <tr>
+      <td>Sports</td>
+      <td>35</td>
+      <td>5.11</td>
+      <td>1.43</td>
+    </tr>
+    <tr>
+      <td>Population and Reproductive Health</td>
+      <td>34</td>
+      <td>4.96</td>
+      <td>1.39</td>
+    </tr>
+    <tr>
+      <td>Disability</td>
+      <td>33</td>
+      <td>4.82</td>
+      <td>1.35</td>
+    </tr>
+    <tr>
+      <td>Energy</td>
+      <td>25</td>
+      <td>3.65</td>
+      <td>1.02</td>
+    </tr>
+    <tr>
+      <td>Animal welfare</td>
+      <td>12</td>
+      <td>1.75</td>
+      <td>0.49</td>
+    </tr>
+    <tr>
+      <td>Other</td>
+      <td>11</td>
+      <td>1.61</td>
+      <td>0.45</td>
+    </tr>
+    <tr>
+      <td>Housing and Settlement</td>
+      <td>10</td>
+      <td>1.46</td>
+      <td>0.41</td>
+    </tr>
+    <tr>
+      <td>Microfinance</td>
+      <td>7</td>
+      <td>1.02</td>
+      <td>0.29</td>
+    </tr>
+    <tr>
+      <td>Road Safety</td>
+      <td>1</td>
+      <td>0.15</td>
+      <td>0.04</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+    
+    <div class="section">
+      <div class="section-head">
+        <div>
+          <h2>Counties Of Operation Frequency</h2>
+          <p class="note">Frequency of counties mentioned in the counties of operation field.</p>
+        </div>
+        <div class="actions">
+          <button class="btn" onclick="downloadPlot('counties-chart', 'counties_of_operation_frequency_01_jul_24_30_jun_25')">Download Chart PNG</button>
+          <button class="btn btn-secondary" onclick="downloadTableCsv('counties_table', 'counties_of_operation_frequency_01_jul_24_30_jun_25.csv')">Download Table CSV</button>
+        </div>
+      </div>
+      <div>                            <div id="counties-chart" class="plotly-graph-div" style="height:780px; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("counties-chart")) {                    Plotly.newPlot(                        "counties-chart",                        [{"hovertemplate":"frequency=%{x}\u003cbr\u003evalue=%{y}\u003cbr\u003epercentage_of_ngos=%{text}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"","marker":{"color":"#b25d1e","pattern":{"shape":""}},"name":"","orientation":"h","showlegend":false,"text":{"dtype":"f8","bdata":"zczMzMzMHUCF61G4HoUfQIXrUbgehR9ApHA9CtejIEC4HoXrUTghQIXrUbgehSFAmpmZmZkZIkCkcD0K1yMkQHE9CtejcCRAhetRuB4FJUCuR+F6FC4mQK5H4XoULiZAmpmZmZkZKUBxPQrXo3ArQDMzMzMzMy1Aj8L1KFwPMEApXI\u002fC9agxQHE9CtejcDRAhetRuB4FNUCamZmZmRlMQA=="},"textposition":"outside","x":{"dtype":"i2","bdata":"MwA2ADYAOQA7ADwAPgBFAEYASABMAEwAVgBeAGQAbgB5AIwAkACBAQ=="},"xaxis":"x","y":["TANA-RIVER","WAJIR","KWALE","BUNGOMA","ISIOLO","NAROK","MIGORI","SIAYA","HOMA-BAY","TURKANA","KAKAMEGA","GARISSA","MACHAKOS","KILIFI","KIAMBU","NAKURU","KAJIADO","KISUMU","MOMBASA","NAIROBI"],"yaxis":"y","type":"bar","texttemplate":"%{text}%"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"Frequency"},"showgrid":true,"gridcolor":"#d9e2f3"},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"Category"},"categoryorder":"total ascending"},"legend":{"tracegroupgap":0},"title":{"text":"Top Counties Of Operation"},"barmode":"relative","margin":{"l":40,"r":40,"t":70,"b":40},"height":780,"plot_bgcolor":"white","paper_bgcolor":"white"},                        {"responsive": true}                    )                };            </script>        </div>
+      <h3>Counties Of Operation Frequency Table</h3><table border="1" class="dataframe report-table" id="counties-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>value</th>
+      <th>frequency</th>
+      <th>percentage_of_ngos</th>
+      <th>percentage_of_mentions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NAIROBI</td>
+      <td>385</td>
+      <td>56.20</td>
+      <td>13.28</td>
+    </tr>
+    <tr>
+      <td>MOMBASA</td>
+      <td>144</td>
+      <td>21.02</td>
+      <td>4.97</td>
+    </tr>
+    <tr>
+      <td>KISUMU</td>
+      <td>140</td>
+      <td>20.44</td>
+      <td>4.83</td>
+    </tr>
+    <tr>
+      <td>KAJIADO</td>
+      <td>121</td>
+      <td>17.66</td>
+      <td>4.17</td>
+    </tr>
+    <tr>
+      <td>NAKURU</td>
+      <td>110</td>
+      <td>16.06</td>
+      <td>3.79</td>
+    </tr>
+    <tr>
+      <td>KIAMBU</td>
+      <td>100</td>
+      <td>14.60</td>
+      <td>3.45</td>
+    </tr>
+    <tr>
+      <td>KILIFI</td>
+      <td>94</td>
+      <td>13.72</td>
+      <td>3.24</td>
+    </tr>
+    <tr>
+      <td>MACHAKOS</td>
+      <td>86</td>
+      <td>12.55</td>
+      <td>2.97</td>
+    </tr>
+    <tr>
+      <td>GARISSA</td>
+      <td>76</td>
+      <td>11.09</td>
+      <td>2.62</td>
+    </tr>
+    <tr>
+      <td>KAKAMEGA</td>
+      <td>76</td>
+      <td>11.09</td>
+      <td>2.62</td>
+    </tr>
+    <tr>
+      <td>TURKANA</td>
+      <td>72</td>
+      <td>10.51</td>
+      <td>2.48</td>
+    </tr>
+    <tr>
+      <td>HOMA-BAY</td>
+      <td>70</td>
+      <td>10.22</td>
+      <td>2.41</td>
+    </tr>
+    <tr>
+      <td>SIAYA</td>
+      <td>69</td>
+      <td>10.07</td>
+      <td>2.38</td>
+    </tr>
+    <tr>
+      <td>MIGORI</td>
+      <td>62</td>
+      <td>9.05</td>
+      <td>2.14</td>
+    </tr>
+    <tr>
+      <td>NAROK</td>
+      <td>60</td>
+      <td>8.76</td>
+      <td>2.07</td>
+    </tr>
+    <tr>
+      <td>ISIOLO</td>
+      <td>59</td>
+      <td>8.61</td>
+      <td>2.04</td>
+    </tr>
+    <tr>
+      <td>BUNGOMA</td>
+      <td>57</td>
+      <td>8.32</td>
+      <td>1.97</td>
+    </tr>
+    <tr>
+      <td>KWALE</td>
+      <td>54</td>
+      <td>7.88</td>
+      <td>1.86</td>
+    </tr>
+    <tr>
+      <td>WAJIR</td>
+      <td>54</td>
+      <td>7.88</td>
+      <td>1.86</td>
+    </tr>
+    <tr>
+      <td>TANA-RIVER</td>
+      <td>51</td>
+      <td>7.45</td>
+      <td>1.76</td>
+    </tr>
+    <tr>
+      <td>BUSIA</td>
+      <td>50</td>
+      <td>7.30</td>
+      <td>1.72</td>
+    </tr>
+    <tr>
+      <td>MANDERA</td>
+      <td>50</td>
+      <td>7.30</td>
+      <td>1.72</td>
+    </tr>
+    <tr>
+      <td>KITUI</td>
+      <td>49</td>
+      <td>7.15</td>
+      <td>1.69</td>
+    </tr>
+    <tr>
+      <td>MAKUENI</td>
+      <td>48</td>
+      <td>7.01</td>
+      <td>1.66</td>
+    </tr>
+    <tr>
+      <td>MARSABIT</td>
+      <td>48</td>
+      <td>7.01</td>
+      <td>1.66</td>
+    </tr>
+    <tr>
+      <td>KISII</td>
+      <td>46</td>
+      <td>6.72</td>
+      <td>1.59</td>
+    </tr>
+    <tr>
+      <td>UASIN-GISHU</td>
+      <td>46</td>
+      <td>6.72</td>
+      <td>1.59</td>
+    </tr>
+    <tr>
+      <td>VIHIGA</td>
+      <td>42</td>
+      <td>6.13</td>
+      <td>1.45</td>
+    </tr>
+    <tr>
+      <td>SAMBURU</td>
+      <td>41</td>
+      <td>5.99</td>
+      <td>1.41</td>
+    </tr>
+    <tr>
+      <td>TAITA-TAVETA</td>
+      <td>41</td>
+      <td>5.99</td>
+      <td>1.41</td>
+    </tr>
+    <tr>
+      <td>BARINGO</td>
+      <td>40</td>
+      <td>5.84</td>
+      <td>1.38</td>
+    </tr>
+    <tr>
+      <td>MERU</td>
+      <td>40</td>
+      <td>5.84</td>
+      <td>1.38</td>
+    </tr>
+    <tr>
+      <td>MURANGA</td>
+      <td>37</td>
+      <td>5.40</td>
+      <td>1.28</td>
+    </tr>
+    <tr>
+      <td>TRANS-NZOIA</td>
+      <td>37</td>
+      <td>5.40</td>
+      <td>1.28</td>
+    </tr>
+    <tr>
+      <td>LAMU</td>
+      <td>36</td>
+      <td>5.26</td>
+      <td>1.24</td>
+    </tr>
+    <tr>
+      <td>LAIKIPIA</td>
+      <td>35</td>
+      <td>5.11</td>
+      <td>1.21</td>
+    </tr>
+    <tr>
+      <td>EMBU</td>
+      <td>33</td>
+      <td>4.82</td>
+      <td>1.14</td>
+    </tr>
+    <tr>
+      <td>KIRINYAGA</td>
+      <td>33</td>
+      <td>4.82</td>
+      <td>1.14</td>
+    </tr>
+    <tr>
+      <td>NYERI</td>
+      <td>31</td>
+      <td>4.53</td>
+      <td>1.07</td>
+    </tr>
+    <tr>
+      <td>NYANDARUA</td>
+      <td>26</td>
+      <td>3.80</td>
+      <td>0.90</td>
+    </tr>
+    <tr>
+      <td>WEST-POKOT</td>
+      <td>26</td>
+      <td>3.80</td>
+      <td>0.90</td>
+    </tr>
+    <tr>
+      <td>THARAKA-NITHI</td>
+      <td>24</td>
+      <td>3.50</td>
+      <td>0.83</td>
+    </tr>
+    <tr>
+      <td>ELGEYO-MARAKWET</td>
+      <td>23</td>
+      <td>3.36</td>
+      <td>0.79</td>
+    </tr>
+    <tr>
+      <td>NYAMIRA</td>
+      <td>22</td>
+      <td>3.21</td>
+      <td>0.76</td>
+    </tr>
+    <tr>
+      <td>NANDI</td>
+      <td>20</td>
+      <td>2.92</td>
+      <td>0.69</td>
+    </tr>
+    <tr>
+      <td>KERICHO</td>
+      <td>19</td>
+      <td>2.77</td>
+      <td>0.66</td>
+    </tr>
+    <tr>
+      <td>BOMET</td>
+      <td>16</td>
+      <td>2.34</td>
+      <td>0.55</td>
+    </tr>
+  </tbody>
+</table>
+    </div>
+
+  </div>
+  <script>
+    const reportTables = {"scope_table": [{"value": "NNGO", "frequency": 615, "percentage": 89.78}, {"value": "INGO", "frequency": 70, "percentage": 10.22}], "scope_of_operation_table": [{"value": "Education", "frequency": 361, "percentage_of_ngos": 52.7, "percentage_of_mentions": 14.75}, {"value": "Relief of Poverty", "frequency": 315, "percentage_of_ngos": 45.99, "percentage_of_mentions": 12.87}, {"value": "Health", "frequency": 310, "percentage_of_ngos": 45.26, "percentage_of_mentions": 12.66}, {"value": "Environmental Conservation", "frequency": 276, "percentage_of_ngos": 40.29, "percentage_of_mentions": 11.27}, {"value": "Welfare", "frequency": 261, "percentage_of_ngos": 38.1, "percentage_of_mentions": 10.66}, {"value": "Promotion of Human Rights", "frequency": 178, "percentage_of_ngos": 25.99, "percentage_of_mentions": 7.27}, {"value": "Water and Sanitation", "frequency": 97, "percentage_of_ngos": 14.16, "percentage_of_mentions": 3.96}, {"value": "Agriculture", "frequency": 79, "percentage_of_ngos": 11.53, "percentage_of_mentions": 3.23}, {"value": "Peace building", "frequency": 73, "percentage_of_ngos": 10.66, "percentage_of_mentions": 2.98}, {"value": "Relief/Disaster Management", "frequency": 73, "percentage_of_ngos": 10.66, "percentage_of_mentions": 2.98}, {"value": "Promotion of Good Governance", "frequency": 70, "percentage_of_ngos": 10.22, "percentage_of_mentions": 2.86}, {"value": "HIV/AIDS awareness/mitigation", "frequency": 60, "percentage_of_ngos": 8.76, "percentage_of_mentions": 2.45}, {"value": "Culture", "frequency": 47, "percentage_of_ngos": 6.86, "percentage_of_mentions": 1.92}, {"value": "Drug and Alcohol Addiction", "frequency": 41, "percentage_of_ngos": 5.99, "percentage_of_mentions": 1.67}, {"value": "ICT", "frequency": 39, "percentage_of_ngos": 5.69, "percentage_of_mentions": 1.59}, {"value": "Sports", "frequency": 35, "percentage_of_ngos": 5.11, "percentage_of_mentions": 1.43}, {"value": "Population and Reproductive Health", "frequency": 34, "percentage_of_ngos": 4.96, "percentage_of_mentions": 1.39}, {"value": "Disability", "frequency": 33, "percentage_of_ngos": 4.82, "percentage_of_mentions": 1.35}, {"value": "Energy", "frequency": 25, "percentage_of_ngos": 3.65, "percentage_of_mentions": 1.02}, {"value": "Animal welfare", "frequency": 12, "percentage_of_ngos": 1.75, "percentage_of_mentions": 0.49}, {"value": "Other", "frequency": 11, "percentage_of_ngos": 1.61, "percentage_of_mentions": 0.45}, {"value": "Housing and Settlement", "frequency": 10, "percentage_of_ngos": 1.46, "percentage_of_mentions": 0.41}, {"value": "Microfinance", "frequency": 7, "percentage_of_ngos": 1.02, "percentage_of_mentions": 0.29}, {"value": "Road Safety", "frequency": 1, "percentage_of_ngos": 0.15, "percentage_of_mentions": 0.04}], "counties_table": [{"value": "NAIROBI", "frequency": 385, "percentage_of_ngos": 56.2, "percentage_of_mentions": 13.28}, {"value": "MOMBASA", "frequency": 144, "percentage_of_ngos": 21.02, "percentage_of_mentions": 4.97}, {"value": "KISUMU", "frequency": 140, "percentage_of_ngos": 20.44, "percentage_of_mentions": 4.83}, {"value": "KAJIADO", "frequency": 121, "percentage_of_ngos": 17.66, "percentage_of_mentions": 4.17}, {"value": "NAKURU", "frequency": 110, "percentage_of_ngos": 16.06, "percentage_of_mentions": 3.79}, {"value": "KIAMBU", "frequency": 100, "percentage_of_ngos": 14.6, "percentage_of_mentions": 3.45}, {"value": "KILIFI", "frequency": 94, "percentage_of_ngos": 13.72, "percentage_of_mentions": 3.24}, {"value": "MACHAKOS", "frequency": 86, "percentage_of_ngos": 12.55, "percentage_of_mentions": 2.97}, {"value": "GARISSA", "frequency": 76, "percentage_of_ngos": 11.09, "percentage_of_mentions": 2.62}, {"value": "KAKAMEGA", "frequency": 76, "percentage_of_ngos": 11.09, "percentage_of_mentions": 2.62}, {"value": "TURKANA", "frequency": 72, "percentage_of_ngos": 10.51, "percentage_of_mentions": 2.48}, {"value": "HOMA-BAY", "frequency": 70, "percentage_of_ngos": 10.22, "percentage_of_mentions": 2.41}, {"value": "SIAYA", "frequency": 69, "percentage_of_ngos": 10.07, "percentage_of_mentions": 2.38}, {"value": "MIGORI", "frequency": 62, "percentage_of_ngos": 9.05, "percentage_of_mentions": 2.14}, {"value": "NAROK", "frequency": 60, "percentage_of_ngos": 8.76, "percentage_of_mentions": 2.07}, {"value": "ISIOLO", "frequency": 59, "percentage_of_ngos": 8.61, "percentage_of_mentions": 2.04}, {"value": "BUNGOMA", "frequency": 57, "percentage_of_ngos": 8.32, "percentage_of_mentions": 1.97}, {"value": "KWALE", "frequency": 54, "percentage_of_ngos": 7.88, "percentage_of_mentions": 1.86}, {"value": "WAJIR", "frequency": 54, "percentage_of_ngos": 7.88, "percentage_of_mentions": 1.86}, {"value": "TANA-RIVER", "frequency": 51, "percentage_of_ngos": 7.45, "percentage_of_mentions": 1.76}, {"value": "BUSIA", "frequency": 50, "percentage_of_ngos": 7.3, "percentage_of_mentions": 1.72}, {"value": "MANDERA", "frequency": 50, "percentage_of_ngos": 7.3, "percentage_of_mentions": 1.72}, {"value": "KITUI", "frequency": 49, "percentage_of_ngos": 7.15, "percentage_of_mentions": 1.69}, {"value": "MAKUENI", "frequency": 48, "percentage_of_ngos": 7.01, "percentage_of_mentions": 1.66}, {"value": "MARSABIT", "frequency": 48, "percentage_of_ngos": 7.01, "percentage_of_mentions": 1.66}, {"value": "KISII", "frequency": 46, "percentage_of_ngos": 6.72, "percentage_of_mentions": 1.59}, {"value": "UASIN-GISHU", "frequency": 46, "percentage_of_ngos": 6.72, "percentage_of_mentions": 1.59}, {"value": "VIHIGA", "frequency": 42, "percentage_of_ngos": 6.13, "percentage_of_mentions": 1.45}, {"value": "SAMBURU", "frequency": 41, "percentage_of_ngos": 5.99, "percentage_of_mentions": 1.41}, {"value": "TAITA-TAVETA", "frequency": 41, "percentage_of_ngos": 5.99, "percentage_of_mentions": 1.41}, {"value": "BARINGO", "frequency": 40, "percentage_of_ngos": 5.84, "percentage_of_mentions": 1.38}, {"value": "MERU", "frequency": 40, "percentage_of_ngos": 5.84, "percentage_of_mentions": 1.38}, {"value": "MURANGA", "frequency": 37, "percentage_of_ngos": 5.4, "percentage_of_mentions": 1.28}, {"value": "TRANS-NZOIA", "frequency": 37, "percentage_of_ngos": 5.4, "percentage_of_mentions": 1.28}, {"value": "LAMU", "frequency": 36, "percentage_of_ngos": 5.26, "percentage_of_mentions": 1.24}, {"value": "LAIKIPIA", "frequency": 35, "percentage_of_ngos": 5.11, "percentage_of_mentions": 1.21}, {"value": "EMBU", "frequency": 33, "percentage_of_ngos": 4.82, "percentage_of_mentions": 1.14}, {"value": "KIRINYAGA", "frequency": 33, "percentage_of_ngos": 4.82, "percentage_of_mentions": 1.14}, {"value": "NYERI", "frequency": 31, "percentage_of_ngos": 4.53, "percentage_of_mentions": 1.07}, {"value": "NYANDARUA", "frequency": 26, "percentage_of_ngos": 3.8, "percentage_of_mentions": 0.9}, {"value": "WEST-POKOT", "frequency": 26, "percentage_of_ngos": 3.8, "percentage_of_mentions": 0.9}, {"value": "THARAKA-NITHI", "frequency": 24, "percentage_of_ngos": 3.5, "percentage_of_mentions": 0.83}, {"value": "ELGEYO-MARAKWET", "frequency": 23, "percentage_of_ngos": 3.36, "percentage_of_mentions": 0.79}, {"value": "NYAMIRA", "frequency": 22, "percentage_of_ngos": 3.21, "percentage_of_mentions": 0.76}, {"value": "NANDI", "frequency": 20, "percentage_of_ngos": 2.92, "percentage_of_mentions": 0.69}, {"value": "KERICHO", "frequency": 19, "percentage_of_ngos": 2.77, "percentage_of_mentions": 0.66}, {"value": "BOMET", "frequency": 16, "percentage_of_ngos": 2.34, "percentage_of_mentions": 0.55}]};
+
+    function downloadPlot(chartId, filename) {
+      const plot = document.getElementById(chartId);
+      if (!plot || typeof Plotly === 'undefined') {
+        return;
+      }
+      Plotly.downloadImage(plot, {
+        format: 'png',
+        filename: filename,
+        width: 1600,
+        height: 900,
+        scale: 2
+      });
+    }
+
+    function csvEscape(value) {
+      if (value === null || value === undefined) {
+        return '';
+      }
+      const text = String(value);
+      if (/[",\n]/.test(text)) {
+        return '"' + text.replace(/"/g, '""') + '"';
+      }
+      return text;
+    }
+
+    function downloadTableCsv(tableKey, filename) {
+      const rows = reportTables[tableKey] || [];
+      if (!rows.length) {
+        return;
+      }
+      const headers = Object.keys(rows[0]);
+      const csvLines = [
+        headers.map(csvEscape).join(','),
+        ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(','))
+      ];
+      const csvContent = csvLines.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    }
+  </script>
+</body>
+</html>

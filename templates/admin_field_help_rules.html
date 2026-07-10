@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="app-page-container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h2 class="mb-1">Field Help Rules</h2>
+      <div class="text-muted small">Manage allowed/disallowed field rules directly from the database.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary btn-sm">Back to Admin</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Total Rules</div><div class="fs-4 fw-bold">{{ metrics.total }}</div></div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Allowed</div><div class="fs-4 fw-bold">{{ metrics.allowed }}</div></div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Disabled</div><div class="fs-4 fw-bold">{{ metrics.disabled }}</div></div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Required</div><div class="fs-4 fw-bold">{{ metrics.required }}</div></div></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4 col-lg-3">
+          <label class="form-label mb-1" for="page_key">Page Key</label>
+          <select class="form-select form-select-sm" id="page_key" name="page_key">
+            {% for key in page_keys %}
+            <option value="{{ key }}" {% if key == selected_page_key %}selected{% endif %}>{{ key }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary btn-sm">Load Rules</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h4 class="card-title mb-3">Add New Rule</h4>
+      <form method="post" class="row g-2">
+        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="page_key" value="{{ selected_page_key }}">
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1">Field Name</label>
+          <input type="text" class="form-control form-control-sm" name="field_name" placeholder="field_key" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1">Field Label</label>
+          <input type="text" class="form-control form-control-sm" name="field_label" placeholder="Field Label" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1">Heading</label>
+          <input type="text" class="form-control form-control-sm" name="heading" placeholder="e.g. 2.3.4 Counties of Operation">
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label mb-1">Notes</label>
+          <input type="text" class="form-control form-control-sm" name="notes" placeholder="Short guidance">
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-3 mt-2">
+          <label class="form-check-label"><input class="form-check-input me-1" type="checkbox" name="is_allowed" value="1">Allowed</label>
+          <label class="form-check-label"><input class="form-check-input me-1" type="checkbox" name="is_disabled" value="1">Disabled</label>
+          <label class="form-check-label"><input class="form-check-input me-1" type="checkbox" name="is_required" value="1">Required</label>
+          <label class="form-check-label"><input class="form-check-input me-1" type="checkbox" name="used_in_sector_report" value="1" checked>Used In Sector Report</label>
+          <button type="submit" class="btn btn-success btn-sm">Create Rule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h4 class="card-title mb-3">Existing Rules ({{ selected_page_key }})</h4>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Field Name</th>
+              <th>Field Label</th>
+              <th>Heading</th>
+              <th>Notes</th>
+              <th>Flags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rule in rules %}
+            <tr>
+              <td colspan="6">
+                <form method="post" class="row g-2 align-items-start">
+                  <input type="hidden" name="rule_id" value="{{ rule.id }}">
+                  <input type="hidden" name="page_key" value="{{ selected_page_key }}">
+                  <div class="col-12 col-md-2">
+                    <input type="text" class="form-control form-control-sm" name="field_name" value="{{ rule.field_name }}" required>
+                  </div>
+                  <div class="col-12 col-md-2">
+                    <input type="text" class="form-control form-control-sm" name="field_label" value="{{ rule.field_label }}" required>
+                  </div>
+                  <div class="col-12 col-md-2">
+                    <input type="text" class="form-control form-control-sm" name="heading" value="{{ rule.heading or '' }}">
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <input type="text" class="form-control form-control-sm" name="notes" value="{{ rule.notes or '' }}">
+                  </div>
+                  <div class="col-12 col-md-2">
+                    <div class="d-flex flex-wrap gap-2 small">
+                      <label><input class="form-check-input me-1" type="checkbox" name="is_allowed" value="1" {% if rule.is_allowed %}checked{% endif %}>Allowed</label>
+                      <label><input class="form-check-input me-1" type="checkbox" name="is_disabled" value="1" {% if rule.is_disabled %}checked{% endif %}>Disabled</label>
+                      <label><input class="form-check-input me-1" type="checkbox" name="is_required" value="1" {% if rule.is_required %}checked{% endif %}>Required</label>
+                      <label><input class="form-check-input me-1" type="checkbox" name="used_in_sector_report" value="1" {% if rule.used_in_sector_report %}checked{% endif %}>Sector</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-md-1 d-flex gap-2">
+                    <button type="submit" name="action" value="update" class="btn btn-primary btn-sm">Save</button>
+                    <button type="submit" name="action" value="delete" class="btn btn-outline-danger btn-sm" onclick="return confirm('Delete this field-help rule?');">Delete</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted">No rules found for this page key.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: form14_web
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - PORT=8000
+      - "NOMINATIM_USER_AGENT=form14-local/1.0 (admin@127.0.0.1)"
+      - SEED_USERS_ON_STARTUP=1
+    volumes:
+      - .:/app
+      - ./instance:/app/instance
+    restart: unless-stopped
+
+  web-dev:
+    build: .
+    container_name: form14_web_dev
+    command: python app.py
+    environment:
+      - FLASK_ENV=development
+      - PORT=5000
+      - "NOMINATIM_USER_AGENT=form14-local/1.0 (admin@127.0.0.1)"
+      - SEED_USERS_ON_STARTUP=1
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+      - ./instance:/app/instance
+    restart: unless-stopped

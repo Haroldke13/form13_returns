@@ -1,0 +1,5 @@
+Remove the background from this scanned photo crop and return a transparent PNG.
+
+Preserve the visible person or people exactly from the input image: faces, clothing, skin tone, pose, body proportions, scan texture, and original colors. Do not beautify, redraw, replace, or invent any person. Keep visible foreground people and important held items. Remove room, outdoor, furniture, wall, floor, photo paper, scanner artifacts, shadows, and borders.
+
+The output must have a transparent background. No solid background, no checkerboard, no white canvas, no text, no watermark, no frame, no cast shadow.

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="app-page-container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-1">Form 14 Files Submitted By User</h2>
+      <div class="text-muted small">
+        {{ target_user.full_name or target_user.email or ('User #' ~ target_user.id) }}
+      </div>
+      {% if aggregation_user_count and aggregation_user_count > 1 %}
+      <div class="text-muted small">Grouped across {{ aggregation_user_count }} accounts with the same email.</div>
+      {% endif %}
+    </div>
+    <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary btn-sm">Back to Admin</a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+          <div class="border rounded-3 bg-light h-100 p-3">
+            <div class="text-muted text-uppercase small">Total Files Submitted</div>
+            <div class="fs-3 fw-semibold">{{ total_worked_file_count or 0 }}</div>
+          </div>
+        </div>
+        {% if search_query %}
+        <div class="col-12 col-md-4">
+          <div class="border rounded-3 h-100 p-3">
+            <div class="text-muted text-uppercase small">Showing</div>
+            <div class="fs-3 fw-semibold">{{ filtered_worked_file_count or 0 }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <form method="get" action="{{ url_for('admin_user_worked_files', user_id=target_user.id) }}" class="row g-2 align-items-end mb-3">
+        {% if aggregation_email %}
+        <input type="hidden" name="email" value="{{ aggregation_email }}">
+        {% endif %}
+        <div class="col-12 col-md-9">
+          <label for="worked-files-search" class="form-label mb-1">Search file</label>
+          <input id="worked-files-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="Search by report ID, PBO name, registration number, or file label">
+        </div>
+        <div class="col-6 col-md-auto">
+          <button type="submit" class="btn btn-primary w-100">Search</button>
+        </div>
+        <div class="col-6 col-md-auto">
+          <a href="{{ url_for('admin_user_worked_files', user_id=target_user.id, email=aggregation_email or None) }}" class="btn btn-outline-secondary w-100">Clear</a>
+        </div>
+      </form>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Organization / File</th>
+              <th>Reporting Period</th>
+              <th>Updated At</th>
+              <th>Open</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in worked_reports %}
+            {% set report = row.report %}
+            <tr>
+              <td>
+                <a href="{{ url_for('report_detail', report_id=report.id) }}">
+                  {{ report.pbo_name or ('Report #' ~ report.id) }}
+                </a>
+                <div class="small text-muted">#{{ report.id }}</div>
+              </td>
+              <td>
+                {% if report.reporting_period_start and report.reporting_period_end %}
+                {{ report.reporting_period_start|format_date }} - {{ report.reporting_period_end|format_date }}
+                {% elif report.reporting_period_start %}
+                {{ report.reporting_period_start|format_date }}
+                {% elif report.reporting_period_end %}
+                {{ report.reporting_period_end|format_date }}
+                {% else %}
+                <span class="text-muted">Not set</span>
+                {% endif %}
+              </td>
+              <td>
+                {{ row.last_touched_at|format_datetime if row.last_touched_at else (report.updated_at|format_datetime if report.updated_at else 'N/A') }}
+              </td>
+              <td>
+                <a href="{{ url_for('report_detail', report_id=report.id) }}" class="btn btn-outline-primary btn-sm">
+                  Open
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-muted">
+                {% if search_query %}
+                No Form 14 submissions matched "{{ search_query }}".
+                {% else %}
+                No Form 14 submissions for this user yet.
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

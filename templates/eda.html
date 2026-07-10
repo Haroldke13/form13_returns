@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %} Data EDA & Profiling{% endblock %}
+{% block content %}
+
+
+
+<div class="container" placeholder="Container for EDA content">
+    <h1 placeholder="Data EDA & Profiling heading">Data EDA & Profiling</h1>
+    <a href="{{ url_for('home') }}" class="btn" placeholder="Link back to home form">Back to Form</a>
+    <a href="{{ url_for('reports_list') }}" class="btn" placeholder="Link to view all reports">View All Reports</a>
+
+    {% if error_message %}
+    <div class="card" placeholder="Error message container">
+        <h2 placeholder="Error heading">Error</h2>
+        <p>{{ error_message }}</p>
+    </div>
+    {% endif %}
+
+    {% if profiling_html %}
+    <div class="card" placeholder="Automated profiling report section">
+        <h2 class="section-title" placeholder="Profiling report title">Automated Profiling Report</h2>
+        {{ profiling_html | safe }}
+    </div>
+    {% endif %}
+
+    {% if summary_sections %}
+    <div class="card" placeholder="EDA summary section">
+        <h2 class="section-title" placeholder="EDA summary heading">Exploratory Data Analysis (EDA) Summary</h2>
+        {% for title, html in summary_sections %}
+        <h3 placeholder="Summary section title">{{ title }}</h3>
+        <div placeholder="Summary section content">{{ html | safe }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not error_message and not profiling_html and not summary_sections %}
+    <div class="card" placeholder="No EDA output message">
+        <p>No EDA output available.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+# Optional / temporarily disabled feature dependencies.
+# Install these only when re-enabling Data Analysis Bot, profiling dashboards, or test tooling:
+#   pip install -r requirements2.0.txt
+
+matplotlib
+plotly
+kaleido
+seaborn
+ydata-profiling
+Faker
+pytest

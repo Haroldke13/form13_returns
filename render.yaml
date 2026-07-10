@@ -1,0 +1,127 @@
+services:
+  - type: web
+    name: returnsform14
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    healthCheckPath: /
+    preDeployCommand: flask init-db
+    disk:
+      name: returnsform14-instance-data
+      mountPath: /app/instance
+      sizeGB: 10
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: FLASK_APP
+        value: app.py
+      - key: APP_TIMEZONE
+        value: Africa/Nairobi
+      - key: PREFERRED_URL_SCHEME
+        value: http
+      - key: SESSION_COOKIE_SECURE
+        value: "false"
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: ALLOWED_HOSTS
+        value: returnsform14.onrender.com,www.returnsform14.org,returnsform14.org,localhost,127.0.0.1
+      - key: RENDER_EXTERNAL_HOSTNAME
+        value: returnsform14.onrender.com
+      - key: PUBLIC_BASE_URL
+        value: https://returnsform14.onrender.com
+      - key: PBORA_APP_HOST_IP
+        value: auto
+      - key: PBORA_GATEWAY
+        value: auto
+      - key: PBORA_POSTGRES_HOST
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: INTERNAL_DATABASE_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_DIALECT
+        value: postgresql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        value: pbora
+      - key: DB_USER
+        value: pbora
+      - key: DB_PASSWORD
+        value: pbora
+      - key: DB_SSL_MODE
+        value: disable
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        value: "5432"
+      - key: POSTGRES_DB
+        value: pbora
+      - key: POSTGRES_USER
+        value: pbora
+      - key: POSTGRES_PASSWORD
+        value: pbora
+      - key: POSTGRES_SSL_MODE
+        value: disable
+      - key: EXTERNAL_POSTGRES
+        value: "1"
+      - key: RUN_SCHEMA_SYNC_ON_STARTUP
+        value: "1"
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: GUNICORN_THREADS
+        value: "8"
+      - key: GUNICORN_TIMEOUT
+        value: "360"
+      - key: PERSISTENT_STORAGE_ROOT
+        value: /app/instance
+      - key: UPLOAD_FOLDER
+        value: /app/instance/uploads
+      - key: REPORT_MERGE_EXPORT_DIR
+        value: /app/instance/report_merge_exports
+      - key: REPORT_MERGE_TEMP_DIR
+        value: /app/instance/report_merge_temp
+      - key: DB_BACKUP_DIR
+        value: /app/instance/backups
+      - key: SEED_USERS_ON_STARTUP
+        value: "0"
+      - key: USER_SEED_RESET
+        value: "0"
+      - key: USER_SEED_PASSWORD_DEFAULT
+        value: field.12345
+      - key: ADMIN_USER_EMAIL
+        value: joel@returnsform14.org
+      - key: ADMIN_USER_PASSWORD
+        value: field.12345
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_DEFAULT_SENDER
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_DISCOVERY_URL
+        sync: false
+      - key: GOOGLE_OAUTH_REDIRECT_URI
+        sync: false
+      - key: GOOGLE_OAUTH_REDIRECT_URI_FALLBACK
+        sync: false
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        sync: false
+      - key: GOOGLE_DRIVE_ENABLED
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
+      - key: GOOGLE_DRIVE_SERVICE_ACCOUNT_FILE
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

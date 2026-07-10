@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="app-page-container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+      <h2 class="mb-1">Admin Data Analysis Bot</h2>
+      <div class="text-muted small">Offline intent routing + local analytics over enabled Form 14 fields.</div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary btn-sm">Back to Admin</a>
+      <form method="post" action="{{ url_for('admin_data_analysis_bot_train') }}" class="d-flex gap-2">
+        <label class="small d-flex align-items-center gap-1 mb-0"><input type="checkbox" name="replace" value="1">Replace dataset rows</label>
+        <button type="submit" class="btn btn-primary btn-sm">Reload + Train (Background)</button>
+      </form>
+    </div>
+  </div>
+  {% set train_job_class = 'alert-info' if train_job.running else ('alert-warning' if train_job.last_error else ('alert-success' if train_job.last_result else 'alert-light')) %}
+  {% set train_job_text = (
+    'Training is running in background (started ' ~ train_job.started_at ~ '). This status auto-refreshes.'
+    if train_job.running else
+    ('Last background training failed: ' ~ train_job.last_error)
+    if train_job.last_error else
+    ('Last background training finished at ' ~ train_job.finished_at ~ '. Accuracy: ' ~ ('%.2f%%'|format((train_job.last_result.accuracy or 0) * 100)) ~ ', labels: ' ~ (train_job.last_result.labels or 0) ~ ', train/test: ' ~ (train_job.last_result.train or 0) ~ '/' ~ (train_job.last_result.test or 0) ~ '.')
+    if train_job.last_result else
+    'No background training job has run yet.'
+  ) %}
+  <div id="train-job-status" class="alert {{ train_job_class }} py-2 small mb-3">{{ train_job_text }}</div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Model Available</div><div class="fs-5 fw-bold">{{ 'YES' if metrics.model_available else 'NO' }}</div></div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Accuracy</div><div class="fs-5 fw-bold">{{ '%.2f%%'|format(metrics.accuracy * 100) }}</div></div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Training Samples</div><div class="fs-5 fw-bold">{{ metrics.sample_count }}</div></div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Intent Labels</div><div class="fs-6 fw-bold">{{ metrics.labels|join(', ') if metrics.labels else 'N/A' }}</div></div></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <h4 class="card-title mb-3">Ask Analysis Question</h4>
+      <div class="mb-2">
+        <textarea id="admin-analysis-question" class="form-control" rows="3" placeholder="Example: Show payment trend over time for enabled fields."></textarea>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <button id="admin-analysis-ask-btn" class="btn btn-success btn-sm" type="button">Run Analysis</button>
+        <span id="admin-analysis-status" class="small text-muted"></span>
+      </div>
+      <div id="admin-analysis-routing" class="alert alert-light border small mt-2 mb-0 d-none"></div>
+      <div id="admin-analysis-output" class="mt-3"></div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h4 class="card-title mb-3">Recent Bot Interactions</h4>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>User</th>
+              <th>Question</th>
+              <th>Intent</th>
+              <th>Confidence</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in recent_rows %}
+            <tr>
+              <td>{{ row.created_at|format_datetime }}</td>
+              <td>{{ row.user.email if row.user else 'System' }}</td>
+              <td>{{ row.question }}</td>
+              <td>{{ row.intent or 'n/a' }}</td>
+              <td>{{ '%.2f'|format(row.confidence or 0) }}</td>
+              <td>
+                {% if row.result_token %}
+                <a href="{{ url_for('admin_data_analysis_result', token=row.result_token) }}" target="_blank" rel="noopener">Open report</a>
+                {% else %}
+                <span class="text-muted">No report</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted">No interactions yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-3" id="external-json-sync">
+    <div class="card-body">
+      <h4 class="card-title mb-2">External JSON Link Sync (Cache + Offline Fallback)</h4>
+      <div class="small text-muted mb-3">
+        Provide all 3 datasets (either link or file upload per dataset), then sync. Synced files are cached locally for offline fallback.
+      </div>
+      <form method="post" action="{{ url_for('admin_data_analysis_bot_external_sync') }}" enctype="multipart/form-data">
+        <div class="row g-2">
+          {% for target in external_json_targets %}
+          <div class="col-12 col-xl-6">
+            <label class="form-label small mb-1" for="{{ target.form_key }}">{{ target.label }}</label>
+            <input
+              id="{{ target.form_key }}"
+              name="{{ target.form_key }}"
+              type="url"
+              class="form-control form-control-sm"
+              placeholder="https://..."
+              value="{{ external_links.get(target.form_key, '') }}"
+            >
+            <div class="small text-muted mt-1 mb-1">or upload JSON file:</div>
+            <input
+              id="{{ target.file_key }}"
+              name="{{ target.file_key }}"
+              type="file"
+              class="form-control form-control-sm"
+              accept="application/json,.json"
+            >
+          </div>
+          {% endfor %}
+        </div>
+        <div class="d-flex flex-wrap gap-3 align-items-center mt-3">
+          <label class="small d-flex align-items-center gap-1 mb-0">
+            <input type="checkbox" name="train_after_sync" value="1" checked>
+            Reload + train after sync
+          </label>
+          <label class="small d-flex align-items-center gap-1 mb-0">
+            <input type="checkbox" name="replace_after_sync" value="1" checked>
+            Replace existing dataset rows
+          </label>
+          <button type="submit" class="btn btn-outline-primary btn-sm">Sync Links + Cache</button>
+        </div>
+      </form>
+      {% if external_sync_meta.last_at %}
+      <div class="small text-muted mt-2">Last successful external sync: {{ external_sync_meta.last_at }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script defer>
+  document.addEventListener('DOMContentLoaded', () => {
+    const askBtn = document.getElementById('admin-analysis-ask-btn');
+    const questionEl = document.getElementById('admin-analysis-question');
+    const statusEl = document.getElementById('admin-analysis-status');
+    const routingEl = document.getElementById('admin-analysis-routing');
+    const outputEl = document.getElementById('admin-analysis-output');
+    if (!askBtn || !questionEl || !statusEl || !outputEl || !routingEl) return;
+
+    askBtn.addEventListener('click', async () => {
+      const question = questionEl.value.trim();
+      if (!question) {
+        statusEl.textContent = 'Please enter a question.';
+        return;
+      }
+      askBtn.disabled = true;
+      statusEl.textContent = 'Running analysis...';
+      routingEl.classList.add('d-none');
+      routingEl.textContent = '';
+      outputEl.innerHTML = '';
+      try {
+        const response = await fetch({{ url_for('admin_data_analysis_bot_ask')|tojson }}, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+          body: JSON.stringify({question}),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || 'Analysis failed.');
+        }
+        const domainText = payload.domain ? ` | Domain: ${payload.domain}` : '';
+        statusEl.textContent = `Intent: ${payload.intent || 'unknown'} | Confidence: ${(payload.confidence || 0).toFixed(2)}${domainText}`;
+        const terms = (payload.domain_terms || []).slice(0, 6).join(', ');
+        const columns = (payload.domain_columns || []).slice(0, 6).join(', ');
+        if (payload.domain || terms || columns) {
+          const source = payload.domain_source ? `Source: ${payload.domain_source}` : 'Source: keyword routing';
+          routingEl.innerHTML = `
+            <div><strong>Detected domain:</strong> ${payload.domain || 'n/a'} (${source})</div>
+            <div><strong>Matched keywords:</strong> ${terms || 'none'}</div>
+            <div><strong>Matched columns:</strong> ${columns || 'none'}</div>
+          `;
+          routingEl.classList.remove('d-none');
+        } else {
+          routingEl.classList.add('d-none');
+          routingEl.textContent = '';
+        }
+        const factor = payload.factor_summary || {};
+        const hasFactor = Number(factor.total || 0) > 0;
+        const factorNoDataMatches = (factor.no_data_matches || []).slice(0, 3).join(', ');
+        const factorPanel = hasFactor ? `
+          <div class="small mt-2 p-2 border rounded bg-light">
+            <div><strong>Coverage check:</strong> ${factor.explanation || `Checked ${factor.total || 0} metrics. ${factor.available || 0} have data and ${factor.no_data || 0} currently have no data.`}</div>
+            <div><strong>Matched missing topics:</strong> ${factorNoDataMatches || 'none'}</div>
+          </div>
+        ` : '';
+        const lines = (payload.summary_lines || []).map((line) => `<li>${line}</li>`).join('');
+        const resultLink = payload.result_url ? `<a href="${payload.result_url}" target="_blank" rel="noopener">Open temporary analysis report</a>` : '';
+        outputEl.innerHTML = `
+          <div class="alert alert-info mb-0">
+            <div><strong>${payload.title || 'Analysis Result'}</strong></div>
+            <div class="mt-1">${payload.answer || ''}</div>
+            <ul class="mt-2 mb-2">${lines || ''}</ul>
+            ${factorPanel}
+            <div>${resultLink}</div>
+          </div>
+        `;
+      } catch (error) {
+        statusEl.textContent = 'Analysis request failed.';
+        routingEl.classList.add('d-none');
+        routingEl.textContent = '';
+        outputEl.innerHTML = `<div class="alert alert-danger mb-0">${error.message || 'Could not run analysis.'}</div>`;
+      } finally {
+        askBtn.disabled = false;
+      }
+    });
+  });
+</script>
+<script defer>
+  document.addEventListener('DOMContentLoaded', () => {
+    const statusBox = document.getElementById('train-job-status');
+    if (!statusBox) return;
+    const endpoint = {{ url_for('admin_data_analysis_bot_train_status')|tojson }};
+
+    const setStatus = (text, alertClass) => {
+      statusBox.textContent = text;
+      statusBox.classList.remove('alert-info', 'alert-warning', 'alert-success', 'alert-light');
+      statusBox.classList.add(alertClass || 'alert-light');
+    };
+
+    const syncStatus = async () => {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {'X-Requested-With': 'XMLHttpRequest'},
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload) return;
+
+        if (payload.running) {
+          setStatus(
+            `Training is running in background (started ${payload.started_at || 'now'}). This status auto-refreshes.`,
+            'alert-info',
+          );
+          return;
+        }
+        if (payload.last_error) {
+          setStatus(`Last background training failed: ${payload.last_error}`, 'alert-warning');
+          return;
+        }
+        const result = payload.last_result || {};
+        if (Object.keys(result).length) {
+          const accuracy = Number(result.accuracy || 0) * 100;
+          setStatus(
+            `Last background training finished at ${payload.finished_at || 'just now'}. Accuracy: ${accuracy.toFixed(2)}%, labels: ${result.labels || 0}, train/test: ${result.train || 0}/${result.test || 0}.`,
+            'alert-success',
+          );
+          return;
+        }
+        setStatus('No background training job has run yet.', 'alert-light');
+      } catch (error) {
+        return;
+      }
+    };
+
+    syncStatus();
+    window.setInterval(syncStatus, 7000);
+  });
+</script>
+{% endblock %}

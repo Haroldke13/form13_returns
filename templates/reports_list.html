@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+{% block title %}All PBO Reports {% endblock %}
+{% block content %}
+<div class="app-page-container">
+<div class="container-fluid px-3 px-md-4">
+    
+
+    <form method="get" action="{{ url_for('reports_list') }}" class="row g-2 align-items-end mb-3" data-skip-page-loader="true">
+        <div class="col-12 col-md-7 col-lg-8">
+            <label for="reports-search" class="form-label mb-1">Search Records</label>
+            <input id="reports-search" type="search" name="q" value="{{ search_query }}"
+                class="form-control"
+                placeholder="Search by PBO name, registration number, contact name, or contact email">
+        </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <label for="reports-per-page" class="form-label mb-1">Rows Per Page</label>
+            <select id="reports-per-page" name="per_page" class="form-select">
+                {% for option in per_page_options %}
+                <option value="{{ option }}" {{ 'selected' if option == per_page else '' }}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <input type="hidden" name="fy" value="{{ current_fiscal_year }}">
+        {% if download_period_start %}
+        <input type="hidden" name="period_start" value="{{ download_period_start }}">
+        <input type="hidden" name="period_end" value="{{ download_period_end }}">
+        {% endif %}
+        <div class="col-6 col-md-2 col-lg-2 d-grid">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+    </form>
+
+    <div class="reports-fy-bar mb-2">
+        <span class="text-muted small">Download Year:</span>
+        <div class="d-flex flex-wrap gap-1">
+            {% for fy_option in fiscal_year_options %}
+            <a href="{{ url_for('reports_list', fy=fy_option, q=search_query, per_page=per_page) }}"
+                class="btn btn-sm {{ 'btn-primary' if fy_option == current_fiscal_year else 'btn-outline-primary' }}"
+                data-skip-page-loader="true">
+                {{ fy_option }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <form method="get" action="{{ url_for('reports_list') }}" class="reports-period-picker mb-3" data-skip-page-loader="true">
+        <input type="hidden" name="q" value="{{ search_query }}">
+        <input type="hidden" name="per_page" value="{{ per_page }}">
+        <input type="hidden" name="fy" value="{{ current_fiscal_year }}">
+        <div>
+            <label for="download-period-start" class="form-label mb-1">Reporting Period Start</label>
+            <input id="download-period-start" type="date" name="period_start" value="{{ download_period_start }}" class="form-control form-control-sm">
+        </div>
+        <div>
+            <label for="download-period-end" class="form-label mb-1">Reporting Period End</label>
+            <input id="download-period-end" type="date" name="period_end" value="{{ download_period_end }}" class="form-control form-control-sm" readonly>
+        </div>
+        <div class="d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Apply Period</button>
+            {% if download_period_start %}
+            <a href="{{ url_for('reports_list', fy=current_fiscal_year, q=search_query, per_page=per_page) }}" class="btn btn-sm btn-outline-secondary" data-skip-page-loader="true">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% set registration_year_href = url_for('download_registration_period_data', fy=current_fiscal_year, stream='year') %}
+    {% set category_year_href = url_for('download_category_scope_data', fy=current_fiscal_year, stream='year') %}
+    {% set county_year_href = url_for('download_county_data', fy=current_fiscal_year, stream='year') %}
+    {% set assets_year_href = url_for('download_assets_data', fy=current_fiscal_year, stream='year') %}
+    {% set donations_year_href = url_for('download_donations_data', fy=current_fiscal_year, stream='year') %}
+    {% set staff_year_href = url_for('download_staff_volunteer_summary', fy=current_fiscal_year, stream='year') %}
+    {% set projects_year_href = url_for('download_projects_data', fy=current_fiscal_year, stream='year') %}
+    {% set governance_year_href = url_for('download_governance_data', fy=current_fiscal_year, stream='year') %}
+
+    {% if download_period_start %}
+    {% set registration_period_href = url_for('download_registration_period_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set category_period_href = url_for('download_category_scope_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set county_period_href = url_for('download_county_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set assets_period_href = url_for('download_assets_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set donations_period_href = url_for('download_donations_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set staff_period_href = url_for('download_staff_volunteer_summary', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set projects_period_href = url_for('download_projects_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% set governance_period_href = url_for('download_governance_data', period_start=download_period_start, period_end=download_period_end, stream='period') %}
+    {% else %}
+    {% set registration_period_href = '#' %}
+    {% set category_period_href = '#' %}
+    {% set county_period_href = '#' %}
+    {% set assets_period_href = '#' %}
+    {% set donations_period_href = '#' %}
+    {% set staff_period_href = '#' %}
+    {% set projects_period_href = '#' %}
+    {% set governance_period_href = '#' %}
+    {% endif %}
+
+    <div class="small text-muted mb-1">Year Stream uses only the Download Year (FY) filter and ignores Reporting Period Start/End.</div>
+    <div class="reports-analysis-bar mb-3">
+        <span class="badge bg-light text-dark border">Year Stream: FY {{ current_fiscal_year }}</span>
+        <a href="{{ registration_year_href }}" class="btn btn-outline-primary" data-skip-page-loader="true">Registration &amp; Period</a>
+        <a href="{{ category_year_href }}" class="btn btn-outline-secondary" data-skip-page-loader="true">Category &amp; Scope</a>
+        <a href="{{ county_year_href }}" class="btn btn-outline-success" data-skip-page-loader="true">Counties</a>
+        <a href="{{ assets_year_href }}" class="btn btn-outline-info" data-skip-page-loader="true">Assets</a>
+        <a href="{{ donations_year_href }}" class="btn btn-outline-info" data-skip-page-loader="true">Donations</a>
+        <a href="{{ staff_year_href }}" class="btn btn-outline-dark" data-skip-page-loader="true">Staff</a>
+        <a href="{{ projects_year_href }}" class="btn btn-outline-secondary" data-skip-page-loader="true">Projects</a>
+        <a href="{{ governance_year_href }}" class="btn btn-outline-primary" data-skip-page-loader="true">Governance</a>
+        {% if current_user.is_authenticated and current_user.role == 'admin' and tf_risk_enabled %}
+        <a href="{{ url_for('admin_tf_risk') }}" class="btn btn-outline-danger">TF Risk</a>
+        {% endif %}
+    </div>
+    <div class="small text-muted mb-1">Period Stream uses only Reporting Period Start/End and ignores the Download Year (FY) filter.</div>
+    <div class="reports-analysis-bar mb-3">
+        {% if download_period_start %}
+        <span class="badge bg-light text-dark border">Period Stream: {{ download_period_start }} to {{ download_period_end }}</span>
+        {% else %}
+        <span class="badge bg-light text-dark border">Period Stream: set Reporting Period Start first</span>
+        {% endif %}
+        <a href="{{ registration_period_href }}" class="btn btn-outline-primary {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Registration &amp; Period</a>
+        <a href="{{ category_period_href }}" class="btn btn-outline-secondary {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Category &amp; Scope</a>
+        <a href="{{ county_period_href }}" class="btn btn-outline-success {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Counties</a>
+        <a href="{{ assets_period_href }}" class="btn btn-outline-info {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Assets</a>
+        <a href="{{ donations_period_href }}" class="btn btn-outline-info {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Donations</a>
+        <a href="{{ staff_period_href }}" class="btn btn-outline-dark {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Staff</a>
+        <a href="{{ projects_period_href }}" class="btn btn-outline-secondary {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Projects</a>
+        <a href="{{ governance_period_href }}" class="btn btn-outline-primary {% if not download_period_start %}disabled{% endif %}" data-skip-page-loader="true">Governance</a>
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {% if reports_vm %}
+    <!-- Responsive table wrapper -->
+    <div class="table-container table-responsive shadow-sm rounded">
+        <table id="reports-table" class="table table-striped table-hover table-bordered align-middle">
+            <thead class="table-dark sticky-top">
+                <tr>
+                    <th class="text-nowrap">PBO Name</th>
+                    <th class="text-nowrap">Updated By</th>
+                    <th class="text-nowrap">Registration</th>
+                    <th class="text-nowrap">Reporting Period</th>
+                    <th class="text-nowrap">Dates</th>
+                    <th class="text-nowrap">Category</th>
+                    <th class="text-nowrap">Scope & Counties</th>
+                    <th class="text-nowrap text-center">Assets</th>
+                    <th class="text-nowrap text-center">Donations</th>
+                    <th class="text-nowrap text-center">Payments</th>
+                    <th class="text-nowrap text-center">Staff</th>
+                    <th class="text-nowrap text-center">Projects</th>
+                    <th class="text-nowrap">Key Answers</th>
+                    <th class="text-nowrap">Governance</th>
+                    <th class="text-nowrap">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vm in reports_vm %}
+                {% set report = vm.report %}
+                <tr title="Report for {{ report.pbo_name }}">
+                    <td title="PBO name" style="font-size: 12pt;">
+                        <strong>{{ report.pbo_name or 'N/A' }}</strong>
+                    </td>
+                    <td class="text-nowrap small" style="font-size: 12pt;" title="Most recent tracked updater">
+                        {{ vm.updater_name }}
+                    </td>
+                    <td class="text-nowrap small" style="font-size: 12pt;" title="Registration number and date">
+                        {{ report.pbo_registration_number or 'N/A' }}
+                        <br><small class="text-muted">{{ report.pbo_registration_date|format_date or '' }}</small>
+                    </td>
+                    <td class="text-nowrap small" style="font-size: 12pt;" title="Reporting period">
+                        {{ vm.reporting_period_start_display }} to {{ vm.reporting_period_end_display }}
+                    </td>
+                    <td class="text-nowrap small" style="font-size: 12pt;" title="Created, updated, and submitted dates">
+                        <strong>Created:</strong> {{ vm.created_at_display or 'N/A' }}
+                        <br><strong>Updated:</strong> {{ vm.updated_at_display or 'N/A' }}
+                        <br><strong>Submitted:</strong> {{ vm.submitted_at_display or 'N/A' }}
+                    </td>
+                    <td title="PBO scope" style="font-size: 12pt;">
+                        <span class="badge bg-secondary">{{ vm.category_display }}</span>
+                    </td>
+                    <td title="Scope and counties" style="font-size: 12pt;">
+                        <span class="badge bg-info text-dark">{{ report.scope.title() if report.scope else 'N/A' }}</span>
+                        {% if report.counties %}
+                        <br><small class="text-muted">{{ report.counties|truncate(20) }}</small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center small" style="font-size: 12pt;" title="Assets total">
+                        {{ vm.assets_total }}
+                    </td>
+                    <td class="text-center small" style="font-size: 12pt;" title="Donations total">
+                        {{ vm.donations_total }}
+                    </td>
+                    <td class="text-center small" style="font-size: 12pt;" title="Payments rows and total">
+                        {{ vm.payments_summary }}
+                    </td>
+                    <td class="text-center small" style="font-size: 12pt;" title="Staff">
+                        {{ vm.staff_display }}
+                    </td>
+                    <td class="text-center small" style="font-size: 12pt;" title="Projects">
+                        {{ vm.projects_count }}
+                    </td>
+                    <td class="small" style="font-size: 12pt;" title="Selected subquestion answers">
+                        {% for item in vm.key_answers_summary %}
+                        <div>{{ item }}</div>
+                        {% endfor %}
+                    </td>
+                    <td class="small" style="font-size: 12pt;" title="Governance information">
+                        <div class="d-flex flex-wrap gap-1">
+                            <span class="badge bg-light text-dark"><i class="fas fa-users"></i> {{
+                                report.membership_number_of_directors or report.number_of_directors or 0 }}</span>
+                            <span class="badge bg-light text-dark"><i class="fas fa-user-friends"></i> {{
+                                report.membership_number_of_registered_members or report.number_of_registered_members or
+                                0 }}</span>
+                            <span class="badge bg-light text-dark"><i class="fas fa-calendar"></i> {{
+                                report.membership_number_of_board_meetings or report.number_of_board_meetings or 0
+                                }}</span>
+                        </div>
+                    </td>
+                    <td style="font-size: 12pt;">
+                        <a href="{{ url_for('report_detail', report_id=report.id) }}"
+                            class="btn btn-sm btn-primary text-nowrap">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Report pagination" class="mt-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="text-muted">
+                Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to {{ [pagination.page *
+                pagination.per_page, pagination.total]|min }} of {{ pagination.total }} reports
+            </div>
+            <ul class="pagination mb-0 flex-wrap justify-content-center">
+                <!-- First page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                    <a class="page-link" href="{{ url_for('reports_list', page=1, per_page=per_page, q=search_query, fy=current_fiscal_year, period_start=download_period_start, period_end=download_period_end) if download_period_start else url_for('reports_list', page=1, per_page=per_page, q=search_query, fy=current_fiscal_year) }}" aria-label="First">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <!-- Previous page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_prev else '' }}">
+                    <a class="page-link"
+                        href="{{ (url_for('reports_list', page=pagination.prev_num, per_page=per_page, q=search_query, fy=current_fiscal_year, period_start=download_period_start, period_end=download_period_end) if download_period_start else url_for('reports_list', page=pagination.prev_num, per_page=per_page, q=search_query, fy=current_fiscal_year)) if pagination.has_prev else '#' }}"
+                        aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+
+                <!-- Page numbers -->
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if p %}
+                <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                    <a class="page-link" href="{{ url_for('reports_list', page=p, per_page=per_page, q=search_query, fy=current_fiscal_year, period_start=download_period_start, period_end=download_period_end) if download_period_start else url_for('reports_list', page=p, per_page=per_page, q=search_query, fy=current_fiscal_year) }}">{{ p }}</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                <!-- Next page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                    <a class="page-link"
+                        href="{{ (url_for('reports_list', page=pagination.next_num, per_page=per_page, q=search_query, fy=current_fiscal_year, period_start=download_period_start, period_end=download_period_end) if download_period_start else url_for('reports_list', page=pagination.next_num, per_page=per_page, q=search_query, fy=current_fiscal_year)) if pagination.has_next else '#' }}"
+                        aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <!-- Last page -->
+                <li class="page-item {{ 'disabled' if not pagination.has_next else '' }}">
+                    <a class="page-link" href="{{ url_for('reports_list', page=pagination.pages, per_page=per_page, q=search_query, fy=current_fiscal_year, period_start=download_period_start, period_end=download_period_end) if download_period_start else url_for('reports_list', page=pagination.pages, per_page=per_page, q=search_query, fy=current_fiscal_year) }}" aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    {% endif %}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        function tableToCSV(tableId) {
+            var csv = [];
+            var rows = document.querySelectorAll(`#${tableId} tr`);
+            for (var i = 0; i < rows.length; i++) {
+                var row = [], cols = rows[i].querySelectorAll('th, td');
+                for (var j = 0; j < cols.length; j++)
+                    row.push('"' + (cols[j].innerText || '').replace(/"/g, '""') + '"');
+                csv.push(row.join(","));
+            }
+            return csv.join("\n");
+        }
+        document.getElementById('download-csv').onclick = function () {
+            var csv = tableToCSV('reports-table');
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'pbo_reports.csv';
+            link.click();
+        };
+        document.getElementById('download-xlsx').onclick = function () {
+            var table = document.getElementById('reports-table');
+            var wb = XLSX.utils.table_to_book(table, { sheet: "Reports" });
+            XLSX.writeFile(wb, 'pbo_reports.xlsx');
+        };
+
+        var periodStartInput = document.getElementById('download-period-start');
+        var periodEndInput = document.getElementById('download-period-end');
+        function autoEndFromStart(startValue) {
+            if (!startValue) return '';
+            var parts = startValue.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(isNaN)) return '';
+            var nextYearSameDay = new Date(Date.UTC(parts[0] + 1, parts[1] - 1, parts[2]));
+            nextYearSameDay.setUTCDate(nextYearSameDay.getUTCDate() - 1);
+            return nextYearSameDay.toISOString().slice(0, 10);
+        }
+        if (periodStartInput && periodEndInput) {
+            periodStartInput.addEventListener('change', function () {
+                periodEndInput.value = autoEndFromStart(periodStartInput.value);
+            });
+            if (periodStartInput.value && !periodEndInput.value) {
+                periodEndInput.value = autoEndFromStart(periodStartInput.value);
+            }
+        }
+    </script>
+    {% else %}
+    <div class="alert alert-info text-center py-5">
+        <h2><i class="fas fa-folder-open me-2"></i>No reports submitted yet</h2>
+        <p class="mb-0">Click "Submit New Report" to create your first report.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .reports-analysis-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .reports-fy-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .reports-period-picker {
+        display: grid;
+        grid-template-columns: minmax(180px, 220px) minmax(180px, 220px) auto;
+        gap: 0.75rem;
+        align-items: end;
+    }
+
+    .reports-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
+    }
+
+    .reports-toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: nowrap;
+        flex: 1 1 auto;
+        justify-content: flex-end;
+    }
+
+    .reports-toolbar-form {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        flex: 0 0 auto;
+    }
+
+    .reports-fy-select {
+        min-width: 130px;
+        width: auto;
+    }
+
+    /* Analysis table optimized styles */
+    .table {
+        font-size: 0.875rem;
+    }
+
+    .table thead th {
+        border-bottom-width: 2px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05) !important;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+        .reports-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            flex-wrap: wrap;
+            overflow-x: visible;
+        }
+
+        .reports-analysis-bar {
+            gap: 0.5rem;
+        }
+
+        .reports-fy-bar {
+            gap: 0.5rem;
+        }
+
+        .reports-period-picker {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .reports-toolbar-actions {
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+
+        .reports-toolbar-form {
+            flex-wrap: wrap;
+        }
+
+        .reports-fy-select {
+            width: 100%;
+        }
+
+        .table {
+            font-size: 0.75rem;
+        }
+
+        .badge {
+            font-size: 0.65rem;
+            padding: 0.2em 0.4em;
+        }
+
+        .btn-sm {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.4rem;
+        }
+    }
+
+    /* Smooth transitions */
+    .table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    .page-link {
+        transition: all 0.15s ease;
+    }
+
+    /* Pagination responsive styles */
+    .pagination {
+        gap: 0.25rem;
+    }
+
+    @media (max-width: 576px) {
+        .pagination .page-link {
+            padding: 0.375rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+
+</div>
+{% endblock %}

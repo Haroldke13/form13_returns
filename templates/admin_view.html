@@ -1,0 +1,1277 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="app-page-container">
+<h2>Admin Operations Dashboard</h2>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Pending Users</div><div class="fs-4 fw-bold">{{ dashboard_metrics.pending_users }}</div></div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Pending Review</div><div class="fs-4 fw-bold">{{ dashboard_metrics.reports_pending_review }}</div></div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Returned</div><div class="fs-4 fw-bold">{{ dashboard_metrics.reports_returned }}</div></div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Approved</div><div class="fs-4 fw-bold">{{ dashboard_metrics.reports_approved }}</div></div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Duplicates Flagged</div><div class="fs-4 fw-bold">{{ dashboard_metrics.duplicate_reports }}</div></div></div>
+  </div>
+  <div class="col-6 col-lg-2">
+    <div class="card shadow-sm h-100"><div class="card-body"><div class="text-muted small">Imports With Errors</div><div class="fs-4 fw-bold">{{ dashboard_metrics.imports_with_errors }}</div></div></div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title mb-0">Workflow Settings</h4>
+          <div class="d-flex gap-2">
+            {% if ocr_features_enabled %}
+            <a hidden href="{{ url_for('report_ocr_upload') }}" class="btn btn-outline-dark btn-sm">OCR Import</a>
+            <a hidden href="{{ url_for('report_ocr_batch_export') }}" class="btn btn-outline-secondary btn-sm">Batch OCR Excel</a>
+            {% endif %}
+            {% if current_user.is_superadmin %}
+            <a hidden href="{{ url_for('admin_uploaded_files') }}" class="btn btn-outline-danger btn-sm">Uploaded Files</a>
+            {% endif %}
+            <form method="post" action="{{ url_for('admin_backup_database') }}" onsubmit="return confirm('Start a database backup and upload it to Google Drive now?');">
+              <button type="submit" class="btn btn-outline-success btn-sm">Backup to Google</button>
+            </form>
+            <a href="{{ url_for('authorize_accounts') }}" class="btn btn-outline-primary btn-sm">Manage Users</a>
+            <a href="{{ url_for('admin_field_help_rules') }}" class="btn btn-outline-primary btn-sm">Field Help Rules</a>
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('admin_view') }}">
+          <div class="mb-3">
+            <label for="edit_deadline" class="form-label">Edit Deadline</label>
+            <input type="datetime-local" class="form-control" id="edit_deadline" name="edit_deadline" value="{{ deadlines.edit_deadline|default('', true) }}">
+          </div>
+          <div class="mb-3">
+            <label for="form_submission_deadline" class="form-label">Submission Deadline</label>
+            <input type="datetime-local" class="form-control" id="form_submission_deadline" name="form_submission_deadline" value="{{ deadlines.form_submission_deadline|default('', true) }}">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Deadlines</button>
+        </form>
+        <div class="mt-3 small text-muted">
+          <div id="backup-status-panel"
+               data-status-url="{{ url_for('admin_backup_status') }}"
+               data-running="{{ 'true' if backup_runtime_status.running else 'false' }}">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <strong>Backup status:</strong>
+              <span id="backup-stage-badge" class="badge {% if backup_runtime_status.running %}bg-primary{% elif backup_runtime_status.last_backup_error %}bg-danger{% else %}bg-secondary{% endif %}">
+                {{ backup_runtime_status.stage or 'idle' }}
+              </span>
+            </div>
+            <div id="backup-detail" class="mt-2">{{ backup_runtime_status.detail or 'No backup currently running.' }}</div>
+            <div class="progress mt-3" role="progressbar" aria-label="Backup progress" aria-valuemin="0" aria-valuemax="100">
+              <div id="backup-progress-bar"
+                   class="progress-bar progress-bar-striped {% if backup_runtime_status.running %}progress-bar-animated{% endif %}"
+                   style="width: 0%">0%</div>
+            </div>
+            <div class="row g-2 mt-2 small">
+              <div class="col-12 col-md-6">
+                <div>Started: <span id="backup-started-at">{{ backup_runtime_status.started_at or 'Not running' }}</span></div>
+                <div>Last backup: <span id="backup-last-at">{{ backup_runtime_status.last_backup_at or 'Not run yet' }}</span></div>
+                <div>Archive: <span id="backup-last-archive">{{ backup_runtime_status.last_backup_archive or 'Not created yet' }}</span></div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div>Current table: <span id="backup-current-table">{{ backup_runtime_status.current_table or 'None' }}</span></div>
+                <div>Current file: <span id="backup-current-file">{{ backup_runtime_status.current_file or 'None' }}</span></div>
+                <div>Files uploaded: <span id="backup-files-counter">{{ backup_runtime_status.files_completed or 0 }}/{{ backup_runtime_status.files_total or 0 }}</span></div>
+              </div>
+            </div>
+            <div id="backup-last-error" class="mt-2 {% if backup_runtime_status.last_backup_error %}text-danger{% else %}text-muted{% endif %}">
+              {{ backup_runtime_status.last_backup_error or 'No backup errors recorded.' }}
+            </div>
+            <div id="backup-credential" class="mt-2 text-muted">
+              Credential:
+              <span id="backup-credential-summary">
+                {% if backup_runtime_status.drive_credential_type %}
+                  {{ backup_runtime_status.drive_credential_type }}{% if backup_runtime_status.drive_credential_source %} via {{ backup_runtime_status.drive_credential_source }}{% endif %}
+                {% else %}
+                  not checked yet
+                {% endif %}
+              </span>
+            </div>
+            <div id="backup-refresh-block" class="mt-2 {% if not backup_runtime_status.drive_refresh_command %}d-none{% endif %}">
+              <div class="fw-semibold text-warning">Refresh command</div>
+              <code id="backup-refresh-command" class="small">{{ backup_runtime_status.drive_refresh_command or '' }}</code>
+            </div>
+            <div id="backup-recommendation" class="mt-2 text-muted {% if not backup_runtime_status.drive_auth_recommendation %}d-none{% endif %}">
+              {{ backup_runtime_status.drive_auth_recommendation or '' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div id="report-merge-tools" class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h4 class="card-title mb-0">Export Reports</h4>
+            <div class="text-muted small mt-1">Use <code>pbo_reports</code> as the main database table and join a selected related <code>models.py</code> table through <code>report_id</code>, with an optional uploaded workbook as an extra source.</div>
+          </div>
+          <a
+            id="report-merge-download-link"
+            href="{{ report_merge_status.download_url or '#' }}"
+            class="btn btn-outline-success btn-sm {% if not report_merge_status.download_ready %}d-none{% endif %}"
+          >
+            Download Cleaned Data
+          </a>
+        </div>
+        <form method="post" action="{{ url_for('admin_start_report_merge') }}" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="merge_reference_name" class="form-label">pbo_reports (main database table)</label>
+            <input type="text" class="form-control" id="merge_reference_name" value="{{ report_merge_reference_label }}" readonly>
+            <div class="small text-muted mt-1">This is always the primary table used for the merge.</div>
+          </div>
+          <div class="mb-3">
+            <label for="merge_related_source" class="form-label">Other live database table</label>
+            <select class="form-select" id="merge_related_source" name="merge_related_source">
+              <option value="">Select a related table from models.py</option>
+              {% for source in report_merge_sources %}
+              <option value="{{ source.key }}">{{ source.label }}</option>
+              {% endfor %}
+            </select>
+            <div class="small text-muted mt-1">These are the actual related table names from <code>models.py</code>, joined back to <code>pbo_reports</code> through <code>report_id</code>.</div>
+          </div>
+          <div class="mb-3">
+            <label for="merge_upload_file" class="form-label">Upload merger file</label>
+            <input type="file" class="form-control" id="merge_upload_file" name="merge_upload_file" accept=".csv,.xlsx,.xls">
+            <div class="small text-muted mt-1">Use this for previously downloaded versions. Uploaded files should include a <code>report_id</code> or <code>ReportID</code> column.</div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+            <div class="small text-muted">You can merge one live DB export, one uploaded workbook, or both into the same cleaned download.</div>
+            <button type="submit" class="btn btn-success">Merge Files</button>
+          </div>
+        </form>
+        <div
+          id="report-merge-status-panel"
+          class="mt-4"
+          data-status-url="{{ url_for('admin_report_merge_status') }}"
+          data-running="{{ 'true' if report_merge_status.running else 'false' }}"
+        >
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <strong>Merge status:</strong>
+            <span
+              id="report-merge-stage-badge"
+              class="badge {% if report_merge_status.running %}bg-primary{% elif report_merge_status.last_error %}bg-danger{% elif report_merge_status.download_ready %}bg-success{% else %}bg-secondary{% endif %}"
+            >
+              {{ report_merge_status.stage or 'idle' }}
+            </span>
+          </div>
+          <div id="report-merge-detail" class="mt-2">{{ report_merge_status.detail or 'No merge currently running.' }}</div>
+          <div class="progress mt-3" role="progressbar" aria-label="Report merge progress" aria-valuemin="0" aria-valuemax="100">
+            <div
+              id="report-merge-progress-bar"
+              class="progress-bar progress-bar-striped {% if report_merge_status.running %}progress-bar-animated{% endif %}"
+              style="width: {{ report_merge_status.progress_percent or 0 }}%"
+            >
+              {{ report_merge_status.progress_percent or 0 }}%
+            </div>
+          </div>
+          <div class="row g-2 mt-2 small">
+            <div class="col-12 col-md-6">
+              <div>Started: <span id="report-merge-started-at">{{ report_merge_status.started_at or 'Not running' }}</span></div>
+              <div>Finished: <span id="report-merge-finished-at">{{ report_merge_status.finished_at or 'Not finished yet' }}</span></div>
+              <div>Reference file: <span id="report-merge-reference-name">{{ report_merge_status.reference_name or report_merge_reference_label }}</span></div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div>Selected sources: <span id="report-merge-selected-sources">{{ report_merge_status.selected_sources|join(', ') if report_merge_status.selected_sources else 'None selected yet' }}</span></div>
+              <div>Current source: <span id="report-merge-current-source">{{ report_merge_status.current_source or 'None' }}</span></div>
+              <div>Completed: <span id="report-merge-sources-counter">{{ report_merge_status.sources_completed or 0 }}/{{ report_merge_status.sources_total or 0 }}</span></div>
+            </div>
+          </div>
+          <div id="report-merge-last-error" class="mt-2 {% if report_merge_status.last_error %}text-danger{% else %}text-muted{% endif %}">
+            {{ report_merge_status.last_error or 'No merge errors recorded.' }}
+          </div>
+          <div
+            id="report-merge-download-wrap"
+            class="mt-3 {% if not report_merge_status.download_ready %}d-none{% endif %}"
+          >
+            <a
+              id="report-merge-inline-download"
+              href="{{ report_merge_status.download_url or '#' }}"
+              class="btn btn-success"
+            >
+              Download Cleaned Data
+            </a>
+            <div class="small text-muted mt-2">The cleaned workbook is ready for download.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if current_user_is_superadmin %}
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+      <div>
+        <h4 class="card-title mb-0">PostgreSQL Hardening Audit</h4>
+        <div class="text-muted small mt-1">Read-only audit for required <code>report_id</code>-style foreign keys and guarded status columns. This report does not delete rows, update IDs, or change live data.</div>
+      </div>
+      <div class="d-flex gap-2">
+        <form method="get" action="{{ url_for('admin_view') }}">
+          <input type="hidden" name="run_fk_audit" value="1">
+          <button type="submit" class="btn btn-outline-primary btn-sm">Run Audit</button>
+        </form>
+        {% if run_fk_audit %}
+        <a href="{{ url_for('admin_view') }}" class="btn btn-outline-secondary btn-sm">Clear</a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if run_fk_audit and postgres_fk_audit %}
+    <div class="alert {% if postgres_fk_audit.blocking_rows or (postgres_status_audit and postgres_status_audit.blocking_rows) %}alert-warning{% else %}alert-success{% endif %} py-2">
+      <div><strong>Audit status:</strong> {{ postgres_fk_audit.message }}</div>
+      <div class="small mt-1">Dialect: {{ postgres_fk_audit.dialect }}. Generated: {{ postgres_fk_audit.generated_at }}.</div>
+    </div>
+
+    <h5 class="mb-3">Required Foreign Keys</h5>
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Required Relations Checked</div>
+          <div class="fs-4 fw-bold">{{ postgres_fk_audit.summary.total_relations }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Blocking Tables</div>
+          <div class="fs-4 fw-bold">{{ postgres_fk_audit.summary.blocked_relations }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Blocking Rows</div>
+          <div class="fs-4 fw-bold">{{ postgres_fk_audit.summary.blocked_rows }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Ready / Already Hardened</div>
+          <div class="fs-5 fw-bold">{{ postgres_fk_audit.summary.ready_relations }} / {{ postgres_fk_audit.summary.already_hardened_relations }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if not postgres_fk_audit.available %}
+    <p class="text-muted mb-0">{{ postgres_fk_audit.message }}</p>
+    {% elif postgres_fk_audit.rows %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Table</th>
+            <th>FK Column</th>
+            <th>Parent Table</th>
+            <th>Null Rows</th>
+            <th>Orphan Rows</th>
+            <th>Nullable Now</th>
+            <th>Desired FK Present</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in postgres_fk_audit.rows %}
+          <tr>
+            <td>
+              <span class="badge {% if row.status_key == 'blocked' %}bg-warning text-dark{% elif row.status_key == 'ready' %}bg-primary{% else %}bg-success{% endif %}">
+                {{ row.status_label }}
+              </span>
+            </td>
+            <td><code>{{ row.table_name }}</code></td>
+            <td><code>{{ row.column_name }}</code></td>
+            <td><code>{{ row.referred_table }}.{{ row.referred_column }}</code></td>
+            <td>{{ row.null_row_count }}</td>
+            <td>{{ row.orphan_row_count }}</td>
+            <td>{{ 'Yes' if row.nullable else 'No' }}</td>
+            <td>{{ 'Yes' if row.has_desired_foreign_key else 'No' }}</td>
+            <td class="small text-muted">{{ row.note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No required foreign-key relations were available to inspect in this database.</p>
+    {% endif %}
+
+    {% if postgres_status_audit %}
+    <hr class="my-4">
+    <div class="d-flex justify-content-between align-items-start gap-3 mb-3 flex-wrap">
+      <div>
+        <h5 class="mb-0">Status Columns</h5>
+        <div class="text-muted small mt-1">{{ postgres_status_audit.message }}</div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Status Columns Checked</div>
+          <div class="fs-4 fw-bold">{{ postgres_status_audit.summary.total_columns }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Blocked Columns</div>
+          <div class="fs-4 fw-bold">{{ postgres_status_audit.summary.blocked_columns }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Blocking Rows</div>
+          <div class="fs-4 fw-bold">{{ postgres_status_audit.summary.blocked_rows }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="border rounded p-3 h-100">
+          <div class="text-muted small">Ready / Already Hardened</div>
+          <div class="fs-5 fw-bold">{{ postgres_status_audit.summary.ready_columns }} / {{ postgres_status_audit.summary.already_hardened_columns }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if not postgres_status_audit.available %}
+    <p class="text-muted mb-0">{{ postgres_status_audit.message }}</p>
+    {% elif postgres_status_audit.rows %}
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Table</th>
+            <th>Column</th>
+            <th>Blank Rows</th>
+            <th>Invalid Rows</th>
+            <th>Nullable Now</th>
+            <th>Constraint Present</th>
+            <th>Expected Default</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in postgres_status_audit.rows %}
+          <tr>
+            <td>
+              <span class="badge {% if row.status_key == 'blocked' %}bg-warning text-dark{% elif row.status_key == 'ready' %}bg-primary{% else %}bg-success{% endif %}">
+                {{ row.status_label }}
+              </span>
+            </td>
+            <td><code>{{ row.table_name }}</code></td>
+            <td><code>{{ row.column_name }}</code></td>
+            <td>{{ row.blank_row_count }}</td>
+            <td>{{ row.invalid_row_count }}</td>
+            <td>{{ 'Yes' if row.nullable else 'No' }}</td>
+            <td>{{ 'Yes' if row.has_constraint else 'No' }}</td>
+            <td>{{ 'Yes' if row.has_expected_default else 'No' }}</td>
+            <td class="small text-muted">{{ row.note }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No status columns were available to inspect in this database.</p>
+    {% endif %}
+    {% endif %}
+    {% else %}
+    <p class="text-muted mb-0">Run the audit to inspect live PostgreSQL FK and status blockers before any strict hardening. The audit is read-only.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="card-title mb-0">Review Queue</h4>
+        <span class="text-muted small">Submitted, validated, in review, and returned reports</span>
+      </div>
+      <form method="post" action="{{ url_for('approve_all_review_queue') }}" class="d-flex gap-2 align-items-start" onsubmit="return confirm('Approve all reports currently in the review queue?');">
+        <input type="text" class="form-control form-control-sm" name="review_notes" placeholder="Optional approval note">
+        <button type="submit" class="btn btn-success btn-sm">Approve All</button>
+      </form>
+    </div>
+    <div class="row g-2 align-items-end mb-3" id="review-queue-controls">
+      <div class="col-12 col-md-6 col-lg-5">
+        <label for="review-queue-search" class="form-label form-label-sm mb-1">Search queue</label>
+        <input
+          type="search"
+          id="review-queue-search"
+          class="form-control form-control-sm"
+          placeholder="Search by report ID, PBO, owner, workflow, review status"
+          autocomplete="off"
+        >
+      </div>
+      <div class="col-12 col-md-3 col-lg-2">
+        <label class="form-label form-label-sm mb-1 d-block">Show</label>
+        <div id="review-queue-per-page" class="btn-group btn-group-sm w-100" role="group" aria-label="Rows per page">
+          <button type="button" class="btn btn-primary" data-per-page="10" aria-pressed="true">10</button>
+          <button type="button" class="btn btn-outline-primary" data-per-page="25" aria-pressed="false">25</button>
+          <button type="button" class="btn btn-outline-primary" data-per-page="50" aria-pressed="false">50</button>
+        </div>
+      </div>
+      <div class="col-12 col-md-3 col-lg-5 d-flex justify-content-md-end">
+        <div class="small text-muted mt-2 mt-md-0" id="review-queue-count"></div>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table id="review-queue-table" class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Report</th>
+            <th>Owner</th>
+            <th>Workflow</th>
+            <th>Review</th>
+            <th>Files</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in workflow_reports %}
+          <tr data-review-row="1">
+            <td>
+              <a href="{{ url_for('report_detail', report_id=report.id) }}">#{{ report.id }}</a>
+              <div>{{ report.pbo_name or 'Unnamed PBO' }}</div>
+              {% if report.duplicate_flag %}
+              <div class="text-danger small">Duplicate flag active</div>
+              <div class="text-danger small">
+                {{ (report.pbo_name or ('Report #' ~ report.id)) ~ '__' ~ (report.reporting_period_start|format_date if report.reporting_period_start else 'NO_START_DATE') }}
+              </div>
+              {% endif %}
+            </td>
+            <td>{{ report.owner_display }}</td>
+            <td>{{ report.workflow_status }}</td>
+            <td>
+              <div>{{ report.review_status }}</div>
+              {% if report.reviewed_by %}
+              <small class="text-muted">By {{ report.reviewed_by.email }}</small>
+              {% endif %}
+            </td>
+            <td>
+              <div class="small">{{ report.uploaded_files|length }} file(s)</div>
+              <form method="post" action="{{ url_for('upload_report_file', report_id=report.id) }}" enctype="multipart/form-data" class="mt-2">
+                <input type="hidden" name="category" value="supporting_document">
+                <input type="file" class="form-control form-control-sm mb-2" name="file" required>
+                <button type="submit" class="btn btn-outline-secondary btn-sm">Upload</button>
+              </form>
+            </td>
+            <td style="min-width: 280px;">
+              <form method="post" action="{{ url_for('update_report_workflow', report_id=report.id) }}">
+                <div class="mb-2">
+                  <select class="form-select form-select-sm" name="workflow_action">
+                    <option value="validate">Validate</option>
+                    <option value="start_review">Start Review</option>
+                    <option value="approve">Approve</option>
+                    <option value="return">Return</option>
+                    <option value="submit">Resubmit</option>
+                  </select>
+                </div>
+                <div class="mb-2">
+                  <textarea class="form-control form-control-sm" name="review_notes" rows="2" placeholder="Review notes"></textarea>
+                </div>
+                <div class="mb-2">
+                  <input class="form-control form-control-sm" name="return_reason" placeholder="Return reason (if returning)">
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Update</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-muted">No reports currently in the review queue.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="d-flex justify-content-end mt-3">
+      <nav id="review-queue-pagination" aria-label="Review queue pagination"></nav>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title mb-0">User Activity</h4>
+          <a href="{{ url_for('admin_user_activity_export', activity_date=user_activity_filters.activity_date or None) }}" class="btn btn-outline-success btn-sm">
+            Download Excel
+          </a>
+        </div>
+        <form method="get" action="{{ url_for('admin_view') }}" class="row g-2 align-items-end mb-3">
+          <input type="hidden" name="action" value="{{ audit_filters.action }}">
+          <input type="hidden" name="user_id" value="{{ audit_filters.user_id or '' }}">
+          <input type="hidden" name="report_id" value="{{ audit_filters.report_id or '' }}">
+          <input type="hidden" name="from_date" value="{{ audit_filters.from_date }}">
+          <input type="hidden" name="to_date" value="{{ audit_filters.to_date }}">
+          <div class="col-12 col-md-5">
+            <label for="activity_date" class="form-label">Filter by day</label>
+            <input class="form-control" id="activity_date" name="activity_date" type="date" value="{{ user_activity_filters.activity_date }}">
+          </div>
+          <div class="col-12 col-md-7">
+            <label for="activity_search" class="form-label">Search file</label>
+            <input class="form-control" id="activity_search" name="activity_search" type="search" value="{{ user_activity_filters.activity_search }}" placeholder="Search by file/report ID, PBO name, registration number, or form file">
+          </div>
+          <div class="col-6 col-md-auto">
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
+          </div>
+          <div class="col-6 col-md-auto">
+            <a href="{{ url_for('admin_view', action=audit_filters.action or None, user_id=audit_filters.user_id or None, report_id=audit_filters.report_id or None, from_date=audit_filters.from_date or None, to_date=audit_filters.to_date or None) }}" class="btn btn-outline-secondary w-100">
+              All Records
+            </a>
+          </div>
+        </form>
+        <div id="user-activity-panel" data-refresh-url="{{ url_for('admin_user_activity_panel', activity_date=user_activity_filters.activity_date or None, activity_search=user_activity_filters.activity_search or None) }}">
+          {% include '_admin_user_activity_table.html' %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="card-title mb-0">Recent Files</h4>
+        </div>
+        <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+          <table class="table table-sm align-middle mb-0">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Reporting Period</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for report in recent_report_files %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('report_detail', report_id=report.id) }}">
+                    {{ report.pbo_name or ('Report #' ~ report.id) }}
+                  </a>
+                </td>
+                <td>
+                  {% if report.reporting_period_start and report.reporting_period_end %}
+                  {{ report.reporting_period_start|format_date }} - {{ report.reporting_period_end|format_date }}
+                  {% elif report.reporting_period_start %}
+                  {{ report.reporting_period_start|format_date }}
+                  {% elif report.reporting_period_end %}
+                  {{ report.reporting_period_end|format_date }}
+                  {% else %}
+                  <span class="text-muted">Not set</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="2" class="text-muted">No recent report files available.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="card-title mb-0">Audit Stream</h4>
+      <a class="btn btn-outline-success btn-sm" href="{{ url_for('export_audit_logs', action=audit_filters.action, user_id=audit_filters.user_id, report_id=audit_filters.report_id, from_date=audit_filters.from_date, to_date=audit_filters.to_date) }}">Export CSV</a>
+    </div>
+    <form method="get" action="{{ url_for('admin_view') }}" class="row g-2 mb-3">
+      <input type="hidden" name="activity_date" value="{{ user_activity_filters.activity_date }}">
+      <input type="hidden" name="activity_search" value="{{ user_activity_filters.activity_search }}">
+      <div class="col-12 col-md-3">
+        <select class="form-select" name="action">
+          <option value="">All actions</option>
+          {% for action in audit_actions %}
+          <option value="{{ action }}" {% if audit_filters.action == action %}selected{% endif %}>{{ action }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <select class="form-select" name="user_id">
+          <option value="">All users</option>
+          {% for user in users %}
+          <option value="{{ user.id }}" {% if audit_filters.user_id == user.id %}selected{% endif %}>{{ user.email }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <input class="form-control" name="report_id" type="number" placeholder="Report ID" value="{{ audit_filters.report_id or '' }}">
+      </div>
+      <div class="col-12 col-md-2">
+        <input class="form-control" name="from_date" type="date" value="{{ audit_filters.from_date }}">
+      </div>
+      <div class="col-12 col-md-2">
+        <input class="form-control" name="to_date" type="date" value="{{ audit_filters.to_date }}">
+      </div>
+      <div class="col-12 col-md-1">
+        <button type="submit" class="btn btn-primary w-100">Go</button>
+      </div>
+    </form>
+    <div style="max-height: 520px; overflow-y: auto;">
+      {% for log in audit_logs %}
+      <div class="border rounded p-2 mb-2">
+        <div class="d-flex justify-content-between gap-3">
+          <strong>{{ log.action }}</strong>
+          <small class="text-muted">{{ log.created_at|format_datetime }}</small>
+        </div>
+        <div>{{ log.user.email if log.user else 'Anonymous / System' }}</div>
+        {% if log.report %}
+        <div><a href="{{ url_for('report_detail', report_id=log.report.id) }}">Report #{{ log.report.id }}</a> {{ log.report.pbo_name or 'Unnamed PBO' }}</div>
+        {% endif %}
+        {% if log.summary %}
+        <div class="text-muted small">{{ log.summary }}</div>
+        {% endif %}
+        <div class="text-muted small">IP: {{ log.ip_address or 'N/A' }}</div>
+      </div>
+      {% else %}
+      <p class="text-muted mb-0">No persistent audit events recorded yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h4 class="card-title mb-3">Recent Import Batches</h4>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Batch</th>
+            <th>Status</th>
+            <th>Rows</th>
+            <th>Errors</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for batch in import_batches %}
+          <tr>
+            <td>
+              <div>#{{ batch.id }}</div>
+              <small class="text-muted">{{ batch.original_filename or 'Manual batch' }}</small>
+            </td>
+            <td>{{ batch.status }}</td>
+            <td>{{ batch.success_rows }}/{{ batch.total_rows }}</td>
+            <td>
+              {{ batch.error_rows }}
+              {% if batch.row_errors %}
+              <div class="small text-muted">{{ batch.row_errors[0].error_message }}</div>
+              {% endif %}
+            </td>
+            <td>{{ batch.created_at|format_datetime }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-muted">No import batches yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="card-title mb-0">Deleted Files Audit</h4>
+        <span class="text-muted small">Recently deleted uploaded files, their original index, and user information</span>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Index</th>
+            <th>File Name</th>
+            <th>Category</th>
+            <th>Deleted By</th>
+            <th>Original Uploader</th>
+            <th>Report</th>
+            <th>Deleted At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in deleted_file_rows %}
+          <tr>
+            <td>{{ row.index }}</td>
+            <td>{{ row.file_name }}</td>
+            <td>{{ row.category }}</td>
+            <td>
+              {% if row.deleted_by %}
+              <div>{{ row.deleted_by.full_name or row.deleted_by.email or ('User #' ~ row.deleted_by.id) }}</div>
+              <small class="text-muted">{{ row.deleted_by.email or 'No email' }}</small>
+              {% else %}
+              <span class="text-muted">System / Unknown</span>
+              {% endif %}
+            </td>
+            <td>{{ row.uploaded_by }}</td>
+            <td>
+              {% if row.report %}
+              <a href="{{ url_for('report_detail', report_id=row.report.id) }}">#{{ row.report.id }}</a>
+              <div class="small text-muted">{{ row.report.pbo_name or 'Unnamed PBO' }}</div>
+              {% else %}
+              <span class="text-muted">No report</span>
+              {% endif %}
+            </td>
+            <td>{{ row.deleted_at|format_datetime if row.deleted_at else 'Unknown' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-muted">No deleted uploaded files have been audited yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if current_user.is_superadmin %}
+<div id="rollback-tools" class="card shadow-sm mt-4 border-danger-subtle">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="card-title mb-0 text-danger">Database Rollback (Superadmin Only)</h4>
+        <span class="text-muted small">Restore from local backup, Google Drive backup, or uploaded rollback file.</span>
+      </div>
+      <a href="{{ url_for('admin_view', refresh_backups=1) }}#rollback-tools" class="btn btn-outline-secondary btn-sm">Refresh Backup List</a>
+    </div>
+
+    <div class="alert alert-warning py-2 small">
+      Rollback can overwrite current data. A pre-rollback snapshot is automatically created and preserved before restore.
+      PostgreSQL rollbacks support <strong>.dump</strong> / <strong>.sql</strong>. SQLite rollbacks support <strong>.sqlite</strong> / <strong>.db</strong>.
+    </div>
+
+    <form method="post" action="{{ url_for('admin_backup_rollback') }}" enctype="multipart/form-data" onsubmit="return confirm('Proceed with database rollback? This will overwrite current DB state.');">
+      <div class="row g-3">
+        <div class="col-12 col-lg-4">
+          <label class="form-label">Source</label>
+          <select name="rollback_source_mode" id="rollback-source-mode" class="form-select" required>
+            <option value="local" selected>Local backup by date/version</option>
+            <option value="google">Google Drive backup</option>
+            <option value="upload">Upload .sqlite/.db/.dump/.sql/.zip</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-lg-8" id="rollback-local-wrap">
+          <label class="form-label">Local backup version</label>
+          <select name="local_backup_id" class="form-select">
+            <option value="">Select local backup file</option>
+            {% for item in rollback_catalog.local_versions %}
+            <option value="{{ item.relative_path }}">{{ item.label }}</option>
+            {% endfor %}
+          </select>
+          <div class="small text-muted mt-1">
+            Local versions found: {{ rollback_catalog.local_versions|length }}
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-8 d-none" id="rollback-google-wrap">
+          <label class="form-label">Google backup version</label>
+          <select name="google_backup_id" class="form-select">
+            <option value="">Select Google Drive backup file</option>
+            {% for item in rollback_catalog.google_versions %}
+            <option value="{{ item.id }}">{{ item.label }}</option>
+            {% endfor %}
+          </select>
+          {% if rollback_catalog.google_error %}
+          <div class="small text-danger mt-1">{{ rollback_catalog.google_error }}</div>
+          {% else %}
+          <div class="small text-muted mt-1">Google versions found: {{ rollback_catalog.google_versions|length }}</div>
+          {% endif %}
+        </div>
+
+        <div class="col-12 col-lg-8 d-none" id="rollback-upload-wrap">
+          <label class="form-label">Upload rollback file</label>
+          <input type="file" class="form-control" name="rollback_upload_file" accept=".sqlite,.db,.dump,.sql,.zip">
+          <div class="small text-muted mt-1">Supported: .sqlite, .db, .dump, .sql, .zip</div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <label for="rollback-confirm" class="form-label">Type confirmation</label>
+          <input type="text" id="rollback-confirm" name="confirm_rollback" class="form-control" placeholder="Type ROLLBACK" required>
+          <div class="small text-muted mt-1">Required safety check.</div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end mt-3">
+        <button type="submit" class="btn btn-danger">Rollback Database</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm mt-4" id="report-merge-history">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h4 class="card-title mb-0">Previous Merged Files</h4>
+        <span class="text-muted small">Saved cleaned merge workbooks with filename, date, time, and direct download.</span>
+      </div>
+      {% if merged_report_files %}
+      <form
+        method="post"
+        action="{{ url_for('admin_report_merge_file_delete_all') }}"
+        onsubmit="return confirm('Delete all saved merged workbooks?');"
+      >
+        <button type="submit" class="btn btn-outline-danger btn-sm">Delete All</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Merged File</th>
+            <th>Generated At</th>
+            <th>Size</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in merged_report_files %}
+          <tr>
+            <td>
+              <div>{{ item.display_name }}</div>
+              <small class="text-muted">{{ item.download_name }}</small>
+            </td>
+            <td>{{ item.modified_at_display }}</td>
+            <td>{{ item.size_display }}</td>
+            <td>
+              <div class="d-flex flex-wrap gap-2">
+                <a
+                  href="{{ url_for('admin_report_merge_file_download', file_name=item.stored_name) }}"
+                  class="btn btn-outline-success btn-sm"
+                >
+                  Download
+                </a>
+                <form
+                  method="post"
+                  action="{{ url_for('admin_report_merge_file_delete', file_name=item.stored_name) }}"
+                  onsubmit="return confirm('Delete this merged workbook?');"
+                >
+                  <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" class="text-muted">No merged files have been saved yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const panel = document.getElementById('user-activity-panel');
+    if (!panel || !panel.dataset.refreshUrl) return;
+
+    let isRefreshing = false;
+    async function refreshUserActivity() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      try {
+        const response = await fetch(panel.dataset.refreshUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) return;
+        const html = await response.text();
+        if (html && html.trim()) {
+          panel.innerHTML = html;
+        }
+      } catch (error) {
+        console.error('Failed to refresh user activity panel', error);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') {
+        refreshUserActivity();
+      }
+    });
+    setInterval(refreshUserActivity, 15000);
+  })();
+
+  (function () {
+    const panel = document.getElementById('backup-status-panel');
+    if (!panel) return;
+
+    const statusUrl = panel.dataset.statusUrl;
+    const stageBadge = document.getElementById('backup-stage-badge');
+    const detailNode = document.getElementById('backup-detail');
+    const progressBar = document.getElementById('backup-progress-bar');
+    const startedAtNode = document.getElementById('backup-started-at');
+    const lastAtNode = document.getElementById('backup-last-at');
+    const lastArchiveNode = document.getElementById('backup-last-archive');
+    const currentTableNode = document.getElementById('backup-current-table');
+    const currentFileNode = document.getElementById('backup-current-file');
+    const filesCounterNode = document.getElementById('backup-files-counter');
+    const lastErrorNode = document.getElementById('backup-last-error');
+    const credentialSummaryNode = document.getElementById('backup-credential-summary');
+    const refreshBlockNode = document.getElementById('backup-refresh-block');
+    const refreshCommandNode = document.getElementById('backup-refresh-command');
+    const recommendationNode = document.getElementById('backup-recommendation');
+
+    function stageClass(stage, running, hasError) {
+      if (running) return 'bg-primary';
+      if (hasError || stage === 'failed' || stage === 'upload_failed') return 'bg-danger';
+      if (stage === 'complete') return 'bg-success';
+      return 'bg-secondary';
+    }
+
+    function computePercent(status) {
+      if (status.files_total > 0) {
+        return Math.round((status.files_completed / status.files_total) * 100);
+      }
+      if (status.tables_total > 0) {
+        return Math.round((status.tables_completed / status.tables_total) * 100);
+      }
+      return status.running ? 10 : 0;
+    }
+
+    function renderStatus(status) {
+      const percent = Math.max(0, Math.min(100, computePercent(status)));
+      const hasError = Boolean(status.last_backup_error);
+
+      stageBadge.textContent = status.stage || 'idle';
+      stageBadge.className = `badge ${stageClass(status.stage, status.running, hasError)}`;
+      detailNode.textContent = status.detail || 'No backup currently running.';
+      progressBar.style.width = `${percent}%`;
+      progressBar.textContent = `${percent}%`;
+      progressBar.classList.toggle('progress-bar-animated', Boolean(status.running));
+      startedAtNode.textContent = status.started_at || 'Not running';
+      lastAtNode.textContent = status.last_backup_at || 'Not run yet';
+      lastArchiveNode.textContent = status.last_backup_archive || 'Not created yet';
+      currentTableNode.textContent = status.current_table || 'None';
+      currentFileNode.textContent = status.current_file || 'None';
+      filesCounterNode.textContent = `${status.files_completed || 0}/${status.files_total || 0}`;
+      lastErrorNode.textContent = status.last_backup_error || 'No backup errors recorded.';
+      lastErrorNode.className = `mt-2 ${hasError ? 'text-danger' : 'text-muted'}`;
+      credentialSummaryNode.textContent = status.drive_credential_type
+        ? `${status.drive_credential_type}${status.drive_credential_source ? ` via ${status.drive_credential_source}` : ''}`
+        : 'not checked yet';
+      refreshCommandNode.textContent = status.drive_refresh_command || '';
+      refreshBlockNode.classList.toggle('d-none', !status.drive_refresh_command);
+      recommendationNode.textContent = status.drive_auth_recommendation || '';
+      recommendationNode.classList.toggle('d-none', !status.drive_auth_recommendation);
+    }
+
+    async function pollStatus() {
+      try {
+        const response = await fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) return;
+        const status = await response.json();
+        renderStatus(status);
+      } catch (error) {
+        console.error('Failed to fetch backup status', error);
+      }
+    }
+
+    renderStatus({
+      running: panel.dataset.running === 'true',
+      stage: stageBadge.textContent.trim(),
+      detail: detailNode.textContent.trim(),
+      started_at: startedAtNode.textContent.trim(),
+      last_backup_at: lastAtNode.textContent.trim(),
+      last_backup_archive: lastArchiveNode.textContent.trim(),
+      current_table: currentTableNode.textContent.trim(),
+      current_file: currentFileNode.textContent.trim(),
+      files_completed: parseInt((filesCounterNode.textContent.split('/')[0] || '0'), 10),
+      files_total: parseInt((filesCounterNode.textContent.split('/')[1] || '0'), 10),
+      last_backup_error: lastErrorNode.classList.contains('text-danger') ? lastErrorNode.textContent.trim() : null,
+      drive_credential_type: {{ (backup_runtime_status.drive_credential_type or '')|tojson }},
+      drive_credential_source: {{ (backup_runtime_status.drive_credential_source or '')|tojson }},
+      drive_refresh_command: {{ (backup_runtime_status.drive_refresh_command or '')|tojson }},
+      drive_auth_recommendation: {{ (backup_runtime_status.drive_auth_recommendation or '')|tojson }},
+    });
+
+    setInterval(pollStatus, 2000);
+  })();
+
+  (function () {
+    const panel = document.getElementById('report-merge-status-panel');
+    if (!panel) return;
+
+    const statusUrl = panel.dataset.statusUrl;
+    const stageBadge = document.getElementById('report-merge-stage-badge');
+    const detailNode = document.getElementById('report-merge-detail');
+    const progressBar = document.getElementById('report-merge-progress-bar');
+    const startedAtNode = document.getElementById('report-merge-started-at');
+    const finishedAtNode = document.getElementById('report-merge-finished-at');
+    const referenceNode = document.getElementById('report-merge-reference-name');
+    const selectedSourcesNode = document.getElementById('report-merge-selected-sources');
+    const currentSourceNode = document.getElementById('report-merge-current-source');
+    const sourcesCounterNode = document.getElementById('report-merge-sources-counter');
+    const lastErrorNode = document.getElementById('report-merge-last-error');
+    const downloadLink = document.getElementById('report-merge-download-link');
+    const inlineDownloadWrap = document.getElementById('report-merge-download-wrap');
+    const inlineDownloadLink = document.getElementById('report-merge-inline-download');
+
+    function stageClass(stage, running, hasError, ready) {
+      if (running) return 'bg-primary';
+      if (hasError || stage === 'failed') return 'bg-danger';
+      if (ready || stage === 'complete') return 'bg-success';
+      return 'bg-secondary';
+    }
+
+    function renderStatus(status) {
+      const percent = Math.max(0, Math.min(100, parseInt(status.progress_percent || 0, 10) || 0));
+      const hasError = Boolean(status.last_error);
+      const downloadReady = Boolean(status.download_ready && status.download_url);
+
+      stageBadge.textContent = status.stage || 'idle';
+      stageBadge.className = `badge ${stageClass(status.stage, status.running, hasError, downloadReady)}`;
+      detailNode.textContent = status.detail || 'No merge currently running.';
+      progressBar.style.width = `${percent}%`;
+      progressBar.textContent = `${percent}%`;
+      progressBar.classList.toggle('progress-bar-animated', Boolean(status.running));
+      startedAtNode.textContent = status.started_at || 'Not running';
+      finishedAtNode.textContent = status.finished_at || 'Not finished yet';
+      referenceNode.textContent = status.reference_name || 'pbo_reports live export';
+      selectedSourcesNode.textContent = (status.selected_sources || []).length
+        ? status.selected_sources.join(', ')
+        : 'None selected yet';
+      currentSourceNode.textContent = status.current_source || 'None';
+      sourcesCounterNode.textContent = `${status.sources_completed || 0}/${status.sources_total || 0}`;
+      lastErrorNode.textContent = status.last_error || 'No merge errors recorded.';
+      lastErrorNode.className = `mt-2 ${hasError ? 'text-danger' : 'text-muted'}`;
+      if (downloadLink) {
+        downloadLink.classList.toggle('d-none', !downloadReady);
+        downloadLink.setAttribute('href', downloadReady ? status.download_url : '#');
+      }
+      if (inlineDownloadWrap) {
+        inlineDownloadWrap.classList.toggle('d-none', !downloadReady);
+      }
+      if (inlineDownloadLink) {
+        inlineDownloadLink.setAttribute('href', downloadReady ? status.download_url : '#');
+      }
+    }
+
+    async function pollStatus() {
+      try {
+        const response = await fetch(statusUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!response.ok) return;
+        const status = await response.json();
+        renderStatus(status);
+      } catch (error) {
+        console.error('Failed to fetch report merge status', error);
+      }
+    }
+
+    renderStatus({
+      running: panel.dataset.running === 'true',
+      stage: stageBadge.textContent.trim(),
+      detail: detailNode.textContent.trim(),
+      started_at: startedAtNode.textContent.trim(),
+      finished_at: finishedAtNode.textContent.trim(),
+      reference_name: referenceNode.textContent.trim(),
+      selected_sources: selectedSourcesNode.textContent.trim() && selectedSourcesNode.textContent.trim() !== 'None selected yet'
+        ? selectedSourcesNode.textContent.split(',').map((value) => value.trim()).filter(Boolean)
+        : [],
+      current_source: currentSourceNode.textContent.trim(),
+      sources_completed: parseInt((sourcesCounterNode.textContent.split('/')[0] || '0'), 10),
+      sources_total: parseInt((sourcesCounterNode.textContent.split('/')[1] || '0'), 10),
+      progress_percent: parseInt(progressBar.textContent || '0', 10),
+      last_error: lastErrorNode.classList.contains('text-danger') ? lastErrorNode.textContent.trim() : null,
+      download_ready: downloadLink ? !downloadLink.classList.contains('d-none') : false,
+      download_url: downloadLink && !downloadLink.classList.contains('d-none') ? downloadLink.getAttribute('href') : null,
+    });
+
+    setInterval(pollStatus, 2000);
+  })();
+
+  (function () {
+    const sourceSelect = document.getElementById('rollback-source-mode');
+    const localWrap = document.getElementById('rollback-local-wrap');
+    const googleWrap = document.getElementById('rollback-google-wrap');
+    const uploadWrap = document.getElementById('rollback-upload-wrap');
+    if (!sourceSelect || !localWrap || !googleWrap || !uploadWrap) return;
+
+    function renderRollbackSource() {
+      const mode = sourceSelect.value;
+      localWrap.classList.toggle('d-none', mode !== 'local');
+      googleWrap.classList.toggle('d-none', mode !== 'google');
+      uploadWrap.classList.toggle('d-none', mode !== 'upload');
+    }
+
+    sourceSelect.addEventListener('change', renderRollbackSource);
+    renderRollbackSource();
+  })();
+
+  (function () {
+    const table = document.getElementById('review-queue-table');
+    const searchInput = document.getElementById('review-queue-search');
+    const perPageWrap = document.getElementById('review-queue-per-page');
+    const countEl = document.getElementById('review-queue-count');
+    const paginationEl = document.getElementById('review-queue-pagination');
+    if (!table || !searchInput || !perPageWrap || !countEl || !paginationEl) return;
+    const perPageButtons = Array.from(perPageWrap.querySelectorAll('[data-per-page]'));
+    if (!perPageButtons.length) return;
+
+    const tbody = table.querySelector('tbody');
+    const allRows = Array.from(tbody.querySelectorAll('tr[data-review-row="1"]'));
+    if (!allRows.length) {
+      searchInput.disabled = true;
+      perPageButtons.forEach((button) => {
+        button.disabled = true;
+      });
+      countEl.textContent = '0 queue items';
+      paginationEl.innerHTML = '';
+      return;
+    }
+
+    let currentPage = 1;
+    const activePerPageButton = perPageButtons.find((btn) => btn.getAttribute('aria-pressed') === 'true');
+    let perPage = parseInt((activePerPageButton && activePerPageButton.dataset.perPage) || '10', 10);
+    let query = '';
+
+    const emptyRow = document.createElement('tr');
+    emptyRow.id = 'review-queue-filter-empty';
+    emptyRow.innerHTML = '<td colspan="6" class="text-muted">No reports match this search.</td>';
+
+    const getFilteredRows = () => {
+      if (!query) return allRows;
+      return allRows.filter((row) => {
+        const haystack = (row.dataset.searchText || row.textContent || '').toLowerCase();
+        return haystack.includes(query);
+      });
+    };
+
+    const updateCounters = (filteredLength, totalLength, startIndex, endIndex) => {
+      if (!filteredLength) {
+        countEl.textContent = `0 of ${totalLength} items`;
+        return;
+      }
+      countEl.textContent = `Showing ${startIndex + 1}-${endIndex} of ${filteredLength} matching (${totalLength} total)`;
+    };
+
+    const pageButton = (label, targetPage, disabled, active) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `btn btn-sm ${active ? 'btn-primary' : 'btn-outline-secondary'}`;
+      button.textContent = label;
+      button.disabled = disabled;
+      button.addEventListener('click', () => {
+        if (disabled || targetPage === currentPage) return;
+        currentPage = targetPage;
+        render();
+      });
+      return button;
+    };
+
+    const renderPagination = (totalPages) => {
+      paginationEl.innerHTML = '';
+      if (totalPages <= 1) return;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'btn-group btn-group-sm';
+      wrap.setAttribute('role', 'group');
+      wrap.appendChild(pageButton('Prev', currentPage - 1, currentPage <= 1, false));
+
+      const windowSize = 2;
+      const pages = [];
+      for (let p = 1; p <= totalPages; p += 1) {
+        if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= windowSize) {
+          pages.push(p);
+        }
+      }
+
+      let lastPage = 0;
+      pages.forEach((p) => {
+        if (lastPage && p - lastPage > 1) {
+          const dots = document.createElement('button');
+          dots.type = 'button';
+          dots.className = 'btn btn-sm btn-outline-secondary';
+          dots.disabled = true;
+          dots.textContent = '...';
+          wrap.appendChild(dots);
+        }
+        wrap.appendChild(pageButton(String(p), p, false, p === currentPage));
+        lastPage = p;
+      });
+
+      wrap.appendChild(pageButton('Next', currentPage + 1, currentPage >= totalPages, false));
+      paginationEl.appendChild(wrap);
+    };
+
+    const render = () => {
+      const filteredRows = getFilteredRows();
+      const totalPages = Math.max(1, Math.ceil(filteredRows.length / perPage));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * perPage;
+      const end = start + perPage;
+      const visibleRows = filteredRows.slice(start, end);
+
+      allRows.forEach((row) => {
+        row.style.display = 'none';
+      });
+      visibleRows.forEach((row) => {
+        row.style.display = '';
+      });
+
+      if (tbody.contains(emptyRow)) {
+        tbody.removeChild(emptyRow);
+      }
+      if (!filteredRows.length) {
+        tbody.appendChild(emptyRow);
+      }
+
+      updateCounters(filteredRows.length, allRows.length, start, Math.min(end, filteredRows.length));
+      renderPagination(totalPages);
+    };
+
+    searchInput.addEventListener('input', (event) => {
+      query = event.target.value.trim().toLowerCase();
+      currentPage = 1;
+      render();
+    });
+
+    perPageButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const nextPerPage = parseInt(button.dataset.perPage || '10', 10) || 10;
+        if (nextPerPage === perPage) return;
+        perPage = nextPerPage;
+        currentPage = 1;
+        perPageButtons.forEach((btn) => {
+          const active = btn === button;
+          btn.classList.toggle('btn-primary', active);
+          btn.classList.toggle('btn-outline-primary', !active);
+          btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        render();
+      });
+    });
+
+    render();
+  })();
+</script>
+</div>
+{% endblock %}

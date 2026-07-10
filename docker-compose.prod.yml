@@ -1,0 +1,29 @@
+services:
+  web:
+    build:
+      context: .
+    container_name: form14_web
+    env_file:
+      - .env.production
+    environment:
+      PORT: ${PORT:-8000}
+      SSL_CERTFILE: /app/certs/server.crt
+      SSL_KEYFILE: /app/certs/server.key
+      INTERNAL_DATABASE_URL: ${INTERNAL_DATABASE_URL:-sqlite:////app/instance/form14.db}
+    ports:
+      - "${DOCKER_BIND_IP:-0.0.0.0}:${HOST_PORT:-8000}:8000"
+    volumes:
+      - ./instance:/app/instance
+      - ./backups:/app/backups
+      - ./certs:/app/certs:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import socket; s = socket.create_connection(('127.0.0.1', 8000), 5); s.close()\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped

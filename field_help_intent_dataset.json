@@ -1,0 +1,802 @@
+[
+  {
+    "input": "Enter PBO name as Hope Foundation Kenya",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Fill reporting period start date as 2025-01-01",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add contact name John Doe",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter telephone number 712345678",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add second telephone number 798765432",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add email info@hope.org",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add another email admin@hope.org",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Select scope as National",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter contact person name Mary Wanjiku",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Provide email contact@ngo.or.ke",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Input reporting start date as today",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter valid email format user@example.com",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add phone number with Kenya code +254712345678",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter organization name Green Earth Initiative",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Select scope as International",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Input valid numeric phone value",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add phone number without country code local format",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter contact email in lowercase",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add two emails and remove one",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter reporting start date before today",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Try to edit PBO registration number manually",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter value in disabled registration date field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Modify reporting period end date directly",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter nationality manually in disabled contact field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Change gender field when disabled",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Input data into readonly KRA PIN hidden field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Override auto-calculated end date",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter text into disabled contact position field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try to enable disabled input via browser",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Modify hidden submission token",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter invalid email user@com",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter phone number 123",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter reporting start date in future",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter empty PBO name",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter special characters in PBO name @@@@",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Enter invalid KRA PIN 123456789",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter KRA PIN P052246430R",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter registration number NGO-123",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter registration number 218/051/2010/057",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter phone with letters 712ABC678",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter duplicate email twice",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Add 10 phone numbers rapidly",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Remove all emails and submit",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter date in wrong format 32/13/2025",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter email with spaces user@mail.com",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter negative number in numeric field",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter extremely long organization name 500 chars",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Submit form without required fields",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter HTML script <script>alert(1)</script>",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Try SQL injection ' OR 1=1 --",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Select project sector as Health",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Select project sector as Education",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add project county Nairobi",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add project beneficiaries count 1200",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add project spending per county 1500000",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter project duration as 2 years",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Set project completion status to Ongoing",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add donor amount 250000",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add payment category Salaries",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter Kenya payments 320000",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter other country payments 45000",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add asset row Vehicle",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Add collaboration networking row",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter staff Kenyan current as 24",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter volunteers Kenyan current as 40",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Set audited flag to Yes",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter countries of operation Uganda and Tanzania",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter contact telephone +254700111222",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter contact email operations@charity.or.ke",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Enter organization name Community Relief Network",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Fill reporting period start date as 2024-07-01",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Attempt to edit postal address field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to edit physical address field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to edit website while locked",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to edit social media while disabled",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to change contact nationality field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to change contact position field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to update government tax waiver amount field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to update government other amount field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to edit PIN number field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Attempt to type in disabled telephone field",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter email missing domain part user@",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter email without at symbol usermail.com",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter contact phone with symbols 71@34",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter reporting date 2026-15-01",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter reporting start date as 2027-01-01",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter project beneficiaries as -10",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter project spending as text one million",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter Kenya payment value as -500",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter PBO name as blank spaces",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter contact email with trailing dot user@mail.",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter contact telephone with letters +2547OO111222",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Add 30 donor rows quickly",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Paste 1000 characters into contact name",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Add the same phone number in five rows",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Remove all project rows then submit",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Toggle scope between national and international ten times",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Inject javascript in contact email <img src=x onerror=alert(1)>",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Try SQL payload admin'-- in pbo name",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Use UNION SELECT style payload in text field",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Record valid project sector entry number 1",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 2",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 3",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 4",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 5",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 6",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 7",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 8",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 9",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 10",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 11",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 12",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 13",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 14",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 15",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 16",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 17",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 18",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 19",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 20",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 21",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 22",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 23",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 24",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 25",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 26",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 27",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 28",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 29",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 30",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 31",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 32",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 33",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 34",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 35",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 36",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 37",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 38",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 39",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Record valid project sector entry number 40",
+    "label": "VALID_INPUT"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 1",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 2",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 3",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 4",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 5",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 6",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 7",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 8",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 9",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 10",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 11",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 12",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 13",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 14",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 15",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 16",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 17",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 18",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 19",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Try editing disabled registration reference field attempt 20",
+    "label": "DISALLOWED_ACTION"
+  },
+  {
+    "input": "Enter malformed email example1@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example2@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example3@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example4@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example5@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example6@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example7@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example8@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example9@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example10@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example11@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example12@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example13@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example14@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example15@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example16@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example17@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example18@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example19@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Enter malformed email example20@bad",
+    "label": "INVALID_INPUT"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 1",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 2",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 3",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 4",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 5",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 6",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 7",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 8",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 9",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Stress test by adding duplicate contact rows batch 10",
+    "label": "EDGE_CASE"
+  },
+  {
+    "input": "Security probe payload 1 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 2 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 3 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 4 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 5 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 6 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 7 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 8 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 9 with script injection marker",
+    "label": "SECURITY_THREAT"
+  },
+  {
+    "input": "Security probe payload 10 with script injection marker",
+    "label": "SECURITY_THREAT"
+  }
+]

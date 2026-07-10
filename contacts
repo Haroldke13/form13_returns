@@ -1,0 +1,15 @@
+Zilpah Angwenyi <zangwenyi@pbora.go.ke> -> .env.users match: missing exact user; closest existing seed is user18_name=Zilpah Kwamboka, user18_email=zkwamboka, department=Research, phone=0727342856
+Bernadette Nzomo <bnzomo@pbora.go.ke> -> user17_name=Bernadette Nzomo, user17_email=bnzomo, department=Research, phone=0727713932, password=field.12345
+Josephine Wanjala <jwanjala@pbora.go.ke> -> user19_name=Josephine Wanjala, user19_email=jwanjala, department=Research, phone=0724292824, password=field.12345
+Amina Matheka <amatheka@pbora.go.ke> -> user20_name=Amina Matheka, user20_email=amatheka, department=Research, phone=0705584383, password=field.12345
+Yvonne Ambundo <yambundo@pbora.go.ke> -> user21_name=Yvonne Ambundo, user21_email=yambundo, department=Research, phone=0723865314, password=field.12345
+Elizabeth Kamau <ekamau@pbora.go.ke> -> user27_name=Elizabeth Kamau, user27_email=ekamau, department=Research, phone=0722216993
+Paul Kimweli Wambua <pkimweli@pbora.go.ke> -> closest existing seed: user1_name=Paul Kimweli, user1_email=pkimweli, department=Compliance, phone=0722755973, password=field.12345
+Margaret Ndanu Mulili <mndanu@pbora.go.ke> -> closest existing seed: user2_name=Margaret Ndanu, user2_email=mndanu, department=Compliance, phone=0702597405, password=field.12345
+Kebati Oeri <koeri@pbora.go.ke> -> user3_name=Kebati Oeri, user3_email=koeri, department=Compliance, phone=0729631633, password=field.12345
+Rukia Noor <rnoor@pbora.go.ke> -> user4_name=Rukia Noor, user4_email=rnoor, department=Compliance, phone=0728390001, password=field.12345
+Esther Letting <eletting@pbora.go.ke> -> user5_name=Esther Letting, user5_email=eletting, department=Compliance, phone=0722442883, password=field.12345
+Stephen Monyoncho <smonyoncho@pbora.go.ke> -> user6_name=Stephen Monyoncho, user6_email=smonyoncho, department=Compliance Admin, phone=0725915552, password=field.12345
+Asha Abdi <aabdi@pbora.go.ke> -> closest existing seed: user11_name=Aisha Abdi, user11_email=aabdi, department=Registration, phone=0700111222, password=field.12345
+Betty Odero <bodero@pbora.go.ke> -> user12_name=Betty Odero, user12_email=bodero, department=ICT, phone=0711333444, password=field.12345
+Joel Onyango <jonyango@pbora.go.ke> -> user16_name=Joel Onyango, user16_email=jonyango, department=ICT, phone=0701446573, password=field.12345
