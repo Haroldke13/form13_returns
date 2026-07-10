@@ -238,7 +238,7 @@ install_docker_stack() {
 }
 
 ensure_required_system_packages() {
-  /install_ubuntu_packages $(for p in git unzip tar gzip nano ufw postgresql postgresql-contrib postgresql-client python3 python3-venv python3-pip build-essential openssl ca-certificates curl gnupg lsb-release; do dpkg -s "$p" >/dev/null 2>&1 || printf "%s " "$p"; done)
+  install_ubuntu_packages $(for p in git unzip tar gzip nano ufw postgresql postgresql-contrib postgresql-client python3 python3-venv python3-pip build-essential openssl ca-certificates curl gnupg lsb-release; do dpkg -s "$p" >/dev/null 2>&1 || printf "%s " "$p"; done)
   install_docker_stack
 }
 
