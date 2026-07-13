@@ -1,0 +1,16 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: form14_cloudflared
+    command:
+      - tunnel
+      - --no-autoupdate
+      - --loglevel
+      - info
+      - run
+      - --token
+      - "${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env.cloudflare}"
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped

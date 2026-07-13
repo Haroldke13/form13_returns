@@ -93,6 +93,31 @@ def test_render_runtime_env_removes_static_lan_db_dependency(monkeypatch):
     assert OLD_IP not in rendered
 
 
+def test_render_runtime_env_preserves_explicit_public_domain(monkeypatch):
+    monkeypatch.setattr(ip_address_change, "runtime_ipv4_hosts", lambda: [])
+
+    source = "\n".join(
+        [
+            "HOST_PORT=8000",
+            "PUBLIC_BASE_URL=https://returnsform14.org",
+            "PUBLIC_HOST_PORT=443",
+            "PREFERRED_URL_SCHEME=https",
+            "ALLOWED_HOSTS=auto,returnsform14.org,www.returnsform14.org",
+            "",
+        ]
+    )
+
+    rendered = ip_address_change.render_runtime_env_text(
+        source,
+        app_host_ip="10.107.20.241",
+        host_postgres_host="10.107.20.241",
+        container_postgres_host="10.107.20.241",
+    )
+
+    assert "PUBLIC_BASE_URL=https://returnsform14.org" in rendered
+    assert "ALLOWED_HOSTS=10.107.20.241,localhost,127.0.0.1,returnsform14.org,www.returnsform14.org" in rendered
+
+
 def test_detect_primary_ipv4_prefers_eth0_over_docker_route(monkeypatch):
     def fake_command_output(args):
         if args == ["ip", "-o", "-4", "addr", "show", "dev", "eth0"]:

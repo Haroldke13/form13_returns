@@ -18,8 +18,8 @@ from urllib.parse import quote, urlparse
 
 DEFAULT_OLD_IP = "192.0.2.10"
 DEFAULT_NETWORK_INTERFACE = "eth0"
-DEFAULT_HOST_POSTGRES_HOST = "127.0.0.1"
-DEFAULT_CONTAINER_POSTGRES_HOST = "host.docker.internal"
+DEFAULT_HOST_POSTGRES_HOST = "auto"
+DEFAULT_CONTAINER_POSTGRES_HOST = "auto"
 BACKUP_DIR_NAME = ".ip_address_change_backups"
 ENV_ASSIGNMENT_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$")
 AUTO_VALUES = {"", "auto", "detect", "dynamic", "<server-ip>", "<server_ip>"}
@@ -243,6 +243,22 @@ def existing_public_scheme(env_values: dict[str, str]) -> str:
     return "http"
 
 
+def explicit_public_base_url(env_values: dict[str, str]) -> str | None:
+    public_base_url = (env_values.get("PUBLIC_BASE_URL") or "").strip().rstrip("/")
+    if not public_base_url or is_auto_value(public_base_url):
+        return None
+
+    parsed = urlparse(public_base_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+
+    hostname = parsed.hostname or ""
+    if hostname in {"localhost", "127.0.0.1", "0.0.0.0"} or is_ip_literal(hostname):
+        return None
+
+    return public_base_url
+
+
 def postgres_url_scheme(env_values: dict[str, str]) -> str:
     for key in ("INTERNAL_DATABASE_URL", "DATABASE_URL", "PBORA_DATABASE_URL"):
         parsed = urlparse(env_values.get(key, ""))
@@ -263,6 +279,26 @@ def build_postgres_url(env_values: dict[str, str], host: str) -> str:
     return f"{scheme}://{auth}@{host}:{port}/{quote(db_name, safe='')}"
 
 
+def public_base_url_for_runtime(env_values: dict[str, str], app_host_ip: str, host_port: str) -> str:
+    explicit_url = explicit_public_base_url(env_values)
+    if explicit_url:
+        return explicit_url
+
+    scheme = existing_public_scheme(env_values)
+    public_port = (
+        env_values.get("PUBLIC_HOST_PORT")
+        or env_values.get("PUBLIC_PORT")
+        or env_values.get("PUBLIC_BASE_URL_PORT")
+        or host_port
+    )
+    normalized_port = str(public_port or "").strip().lower()
+    if normalized_port in {"", "default", "none", "off"}:
+        return f"{scheme}://{app_host_ip}"
+    if (scheme == "http" and normalized_port == "80") or (scheme == "https" and normalized_port == "443"):
+        return f"{scheme}://{app_host_ip}"
+    return f"{scheme}://{app_host_ip}:{normalized_port}"
+
+
 def render_runtime_env_text(
     env_text: str,
     *,
@@ -280,7 +316,7 @@ def render_runtime_env_text(
     if host_postgres_host == "auto" or is_auto_value(host_postgres_host) or host_postgres_host == "host.docker.internal":
         host_postgres_host = detected_host_ip or DEFAULT_HOST_POSTGRES_HOST
     if container_postgres_host == "auto" or is_auto_value(container_postgres_host) or container_postgres_host == "host.docker.internal":
-        container_postgres_host = DEFAULT_CONTAINER_POSTGRES_HOST
+        container_postgres_host = detected_host_ip or host_postgres_host
 
     env_values = env_map_from_text(env_text)
     host_port = env_values.get("HOST_PORT") or env_values.get("PORT") or "8000"
@@ -294,7 +330,7 @@ def render_runtime_env_text(
     updates = {
         "APP_HOST": "0.0.0.0",
         "FLASK_RUN_HOST": "0.0.0.0",
-        "PUBLIC_BASE_URL": f"{public_scheme}://{app_host_ip}:{host_port}",
+        "PUBLIC_BASE_URL": public_base_url_for_runtime(env_values, app_host_ip, host_port),
         "ALLOWED_HOSTS": allowed_hosts_for_runtime(env_values.get("ALLOWED_HOSTS"), app_host_ip),
         "PBORA_NETWORK_INTERFACE": network_interface or DEFAULT_NETWORK_INTERFACE,
         "PBORA_APP_HOST_IP": app_host_ip,

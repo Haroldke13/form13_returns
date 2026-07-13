@@ -210,6 +210,7 @@ warn_if_placeholder_env() {
   [[ "$admin_email" == "admin@example.local" ]] && log_warn "ADMIN_USER_EMAIL still uses the example placeholder."
   [[ "$admin_password" == "change-this-admin-password" ]] && log_warn "ADMIN_USER_PASSWORD still uses the example placeholder."
   [[ "$pg_password" == "change-this-db-password" ]] && log_warn "POSTGRES_PASSWORD still uses the example placeholder."
+  return 0
 }
 
 wait_for_http() {

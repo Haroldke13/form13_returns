@@ -55,5 +55,5 @@ fi
 echo
 log_info "Healthcheck passed."
 if [[ -n "$(server_ip)" ]]; then
-  echo "LAN URL: http://$(server_ip):$PORT"
+  echo "LAN URL: $URL"
 fi

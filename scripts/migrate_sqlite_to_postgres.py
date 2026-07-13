@@ -29,8 +29,15 @@ def load_form14_app(env_file: Path, database_url: str | None = None):
         os.environ["INTERNAL_DATABASE_URL"] = database_url
         os.environ["DATABASE_URL"] = database_url
         os.environ["PBORA_DATABASE_URL"] = database_url
+    previous_skip_schema = os.environ.get("SKIP_SCHEMA_CHECK")
     os.environ["SKIP_SCHEMA_CHECK"] = "1"
-    import app as form14_app
+    try:
+        import app as form14_app
+    finally:
+        if previous_skip_schema is None:
+            os.environ.pop("SKIP_SCHEMA_CHECK", None)
+        else:
+            os.environ["SKIP_SCHEMA_CHECK"] = previous_skip_schema
 
     return form14_app
 
@@ -330,6 +337,7 @@ def main() -> int:
             run_postgresql_audit=False,
             sync_default_admin=False,
         )
+        form14_app.db.session.remove()
         import_result = import_sqlite(
             form14_app,
             source_path=source_path,

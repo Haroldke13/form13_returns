@@ -1,0 +1,7 @@
+.env.cloudflare
+.cloudflared/
+cloudflared/*.json
+cloudflared/cert.pem
+__pycache__/
+*.py[cod]
+.pytest_cache/

@@ -1,37 +1,26 @@
 # PBORA Form 13
 
-## HTTPS and domain setup
+## Cloudflare Tunnel domain setup
 
-To serve the app at returnsform13.org with HTTPS, point your DNS to the server address 10.107.20.24 (NGOCB.LOCAL).
+The preferred domain setup for this server is Cloudflare Tunnel at `returnsform14.org`.
+Use [docs/CLOUDFLARE_TUNNEL.md](docs/CLOUDFLARE_TUNNEL.md) to create the
+Cloudflare connector token, configure `returnsform14.org` and
+`www.returnsform14.org`, and start the `cloudflared` sidecar.
 
-### DNS records
-Create these records in your DNS provider:
-
-- A record: `@` -> `10.107.20.24` (server host: `NGOCB.LOCAL`)
-- A record: `www` -> `10.107.20.24` (server host: `NGOCB.LOCAL`)
-
-### Caddy configuration
-The deployment helper installs Caddy and uses a config like this:
-
-```caddy
-returnsform13.org {
-    reverse_proxy 127.0.0.1:8000
-    encode gzip
-    header {
-        Strict-Transport-Security "max-age=31536000; includeSubDomains"
-    }
-}
-
-www.returnsform13.org {
-    redir https://returnsform13.org{uri} 308
-}
-```
-
-### Deployment command
-After DNS has propagated, run:
+Quick start after the Cloudflare tunnel token has been copied:
 
 ```bash
-./deploy_once.sh sqlite returnsform13.org
+cp .env.cloudflare.example .env.cloudflare
+nano .env.cloudflare
+./scripts/cloudflare_tunnel_up.sh postgres
 ```
 
-If the certificate is not issued yet, wait a few minutes and retry after DNS propagation.
+The Cloudflare published application should use service type `HTTPS`, URL
+`web:8000`, and `No TLS Verify` enabled, because the app container uses the
+local certificate files mounted from `./certs`.
+
+## Legacy direct DNS setup
+
+`deploy_once.sh` still supports the older Caddy/direct-DNS deployment path for
+servers that have a public IP address. For the current LAN-hosted server,
+Cloudflare Tunnel avoids exposing inbound ports.
