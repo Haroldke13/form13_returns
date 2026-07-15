@@ -1,4 +1,5 @@
 .env.cloudflare
+.env.ngrok
 .cloudflared/
 cloudflared/*.json
 cloudflared/cert.pem

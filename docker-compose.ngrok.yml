@@ -1,0 +1,28 @@
+services:
+  web:
+    environment:
+      NGROK_ALLOWED_HOSTS: ${NGROK_ALLOWED_HOSTS:-}
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: form14_ngrok
+    env_file:
+      - .env.ngrok
+    entrypoint:
+      - /bin/sh
+      - -lc
+    command:
+      - |
+        set -eu
+        upstream="$${NGROK_UPSTREAM:-https://web:8000}"
+        set -- http --log=stdout --log-format=logfmt --inspect=true
+        if [ -n "$${NGROK_URL:-}" ]; then
+          set -- "$$@" --url "$$NGROK_URL"
+        fi
+        exec ngrok "$$@" "$$upstream"
+    ports:
+      - "${NGROK_INSPECTOR_HOST:-127.0.0.1}:${NGROK_INSPECTOR_PORT:-4040}:4040"
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped

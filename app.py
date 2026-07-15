@@ -926,7 +926,11 @@ DATABASE_DUMP_BOOTSTRAP_CANDIDATES = (
 
 # 🔹 DATABASE + SECURITY CONFIGURATION
 database_url = resolve_primary_database_url()
-raw_allowed_hosts = env_csv('ALLOWED_HOSTS')
+raw_allowed_hosts = (
+    env_csv('ALLOWED_HOSTS')
+    + env_csv('ADDITIONAL_ALLOWED_HOSTS')
+    + env_csv('NGROK_ALLOWED_HOSTS')
+)
 allowed_hosts = resolve_trusted_hosts(raw_allowed_hosts, app_host_ip=os.getenv('PBORA_APP_HOST_IP'))
 render_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
 is_production = is_production_environment()
