@@ -4,7 +4,7 @@ from PIL import Image
 # =========================
 # CONFIG
 # =========================
-url = "https://pbora.go.ke/form/pbo-week"
+url = "https://returnsform14.org/form/pbo-week"
 
 output_file = "pbolandingpage.jpg"
 

@@ -5,7 +5,7 @@ APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$APP_DIR/_deploy_common.sh"
 
 MODE="sqlite"
-DOMAIN_NAME="${CANONICAL_HOSTNAME:-returnsform13.org}"
+DOMAIN_NAME="${CANONICAL_HOSTNAME:-returnsform14.org}"
 APP_PORT="${APP_PORT:-$(host_port)}"
 APP_HOST="${APP_HOST:-127.0.0.1}"
 DEPLOY_ARGS=()
@@ -16,9 +16,9 @@ Usage:
   ./deploy_once.sh [sqlite|postgres] [domain-name] [--no-build]
 
 Examples:
-  ./deploy_once.sh sqlite returnsform13.org
-  ./deploy_once.sh postgres returnsform13.org
-  ./deploy_once.sh postgres returnsform13.org --no-build
+  ./deploy_once.sh sqlite returnsform14.org
+  ./deploy_once.sh postgres returnsform14.org
+  ./deploy_once.sh postgres returnsform14.org --no-build
 
 This script will:
   1. prepare the production environment file,

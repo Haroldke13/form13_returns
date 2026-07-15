@@ -11109,6 +11109,10 @@ PUBLIC_ENDPOINTS = {
     'signup',
     'forgot_password',
     'reset_password',
+    'form_pbo_week',
+    'form_pbo_week_registration',
+    'pbo_week_schedule',
+    'pbo_week_intro',
     'global_field_help_context',
     'static',
 }
@@ -11157,6 +11161,13 @@ def redirect_to_canonical_host():
         '',
     ))
     return redirect(target, code=308)
+
+
+def render_public_html(filename):
+    html_path = Path(__file__).resolve().parent / filename
+    if not html_path.is_file():
+        abort(404)
+    return send_file(html_path, mimetype='text/html')
 
 
 @app.before_request
@@ -11639,6 +11650,26 @@ def section_b_preview():
         project_other_amounts=payload.get('project_other_amounts') or [],
     )
     return jsonify(preview)
+
+
+@app.route('/form/pbo-week', methods=['GET'], strict_slashes=False)
+def form_pbo_week():
+    return render_public_html('FINALPBOWEEK.html')
+
+
+@app.route('/form/pbo-week-registration', methods=['GET'], strict_slashes=False)
+def form_pbo_week_registration():
+    return redirect(url_for('login', next=url_for('home')))
+
+
+@app.route('/programme-schedule', methods=['GET'], strict_slashes=False)
+def pbo_week_schedule():
+    return render_public_html('programme-schedule.html')
+
+
+@app.route('/introtoform', methods=['GET'], strict_slashes=False)
+def pbo_week_intro():
+    return render_public_html('introtoform.html')
 
 
 @app.route('/', methods=['GET', 'POST'])
