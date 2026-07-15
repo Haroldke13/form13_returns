@@ -1511,6 +1511,13 @@ function showNotification(message, timeout=3500) {
                         value="{{ prefill.reporting_period_end }}">
                 </div>
             </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label for="report-edit-return-date">RETURN DATE</label>
+                    <input type="date" id="report-edit-return-date" name="return_date"
+                        value="{{ prefill.return_date or '9999-09-09' }}">
+                </div>
+            </div>
         </div>
 
         <script>

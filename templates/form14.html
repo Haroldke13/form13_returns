@@ -1101,6 +1101,17 @@ FORM 14 – PBO Annual Report
                                 <input type="hidden" id="reporting_period_end_hidden" name="reporting_period_end">
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="return_date" style="font-weight: 600;">
+                                    <i class="fa-solid fa-calendar-day"></i> RETURN DATE
+                                </label>
+                                <input type="date" style="background-color: transparent; width: 100%;"
+                                    id="return_date" name="return_date"
+                                    value="{{ prefill.return_date or '9999-09-09' }}"
+                                    title="Return Date">
+                            </div>
+                        </div>
 
                         <script defer>
                             function parseFormattedDate(value) {

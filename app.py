@@ -31,7 +31,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError, OperationalError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from email.message import EmailMessage
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from models import (
@@ -73,6 +73,7 @@ from models import (
     REPORT_REVIEW_STATUS_VALUES as MODEL_REPORT_REVIEW_STATUS_VALUES,
     IMPORT_BATCH_STATUS_VALUES as MODEL_IMPORT_BATCH_STATUS_VALUES,
     UPLOADED_FILE_STATUS_VALUES as MODEL_UPLOADED_FILE_STATUS_VALUES,
+    RETURN_DATE_PLACEHOLDER,
     sqlite_table_has_real_id_primary_key,
 )
 from mergePBOrecords_2 import (
@@ -991,6 +992,7 @@ TRACKED_REPORT_FIELDS = [
     'pbo_registration_number',
     'reporting_period_start',
     'reporting_period_end',
+    'return_date',
     'audited',
     'late_returns',
     'outstanding_penalty',
@@ -1752,12 +1754,46 @@ def ensure_legacy_user_schema():
     db.session.commit()
 
 
+def backfill_missing_return_dates():
+    """Hard-code the legacy missing return date marker for preexisting rows."""
+    if schema_work_disabled():
+        return 0
+
+    inspector = inspect(db.engine)
+    table_name = PBOReport.__tablename__
+    if table_name not in inspector.get_table_names():
+        return 0
+
+    existing_columns = {column['name'] for column in inspector.get_columns(table_name)}
+    if 'return_date' not in existing_columns:
+        return 0
+
+    quoted_table = dialect_quote_identifier(table_name)
+    quoted_column = dialect_quote_identifier('return_date')
+    dialect_name = db.engine.dialect.name
+    if dialect_name in {'mysql', 'mariadb'}:
+        missing_predicate = f"{quoted_column} IS NULL OR TRIM(CAST({quoted_column} AS CHAR)) = ''"
+    else:
+        missing_predicate = f"{quoted_column} IS NULL OR TRIM(CAST({quoted_column} AS TEXT)) = ''"
+    result = db.session.execute(
+        text(
+            f"UPDATE {quoted_table} "
+            f"SET {quoted_column} = :return_date "
+            f"WHERE {missing_predicate}"
+        ),
+        {'return_date': RETURN_DATE_PLACEHOLDER.isoformat()},
+    )
+    db.session.commit()
+    return max(result.rowcount or 0, 0)
+
+
 def ensure_legacy_report_schema():
     """Backfill columns added to pbo_reports after initial deployments."""
     if schema_work_disabled():
         return
 
     ensure_model_columns(PBOReport)
+    backfill_missing_return_dates()
     ensure_model_string_capacities(PBOReport)
 
 
@@ -3035,6 +3071,7 @@ def assign_missing_legacy_sqlite_ids(model_class, rows):
 
 
 MISSING_DATE_PLACEHOLDER = "99/99/9999"
+RETURN_DATE_PLACEHOLDER_DISPLAY = "9/9/9999"
 
 
 def parse_date(value):
@@ -3090,6 +3127,21 @@ def reporting_period_input_value(date_value, raw_value=None):
     if raw:
         return raw
     return date_value.isoformat() if date_value else ""
+
+
+def parse_return_date(value):
+    return parse_date(value) or RETURN_DATE_PLACEHOLDER
+
+
+def return_date_input_value(value):
+    return (value or RETURN_DATE_PLACEHOLDER).isoformat()
+
+
+def return_date_display(value):
+    normalized = value or RETURN_DATE_PLACEHOLDER
+    if normalized == RETURN_DATE_PLACEHOLDER:
+        return RETURN_DATE_PLACEHOLDER_DISPLAY
+    return format_date(normalized)
 
 
 def report_owner_display(report):
@@ -4918,6 +4970,7 @@ def send_email_message(subject, recipients, body):
 
 def empty_form14_prefill():
     return {
+        'return_date': return_date_input_value(None),
         'income_b2_total': None,
         'receipts_total': None,
         'cash_bank_balance': None,
@@ -10794,6 +10847,7 @@ def build_sector_report_rows(reports):
             "scope": report.scope,
             "reporting_period_start": format_date(report.reporting_period_start),
             "reporting_period_end": format_date(report.reporting_period_end),
+            "return_date": return_date_display(report.return_date),
             "contact_name": report.contact_name,
             "contact_telephone": report.contact_telephone,
             "countries_of_operation": report.countries_of_operation,
@@ -10861,6 +10915,7 @@ def get_sector_report_columns():
         ("scope", "Scope"),
         ("reporting_period_start", "Reporting Start"),
         ("reporting_period_end", "Reporting End"),
+        ("return_date", "Return Date"),
         ("contact_name", "Contact Name"),
         ("contact_telephone", "Contact Telephone"),
         ("countries_of_operation", "Countries of Operation"),
@@ -11611,6 +11666,7 @@ def home():
                     request.form.get('reporting_period_start'),
                     request.form.get('reporting_period_end'),
                 )
+                report.return_date = parse_return_date(request.form.get('return_date'))
                 report.pbo_name = get_form_upper('pbo_name')
                 report.pbo_registration_number = get_form_upper('pbo_registration_number')
                 report.pbo_registration_date = parse_date(request.form.get('pbo_registration_date'))
@@ -14363,6 +14419,7 @@ def import_reports():
                 row.get('reporting_period_start') or row.get('Reporting Period Start'),
                 row.get('reporting_period_end') or row.get('Reporting Period End'),
             )
+            report.return_date = parse_return_date(row.get('return_date') or row.get('Return Date'))
             report.audited = to_upper(row.get('audited') or row.get('Audited'))
             report.late_returns = to_upper(row.get('late_returns') or row.get('Late Returns'))
             report.outstanding_penalty = row.get('outstanding_penalty') or row.get('Outstanding Penalty') or report.outstanding_penalty
@@ -14555,7 +14612,7 @@ def update_report_field(report_id):
     before = report_snapshot(report)
     editable_fields = [
         'pbo_name', 'filing_period', 'filling_fee', 'late_returns', 'penalty_paid',
-        'outstanding_penalty', 'reporting_period_end', 'form_14', 'audited', 'requests',
+        'outstanding_penalty', 'reporting_period_end', 'return_date', 'form_14', 'audited', 'requests',
         'date_received', 'received_by', 'filed_for_action_by_registry', 'date_filed_by_registry_for_action',
         'designate_by_pco', 'date_assigned', 'review_acknowledgement', 'date_acknowledged_notice_sent',
         'end_of_notice_period', 'notice_countdown'
@@ -14564,7 +14621,10 @@ def update_report_field(report_id):
     for field in editable_fields:
         if field in request.form:
             value = request.form[field]
-            setattr(report, field, parse_date(value) if field == 'reporting_period_end' else value)
+            if field == 'return_date':
+                setattr(report, field, parse_return_date(value))
+            else:
+                setattr(report, field, parse_date(value) if field == 'reporting_period_end' else value)
             updated = True
     if updated:
         report.pbo_name = to_upper(report.pbo_name)
@@ -14611,6 +14671,7 @@ def add_report_row():
             review_status='pending',
             data_source='admin',
             user_id=current_user.id,
+            return_date=parse_return_date(request.form.get('return_date')),
         )
         set_reporting_period_fields(
             report,
@@ -14731,6 +14792,7 @@ def report_detail(report_id):
         'associated_username': report_associated_username_display(report),
         'reporting_period_start_display': reporting_period_display(report.reporting_period_start, report.reporting_period_start_raw),
         'reporting_period_end_display': reporting_period_display(report.reporting_period_end, report.reporting_period_end_raw),
+        'return_date_display': return_date_display(report.return_date),
         'can_edit_report': can_edit_report_record(current_user, report),
         'countries_of_operation_list': countries_of_operation_list,
         'counties_list': counties_list,
@@ -14803,6 +14865,7 @@ def report_edit(report_id):
                 request.form.get('reporting_period_start'),
                 request.form.get('reporting_period_end'),
             )
+            report.return_date = parse_return_date(request.form.get('return_date'))
             report.pbo_name = get_form_upper('pbo_name')
             assign_pbo_name_normalized(report)
             report.pbo_registration_number = get_form_upper('pbo_registration_number')
@@ -15403,6 +15466,7 @@ def report_edit(report_id):
         'associated_username': report_associated_username_display(report),
         'reporting_period_start_display': reporting_period_display(report.reporting_period_start, report.reporting_period_start_raw),
         'reporting_period_end_display': reporting_period_display(report.reporting_period_end, report.reporting_period_end_raw),
+        'return_date_display': return_date_display(report.return_date),
         'countries_of_operation_list': [c.strip() for c in (report.countries_of_operation or "").split(",") if c.strip()],
         'counties_list': [c.strip() for c in (report.counties or "").split(",") if c.strip()],
         'assets_list': report.assets,
@@ -15420,6 +15484,7 @@ def report_edit(report_id):
     prefill = {
         'reporting_period_start': report.reporting_period_start.isoformat() if report.reporting_period_start else "",
         'reporting_period_end': report.reporting_period_end.isoformat() if report.reporting_period_end else "",
+        'return_date': return_date_input_value(report.return_date),
         'pbo_name': report.pbo_name or "",
         'pbo_registration_number': report.pbo_registration_number or "",
         'pbo_registration_date': report.pbo_registration_date.isoformat() if report.pbo_registration_date else "",

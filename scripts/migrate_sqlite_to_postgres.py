@@ -344,6 +344,7 @@ def main() -> int:
             replace_existing=args.replace_existing,
             batch_size=args.batch_size,
         )
+        form14_app.backfill_missing_return_dates()
         seed_result = None
         if args.sync_env_users:
             seed_result = sync_env_users(form14_app, env_file)

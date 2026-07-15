@@ -1,6 +1,6 @@
 
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy import event, text
 from sqlalchemy.orm import Session
@@ -47,6 +47,9 @@ def build_status_check_constraint(column_name, allowed_values):
 
 def utc_now():
     return datetime.now(timezone.utc)
+
+
+RETURN_DATE_PLACEHOLDER = date(9999, 9, 9)
 
 
 # User model for authentication and roles
@@ -177,6 +180,12 @@ class PBOReport(db.Model):
     reporting_period_end = db.Column(db.Date, nullable=True)
     reporting_period_start_raw = db.Column(db.String(50), nullable=True)
     reporting_period_end_raw = db.Column(db.String(50), nullable=True)
+    return_date = db.Column(
+        db.Date,
+        nullable=False,
+        default=RETURN_DATE_PLACEHOLDER,
+        server_default=RETURN_DATE_PLACEHOLDER.isoformat(),
+    )
 
     # Section A1 - PBO Particulars
     pbo_name = db.Column(db.Text, nullable=True)

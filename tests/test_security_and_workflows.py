@@ -809,6 +809,40 @@ def test_duplicate_submit_token_creates_one_report(app, client, models):
         assert len(rows) == 1
 
 
+def test_form14_submission_saves_return_date(app, client, models):
+    PBOReport = models["PBOReport"]
+
+    create_and_login_user(app, client, models, "return-date-submit@example.com", "ReturnDateSubmit@123")
+
+    response = client.post(
+        "/",
+        data={
+            "submission_token": "TOKEN-RETURN-DATE-001",
+            "pbo_name": "Return Date Test NGO",
+            "reporting_period_start": "2026-01-01",
+            "reporting_period_end": "2026-12-31",
+            "return_date": "2026-07-15",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+
+    with app.app_context():
+        report = PBOReport.query.filter_by(submission_token="TOKEN-RETURN-DATE-001").one()
+        assert report.return_date == datetime(2026, 7, 15).date()
+
+
+def test_form14_get_renders_return_date_field_with_placeholder_default(app, client, models):
+    create_and_login_user(app, client, models, "return-date-form@example.com", "ReturnDateForm@123")
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b'name="return_date"' in response.data
+    assert b'value="9999-09-09"' in response.data
+
+
 def test_reused_stale_submit_token_with_different_report_identity_creates_new_report(app, client, models):
     PBOReport = models["PBOReport"]
 
@@ -3703,6 +3737,12 @@ def test_legacy_report_schema_is_bootstrapped_for_existing_post_deploy_tables(ap
                 "created_at DATETIME)"
             )
         )
+        db.session.execute(
+            text(
+                "INSERT INTO pbo_reports (id, pbo_name, created_at) "
+                "VALUES (1, 'LEGACY NGO', '2026-07-01 00:00:00')"
+            )
+        )
         db.session.commit()
 
         app_code.ensure_legacy_report_schema()
@@ -3717,7 +3757,12 @@ def test_legacy_report_schema_is_bootstrapped_for_existing_post_deploy_tables(ap
             "countries_of_operation",
             "income_b2_total",
             "receipts_total",
+            "return_date",
         }.issubset(columns)
+        legacy_return_date = db.session.execute(
+            text("SELECT return_date FROM pbo_reports WHERE id = 1")
+        ).scalar_one()
+        assert str(legacy_return_date) == "9999-09-09"
 
 
 def test_ensure_model_string_capacities_promotes_legacy_varchar_to_text_for_postgresql(app, models, app_code, monkeypatch):
