@@ -80,6 +80,30 @@ run_docker_compose() {
   docker_compose_cmd "$@"
 }
 
+skip_docker_build_enabled() {
+  local value
+  value="$(printf '%s' "${PBORA_SKIP_DOCKER_BUILD:-${SKIP_DOCKER_BUILD:-0}}" | tr '[:upper:]' '[:lower:]')"
+  case "$value" in
+    1|true|yes|on|skip|no-build)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+compose_up_detached() {
+  local compose_file="$1"
+  if skip_docker_build_enabled; then
+    log_info "Starting containers from existing cached Docker images; skipping app image rebuild."
+    docker_compose_cmd --env-file "$ENV_FILE" -f "$compose_file" up -d --no-build
+  else
+    log_info "Building with Docker layer cache and starting containers."
+    docker_compose_cmd --env-file "$ENV_FILE" -f "$compose_file" up -d --build
+  fi
+}
+
 require_docker() {
   command -v docker >/dev/null 2>&1 || die "Docker is not installed or not on PATH."
   docker_compose_cmd version >/dev/null 2>&1 || die "Docker Compose plugin is not available."

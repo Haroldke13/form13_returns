@@ -30,17 +30,32 @@ if [[ "$MODE" == "postgres" ]]; then
 fi
 
 PORT="$(read_env_value HOST_PORT 8000)"
-URL="$(public_base_url)"
+URL="${PBORA_HEALTHCHECK_URL:-$(read_env_value PBORA_HEALTHCHECK_URL)}"
+if [[ -z "$URL" ]]; then
+  URL="$(public_base_url)"
+fi
+LOCAL_URL="http://$(server_ip):$PORT"
+if [[ "$LOCAL_URL" == "http://:$PORT" ]]; then
+  LOCAL_URL="http://127.0.0.1:$PORT"
+fi
 if [[ -f "$APP_DIR/certs/server.crt" && -f "$APP_DIR/certs/server.key" ]]; then
   URL="${URL/http:\/\//https:\/\/}"
+  LOCAL_URL="${LOCAL_URL/http:\/\//https:\/\/}"
 fi
 
 log_info "Compose status:"
 run_docker_compose --env-file .env.production -f "$COMPOSE_FILE" ps
 echo
 log_info "HTTP check: $URL"
-wait_for_http "$URL" 15 2 || die "HTTP healthcheck failed for $URL"
-log_info "HTTP check passed."
+if wait_for_http "$URL" 15 2; then
+  log_info "HTTP check passed."
+elif [[ "$LOCAL_URL" != "$URL" ]]; then
+  log_warn "HTTP healthcheck failed for $URL; trying local container URL: $LOCAL_URL"
+  wait_for_http "$LOCAL_URL" 15 2 || die "HTTP healthcheck failed for $URL and local fallback $LOCAL_URL"
+  log_info "Local HTTP fallback check passed."
+else
+  die "HTTP healthcheck failed for $URL"
+fi
 
 if [[ "$MODE" == "postgres" ]] && ! external_postgres_enabled; then
   log_info "Database check:"

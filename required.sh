@@ -3,18 +3,19 @@ set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$APP_DIR/_deploy_common.sh"
-RAW_MODE="${1:-postgres}"
+RAW_MODE="postgres"
 APT_UPDATED=0
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./required.sh [sqlite|postgres]
+  ./required.sh [sqlite|postgres] [--no-build]
 
 Examples:
   ./required.sh
   ./required.sh postgres
   ./required.sh sqlite
+  ./required.sh postgres --no-build
 
 What it does:
   - Installs Ubuntu/Debian host prerequisites if missing
@@ -28,15 +29,31 @@ What it does:
 Important:
   - If `.env.production` does not exist yet, the script creates it and stops
     so you can edit real production values before continuing.
+  - By default Docker uses cached image layers while building the app image.
+  - Use --no-build or PBORA_SKIP_DOCKER_BUILD=1 to reuse the existing app image.
 EOF
 }
 
-case "$RAW_MODE" in
-  -h|--help|help)
-    usage
-    exit 0
-    ;;
-esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
+    --no-build|--skip-build|--cached-image)
+      export PBORA_SKIP_DOCKER_BUILD=1
+      shift
+      ;;
+    sqlite|postgres|postgresql|pg)
+      RAW_MODE="$1"
+      shift
+      ;;
+    *)
+      usage >&2
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
 
 MODE="$(resolve_mode "$RAW_MODE")" || { usage >&2; die "Unknown mode: $RAW_MODE"; }
 COMPOSE_FILE="$(compose_file_for_mode "$MODE")"
@@ -198,8 +215,8 @@ deploy_application() {
   log_info "Validating compose configuration..."
   validate_compose "$COMPOSE_FILE"
 
-  log_info "Building and starting application using $COMPOSE_FILE..."
-  run_docker_compose --env-file .env.production -f "$COMPOSE_FILE" up -d --build
+  log_info "Starting application using $COMPOSE_FILE..."
+  compose_up_detached "$COMPOSE_FILE"
 
   if [[ "$MODE" == "postgres" ]] && ! external_postgres_enabled; then
     wait_for_postgres_container "$(read_env_value POSTGRES_DB form14)" "$(read_env_value POSTGRES_USER form14)" 45 2 || \

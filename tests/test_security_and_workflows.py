@@ -2096,6 +2096,9 @@ def test_report_detail_and_edit_show_associated_username(app, client, models):
             user_id=owner.id,
             workflow_status="draft",
             review_status="pending",
+            reporting_period_start=datetime(2026, 1, 1).date(),
+            reporting_period_end=datetime(2026, 12, 31).date(),
+            return_date=datetime(2026, 7, 15).date(),
         )
         db.session.add(report)
         db.session.commit()
@@ -2110,8 +2113,14 @@ def test_report_detail_and_edit_show_associated_username(app, client, models):
     assert edit_response.status_code == 200
     assert b"Associated Username" in detail_response.data
     assert b"detail-owner" in detail_response.data
+    assert b"Return Filing Date" in detail_response.data
+    assert b"01/01/2026 to 31/12/2026" in detail_response.data
+    assert b"15/07/2026" in detail_response.data
     assert b"Associated Username" in edit_response.data
     assert b"detail-owner" in edit_response.data
+    assert b"Return Filing Date" in edit_response.data
+    assert b"01/01/2026 to 31/12/2026" in edit_response.data
+    assert b"15/07/2026" in edit_response.data
 
 
 def test_report_edit_accepts_inactive_section_flags_and_clears_section_data(app, client, models):
@@ -2182,6 +2191,9 @@ def test_reports_list_renders_dates_payments_and_key_answers_columns(app, client
             assets_stolen="NO",
             gov_tax_waiver=True,
             election_frequency="ANNUALLY",
+            reporting_period_start=datetime(2026, 1, 1).date(),
+            reporting_period_end=datetime(2026, 12, 31).date(),
+            return_date=datetime(2026, 7, 15).date(),
         )
         db.session.add(report)
         db.session.commit()
@@ -2192,7 +2204,12 @@ def test_reports_list_renders_dates_payments_and_key_answers_columns(app, client
     response = client.get("/reports")
 
     assert response.status_code == 200
+    assert b"reports-table-scroll" in response.data
+    assert b"Scrollable reports table" in response.data
     assert b"Dates" in response.data
+    assert b"Reporting Period / Filing Date" in response.data
+    assert b"Return Filing:" in response.data
+    assert b"15/07/2026" in response.data
     assert b"Updated By" in response.data
     assert b"Payments" in response.data
     assert b"Key Answers" in response.data
@@ -2201,6 +2218,137 @@ def test_reports_list_renders_dates_payments_and_key_answers_columns(app, client
     assert b"Assets issue: NO" in response.data
     assert b"Tax waiver: YES" in response.data
     assert b"Election: ANNUALLY" in response.data
+
+
+def test_my_files_renders_return_filing_date_column(app, client, models):
+    db = models["db"]
+    User = models["User"]
+    PBOReport = models["PBOReport"]
+
+    with app.app_context():
+        owner = create_user(db, User, "my-files-owner@example.com", "OwnerUser@123")
+        report = PBOReport(
+            pbo_name="My Files Filing Date NGO",
+            pbo_registration_number="REG-MY-FILES-001",
+            user_id=owner.id,
+            workflow_status="submitted",
+            review_status="pending",
+            reporting_period_start=datetime(2026, 1, 1).date(),
+            reporting_period_end=datetime(2026, 12, 31).date(),
+            return_date=datetime(2026, 7, 15).date(),
+        )
+        db.session.add(report)
+        db.session.commit()
+
+    login(client, "my-files-owner@example.com", "OwnerUser@123")
+    response = client.get("/my-files")
+
+    assert response.status_code == 200
+    assert b"Return Filing Date" in response.data
+    assert b"15/07/2026" in response.data
+
+
+def test_all_files_requires_manage_all_records_and_lists_all_user_work(app, client, models):
+    db = models["db"]
+    User = models["User"]
+    PBOReport = models["PBOReport"]
+    UploadedFile = models["UploadedFile"]
+
+    with app.app_context():
+        from models import FieldChangeLog, UserActivityLog
+
+        admin = create_user(
+            db,
+            User,
+            "all-files-admin@example.com",
+            "AllFilesAdmin@123",
+            role="admin",
+            can_manage_all_records=True,
+        )
+        owner = create_user(db, User, "all-files-owner@example.com", "AllFilesOwner@123")
+        editor = create_user(db, User, "all-files-editor@example.com", "AllFilesEditor@123")
+        viewer = create_user(db, User, "all-files-viewer@example.com", "AllFilesViewer@123")
+        admin.full_name = "All Files Admin"
+        owner.full_name = "All Files Owner"
+        editor.full_name = "All Files Editor"
+        viewer.full_name = "All Files Viewer"
+        db.session.commit()
+
+        first_report = PBOReport(
+            pbo_name="All Files Owned NGO",
+            pbo_registration_number="REG-ALL-FILES-001",
+            user_id=owner.id,
+            last_modified_by_id=editor.id,
+            workflow_status="submitted",
+            review_status="pending",
+            reporting_period_start=datetime(2026, 1, 1).date(),
+            reporting_period_end=datetime(2026, 12, 31).date(),
+            return_date=datetime(2026, 7, 15).date(),
+        )
+        second_report = PBOReport(
+            pbo_name="All Files Uploaded NGO",
+            pbo_registration_number="REG-ALL-FILES-002",
+            user_id=editor.id,
+            workflow_status="validated",
+            review_status="pending",
+            return_date=datetime(2026, 8, 1).date(),
+        )
+        db.session.add_all([first_report, second_report])
+        db.session.commit()
+
+        db.session.add_all([
+            FieldChangeLog(
+                report_id=first_report.id,
+                user_id=editor.id,
+                action="report_updated",
+                field_name="pbo_name",
+                old_value="Old name",
+                new_value="All Files Owned NGO",
+                created_at=datetime(2026, 7, 16, 8, 0, 0),
+            ),
+            UserActivityLog(
+                user_id=owner.id,
+                report_id=second_report.id,
+                action="report_updated",
+                summary="Owner reviewed the uploaded file record",
+                created_at=datetime(2026, 7, 17, 9, 0, 0),
+            ),
+            UploadedFile(
+                report_id=second_report.id,
+                uploaded_by_id=owner.id,
+                category="supporting_document",
+                original_filename="all-files-support.pdf",
+                stored_filename="all-files-support.pdf",
+                storage_path="/tmp/all-files-support.pdf",
+                status="uploaded",
+                created_at=datetime(2026, 7, 17, 10, 0, 0),
+            ),
+        ])
+        db.session.commit()
+
+    login(client, "all-files-viewer@example.com", "AllFilesViewer@123")
+    denied = client.get("/all-files")
+    assert denied.status_code == 403
+
+    viewer_files = client.get("/my-files")
+    assert viewer_files.status_code == 200
+    assert b'href="/all-files"' not in viewer_files.data
+
+    client.get("/logout", follow_redirects=True)
+    login(client, "all-files-admin@example.com", "AllFilesAdmin@123")
+    response = client.get("/all-files?q=All Files")
+
+    assert response.status_code == 200
+    assert b'href="/all-files"' in response.data
+    assert b"All Files" in response.data
+    assert b"ALL FILES OWNED NGO" in response.data
+    assert b"ALL FILES UPLOADED NGO" in response.data
+    assert b"All Files Owner" in response.data
+    assert b"All Files Editor" in response.data
+    assert b"all-files-support.pdf" in response.data
+    assert b"Return Filing Date" in response.data
+    assert b"15/07/2026" in response.data
+    assert b"01/08/2026" in response.data
 
 
 def test_reports_list_supports_search_and_per_page(app, client, models):

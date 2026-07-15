@@ -1304,7 +1304,7 @@ function showNotification(message, timeout=3500) {
                 </div>
                 <h1 class="report-edit-title">{{ report.pbo_name or 'Edit PBO Report' }}</h1>
                 <p class="report-edit-subtitle">
-                    Updating the official return for {{ reporting_period_start_display }}
+                    Updating the official return for {{ reporting_period_start_display }} to {{ reporting_period_end_display }}
                     {% if edit_totals.counties %}
                     • {{ edit_totals.counties }} county{{ '' if edit_totals.counties == 1 else 'ies' }} selected
                     {% endif %}
@@ -1332,8 +1332,8 @@ function showNotification(message, timeout=3500) {
                     <div class="report-edit-stat-label">Reporting Window</div>
                     <span class="report-edit-stat-icon"><i class="bi bi-calendar-range"></i></span>
                 </div>
-                <div class="report-edit-stat-value">{{ reporting_period_start_display }}</div>
-                <p class="report-edit-stat-note">Start date currently on file.</p>
+                <div class="report-edit-stat-value">{{ reporting_period_start_display }} to {{ reporting_period_end_display }}</div>
+                <p class="report-edit-stat-note">Return filing date: {{ return_filing_date_display }}</p>
             </div>
             <div class="report-edit-stat coverage">
                 <div class="report-edit-stat-head">
@@ -1513,7 +1513,7 @@ function showNotification(message, timeout=3500) {
             </div>
             <div class="row mt-3">
                 <div class="col-md-6">
-                    <label for="report-edit-return-date">RETURN DATE</label>
+                    <label for="report-edit-return-date">Return Filing Date</label>
                     <input type="date" id="report-edit-return-date" name="return_date"
                         value="{{ prefill.return_date or '9999-09-09' }}">
                 </div>

@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}All Files{% endblock %}
+
+{% block content %}
+<div class="app-page-container">
+<style>
+    :root {
+        --all-files-panel: #ffffff;
+        --all-files-line: #d9e2ec;
+        --all-files-text: #0f172a;
+        --all-files-muted: #64748b;
+        --all-files-head: #123a87;
+        --all-files-soft: #f1f5f9;
+    }
+
+    .all-files-page {
+        color: var(--all-files-text);
+        width: 100%;
+    }
+
+    .all-files-topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .all-files-title {
+        margin: 0 0 6px;
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .all-files-subtitle,
+    .all-files-meta {
+        margin: 0;
+        color: var(--all-files-muted);
+    }
+
+    .all-files-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .all-files-filter {
+        display: grid;
+        grid-template-columns: minmax(240px, 1fr) auto auto;
+        gap: 10px;
+        align-items: end;
+        margin-bottom: 14px;
+    }
+
+    .all-files-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .all-files-stat {
+        border: 1px solid var(--all-files-line);
+        background: var(--all-files-panel);
+        border-radius: 8px;
+        padding: 12px 14px;
+    }
+
+    .all-files-stat-label {
+        margin: 0 0 6px;
+        color: var(--all-files-muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .all-files-stat-value {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .all-files-table-panel {
+        border: 1px solid var(--all-files-line);
+        border-radius: 8px;
+        background: var(--all-files-panel);
+        overflow: hidden;
+    }
+
+    .all-files-table-wrap {
+        max-height: calc(100vh - 330px);
+        min-height: 360px;
+        overflow: auto;
+        scrollbar-width: thin;
+    }
+
+    .all-files-table {
+        width: 100%;
+        min-width: 1680px;
+        margin: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .all-files-table th,
+    .all-files-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--all-files-line);
+        vertical-align: top;
+        font-size: 13px;
+    }
+
+    .all-files-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--all-files-head);
+        color: #ffffff;
+        white-space: nowrap;
+    }
+
+    .all-files-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .all-files-report-link {
+        color: #0f2f78;
+        font-weight: 800;
+        text-decoration: none;
+    }
+
+    .all-files-report-link:hover {
+        text-decoration: underline;
+    }
+
+    .all-files-muted {
+        color: var(--all-files-muted);
+        font-size: 12px;
+    }
+
+    .all-files-cell-wide {
+        min-width: 260px;
+        max-width: 360px;
+    }
+
+    .all-files-cell-wrap {
+        white-space: normal;
+        line-height: 1.4;
+    }
+
+    .all-files-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: var(--all-files-soft);
+        color: #1e293b;
+        padding: 4px 8px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .all-files-empty {
+        padding: 48px 20px;
+        text-align: center;
+        color: var(--all-files-muted);
+    }
+
+    @media (max-width: 960px) {
+        .all-files-filter,
+        .all-files-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .all-files-table-wrap {
+            max-height: calc(100vh - 400px);
+        }
+    }
+</style>
+
+<div class="all-files-page">
+    <div class="all-files-topbar">
+        <div>
+            <h1 class="all-files-title">All Files</h1>
+            <p class="all-files-subtitle">Files worked on by all users.</p>
+            <p class="all-files-meta">Generated: {{ generated_at }}</p>
+        </div>
+        <div class="all-files-actions">
+            <a href="{{ url_for('reports_list') }}" class="btn btn-outline-secondary">Reports</a>
+            <a href="{{ url_for('my_files') }}" class="btn btn-outline-secondary">My Files</a>
+        </div>
+    </div>
+
+    <form method="get" action="{{ url_for('all_files') }}" class="all-files-filter" data-skip-page-loader="true">
+        <div>
+            <label for="all-files-search" class="form-label mb-1">Search Records</label>
+            <input id="all-files-search" type="search" name="q" value="{{ search_query }}" class="form-control" placeholder="PBO, registration, user, file, or status">
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search_query %}
+        <a href="{{ url_for('all_files') }}" class="btn btn-outline-secondary" data-skip-page-loader="true">Clear</a>
+        {% else %}
+        <span></span>
+        {% endif %}
+    </form>
+
+    <div class="all-files-summary-grid">
+        <section class="all-files-stat">
+            <p class="all-files-stat-label">Total Records</p>
+            <p class="all-files-stat-value">{{ total_reports }}</p>
+        </section>
+        <section class="all-files-stat">
+            <p class="all-files-stat-label">Displayed</p>
+            <p class="all-files-stat-value">{{ filtered_reports }}</p>
+        </section>
+        <section class="all-files-stat">
+            <p class="all-files-stat-label">Contributors</p>
+            <p class="all-files-stat-value">{{ distinct_worker_count }}</p>
+        </section>
+        <section class="all-files-stat">
+            <p class="all-files-stat-label">Uploaded Files</p>
+            <p class="all-files-stat-value">{{ total_file_count }}</p>
+        </section>
+    </div>
+
+    <div class="all-files-table-panel">
+        <div class="all-files-table-wrap" tabindex="0" aria-label="Scrollable all files table">
+            <table class="all-files-table">
+                <thead>
+                    <tr>
+                        <th>File / Report</th>
+                        <th>Registration</th>
+                        <th>Reporting Period</th>
+                        <th>Return Filing Date</th>
+                        <th>Record Owner</th>
+                        <th>Worked By</th>
+                        <th>Latest Worker</th>
+                        <th>Latest Activity</th>
+                        <th>Files</th>
+                        <th>Workflow</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    {% set report = row.report %}
+                    <tr>
+                        <td class="all-files-cell-wide">
+                            <a class="all-files-report-link" href="{{ url_for('report_detail', report_id=report.id) }}">{{ report.pbo_name or ('Report #' ~ report.id) }}</a>
+                            <div class="all-files-muted">Report #{{ report.id }}</div>
+                        </td>
+                        <td>
+                            {{ report.pbo_registration_number or 'N/A' }}
+                        </td>
+                        <td class="all-files-cell-wrap">
+                            {{ row.period_display }}
+                        </td>
+                        <td>
+                            {{ row.return_filing_date }}
+                        </td>
+                        <td class="all-files-cell-wrap">
+                            {{ row.owner_name }}
+                        </td>
+                        <td class="all-files-cell-wide all-files-cell-wrap">
+                            {{ row.worker_summary }}
+                        </td>
+                        <td class="all-files-cell-wrap">
+                            <strong>{{ row.latest_worker }}</strong>
+                            <div class="all-files-muted">{{ row.latest_worker_roles }}</div>
+                        </td>
+                        <td class="all-files-cell-wide all-files-cell-wrap">
+                            {{ row.latest_activity_summary }}
+                            <div class="all-files-muted">{{ row.latest_activity_at or 'N/A' }}</div>
+                        </td>
+                        <td class="all-files-cell-wrap">
+                            <span class="all-files-badge">{{ row.file_count }}</span>
+                            {% if row.file_names %}
+                            <div class="all-files-muted">{{ row.file_names }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="all-files-badge">{{ row.workflow_status }}</span>
+                        </td>
+                        <td>
+                            {{ row.updated_at or row.created_at or 'N/A' }}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{{ url_for('report_detail', report_id=report.id) }}" class="btn btn-sm btn-outline-dark">View</a>
+                                <a href="{{ url_for('report_edit', report_id=report.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                {% if row.latest_file_id %}
+                                <a href="{{ url_for('my_file_open', file_id=row.latest_file_id) }}" class="btn btn-sm btn-outline-success">Open File</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="12">
+                            <div class="all-files-empty">No matching records found.</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

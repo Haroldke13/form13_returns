@@ -3,31 +3,48 @@ set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$APP_DIR/_deploy_common.sh"
-RAW_MODE="${1:-sqlite}"
+RAW_MODE="sqlite"
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./deploy.sh [sqlite|postgres]
+  ./deploy.sh [sqlite|postgres] [--no-build]
 
 Examples:
   ./deploy.sh
   ./deploy.sh sqlite
   ./deploy.sh postgres
+  ./deploy.sh postgres --no-build
 
 Notes:
   - Default mode is sqlite.
+  - By default Docker uses the layer cache while building the app image.
+  - Use --no-build or PBORA_SKIP_DOCKER_BUILD=1 to reuse the existing app image.
   - If `.env.production` does not exist, this script copies `.env.production.example`
     to `.env.production` and stops so you can edit real server values first.
 EOF
 }
 
-case "$RAW_MODE" in
-  -h|--help|help)
-    usage
-    exit 0
-    ;;
-esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
+    --no-build|--skip-build|--cached-image)
+      export PBORA_SKIP_DOCKER_BUILD=1
+      shift
+      ;;
+    sqlite|postgres|postgresql|pg)
+      RAW_MODE="$1"
+      shift
+      ;;
+    *)
+      usage >&2
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
 
 MODE="$(resolve_mode "$RAW_MODE")" || { usage >&2; die "Unknown mode: $RAW_MODE"; }
 COMPOSE_FILE="$(compose_file_for_mode "$MODE")"
@@ -61,7 +78,7 @@ if [[ "$MODE" == "postgres" ]]; then
 fi
 
 log_info "Starting $MODE deployment..."
-docker_compose_cmd --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --build
+compose_up_detached "$COMPOSE_FILE"
 
 if [[ "$MODE" == "postgres" ]] && ! external_postgres_enabled; then
   wait_for_postgres_container "$(read_env_value POSTGRES_DB form14)" "$(read_env_value POSTGRES_USER form14)" 45 2 || \

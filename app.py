@@ -14786,13 +14786,15 @@ def report_detail(report_id):
 
     report.auditor_info = {}
     report.js_totals = {}
+    return_filing_date_display = return_date_display(report.return_date)
 
     context = {
         'report': report,
         'associated_username': report_associated_username_display(report),
         'reporting_period_start_display': reporting_period_display(report.reporting_period_start, report.reporting_period_start_raw),
         'reporting_period_end_display': reporting_period_display(report.reporting_period_end, report.reporting_period_end_raw),
-        'return_date_display': return_date_display(report.return_date),
+        'return_date_display': return_filing_date_display,
+        'return_filing_date_display': return_filing_date_display,
         'can_edit_report': can_edit_report_record(current_user, report),
         'countries_of_operation_list': countries_of_operation_list,
         'counties_list': counties_list,
@@ -15461,12 +15463,14 @@ def report_edit(report_id):
             flash(f'Error updating report: {str(e)}', 'error')
             return redirect(url_for('report_edit', report_id=report.id))
 
+    return_filing_date_display = return_date_display(report.return_date)
     context = {
         'report': report,
         'associated_username': report_associated_username_display(report),
         'reporting_period_start_display': reporting_period_display(report.reporting_period_start, report.reporting_period_start_raw),
         'reporting_period_end_display': reporting_period_display(report.reporting_period_end, report.reporting_period_end_raw),
-        'return_date_display': return_date_display(report.return_date),
+        'return_date_display': return_filing_date_display,
+        'return_filing_date_display': return_filing_date_display,
         'countries_of_operation_list': [c.strip() for c in (report.countries_of_operation or "").split(",") if c.strip()],
         'counties_list': [c.strip() for c in (report.counties or "").split(",") if c.strip()],
         'assets_list': report.assets,
@@ -15773,6 +15777,241 @@ def field_help_ai():
     return global_field_help_chat()
 
 
+def all_files_datetime_rank(value):
+    if value is None:
+        return float('-inf')
+    if isinstance(value, datetime):
+        normalized = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return normalized.timestamp()
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc).timestamp()
+    return float('-inf')
+
+
+def all_files_user_label(user, user_id=None):
+    label = user_display_name(user)
+    if label:
+        return label
+    normalized_user_id = coerce_legacy_int(user_id)
+    if normalized_user_id is not None:
+        return f'User #{normalized_user_id}'
+    return 'Unassigned'
+
+
+def all_files_register_worker(workers, user=None, user_id=None, role='Contributor', touched_at=None):
+    normalized_user_id = coerce_legacy_int(user_id if user_id is not None else getattr(user, 'id', None))
+    if normalized_user_id is None:
+        return None
+
+    entry = workers.setdefault(normalized_user_id, {
+        'user_id': normalized_user_id,
+        'user': user,
+        'roles': [],
+        'last_touched_at': None,
+    })
+    if entry.get('user') is None and user is not None:
+        entry['user'] = user
+    if role and role not in entry['roles']:
+        entry['roles'].append(role)
+    if all_files_datetime_rank(touched_at) > all_files_datetime_rank(entry.get('last_touched_at')):
+        entry['last_touched_at'] = touched_at
+    return entry
+
+
+def all_files_register_event(events, user=None, user_id=None, role='Contributor', label='Activity', touched_at=None, detail=None):
+    normalized_user_id = coerce_legacy_int(user_id if user_id is not None else getattr(user, 'id', None))
+    events.append({
+        'user_id': normalized_user_id,
+        'user': user,
+        'role': role,
+        'label': label,
+        'detail': detail,
+        'touched_at': touched_at,
+    })
+
+
+def all_files_role_summary(entry):
+    return ', '.join(entry.get('roles') or []) or 'Contributor'
+
+
+def all_files_worker_summary(worker_entries):
+    summary_items = []
+    for entry in worker_entries[:6]:
+        summary_items.append(
+            f"{all_files_user_label(entry.get('user'), entry.get('user_id'))} ({all_files_role_summary(entry)})"
+        )
+    if len(worker_entries) > 6:
+        summary_items.append(f"+{len(worker_entries) - 6} more")
+    return '; '.join(summary_items) or 'No tracked worker'
+
+
+def build_all_files_rows(reports):
+    rows = []
+    for report in reports:
+        workers = {}
+        events = []
+
+        def register(user=None, user_id=None, role='Contributor', label='Activity', touched_at=None, detail=None):
+            all_files_register_worker(workers, user=user, user_id=user_id, role=role, touched_at=touched_at)
+            all_files_register_event(
+                events,
+                user=user,
+                user_id=user_id,
+                role=role,
+                label=label,
+                touched_at=touched_at,
+                detail=detail,
+            )
+
+        register(
+            user=getattr(report, 'user', None),
+            user_id=getattr(report, 'user_id', None),
+            role='Owner',
+            label='Record owner',
+            touched_at=getattr(report, 'created_at', None),
+        )
+        register(
+            user=getattr(report, 'last_modified_by', None),
+            user_id=getattr(report, 'last_modified_by_id', None),
+            role='Editor',
+            label='Report updated',
+            touched_at=getattr(report, 'updated_at', None),
+        )
+
+        uploaded_files = sorted(
+            report.uploaded_files or [],
+            key=lambda item: all_files_datetime_rank(getattr(item, 'created_at', None)),
+            reverse=True,
+        )
+        for uploaded_file in uploaded_files:
+            register(
+                user=getattr(uploaded_file, 'uploaded_by', None),
+                user_id=getattr(uploaded_file, 'uploaded_by_id', None),
+                role='Uploader',
+                label='File uploaded',
+                touched_at=getattr(uploaded_file, 'created_at', None),
+                detail=getattr(uploaded_file, 'original_filename', None),
+            )
+
+        for change in report.field_changes or []:
+            if getattr(change, 'action', None) not in QUALIFYING_REPORT_WORK_FIELD_CHANGE_ACTIONS:
+                continue
+            register(
+                user=getattr(change, 'user', None),
+                user_id=getattr(change, 'user_id', None),
+                role='Editor',
+                label='Field changed',
+                touched_at=getattr(change, 'created_at', None),
+                detail=getattr(change, 'field_name', None),
+            )
+
+        for activity in report.activity_logs or []:
+            if getattr(activity, 'action', None) not in QUALIFYING_REPORT_WORK_ACTIVITY_ACTIONS:
+                continue
+            action_label = str(getattr(activity, 'action', '') or 'Activity').replace('_', ' ').title()
+            summary = shorten(str(getattr(activity, 'summary', '') or ''), width=90, placeholder='...')
+            register(
+                user=getattr(activity, 'user', None),
+                user_id=getattr(activity, 'user_id', None),
+                role='Contributor',
+                label=action_label,
+                touched_at=getattr(activity, 'created_at', None),
+                detail=summary or None,
+            )
+
+        worker_entries = sorted(
+            workers.values(),
+            key=lambda entry: (
+                all_files_datetime_rank(entry.get('last_touched_at')),
+                entry.get('user_id') or 0,
+            ),
+            reverse=True,
+        )
+        latest_event = max(
+            events,
+            key=lambda item: all_files_datetime_rank(item.get('touched_at')),
+            default=None,
+        )
+        latest_worker_entry = None
+        if latest_event and latest_event.get('user_id') in workers:
+            latest_worker_entry = workers[latest_event['user_id']]
+        elif worker_entries:
+            latest_worker_entry = worker_entries[0]
+
+        latest_touched_at = (
+            latest_event.get('touched_at') if latest_event else None
+        ) or getattr(report, 'updated_at', None) or getattr(report, 'created_at', None)
+        latest_activity_parts = []
+        if latest_event:
+            latest_activity_parts.append(latest_event.get('label') or 'Activity')
+            if latest_event.get('detail'):
+                latest_activity_parts.append(str(latest_event['detail']))
+        latest_activity_summary = ': '.join(latest_activity_parts) if latest_activity_parts else 'No tracked activity'
+
+        owner_name = all_files_user_label(getattr(report, 'user', None), getattr(report, 'user_id', None))
+        latest_worker_name = (
+            all_files_user_label(latest_worker_entry.get('user'), latest_worker_entry.get('user_id'))
+            if latest_worker_entry else 'Unassigned'
+        )
+        latest_worker_roles = all_files_role_summary(latest_worker_entry or {})
+
+        rows.append({
+            'report': report,
+            'period_display': (
+                f"{reporting_period_display(report.reporting_period_start, report.reporting_period_start_raw)}"
+                f" to {reporting_period_display(report.reporting_period_end, report.reporting_period_end_raw)}"
+            ),
+            'return_filing_date': return_date_display(report.return_date),
+            'owner_name': owner_name,
+            'worker_count': len(worker_entries),
+            'worker_ids': [entry.get('user_id') for entry in worker_entries if entry.get('user_id') is not None],
+            'worker_summary': all_files_worker_summary(worker_entries),
+            'latest_worker': latest_worker_name,
+            'latest_worker_roles': latest_worker_roles,
+            'latest_activity_summary': latest_activity_summary,
+            'latest_activity_at': format_datetime(latest_touched_at),
+            'latest_touched_at_raw': latest_touched_at,
+            'file_count': len(uploaded_files),
+            'file_names': '; '.join(item.original_filename for item in uploaded_files[:4] if item.original_filename),
+            'latest_file_id': uploaded_files[0].id if uploaded_files else None,
+            'workflow_status': (report.workflow_status or 'draft').replace('_', ' ').title(),
+            'updated_at': format_datetime(report.updated_at),
+            'created_at': format_datetime(report.created_at),
+        })
+
+    rows.sort(
+        key=lambda row: (
+            all_files_datetime_rank(row.get('latest_touched_at_raw')),
+            getattr(row.get('report'), 'id', 0) or 0,
+        ),
+        reverse=True,
+    )
+    return rows
+
+
+def all_files_row_matches_search(row, search_query):
+    term = (search_query or '').strip().lower()
+    if not term:
+        return True
+    report = row.get('report')
+    search_values = [
+        getattr(report, 'id', None),
+        getattr(report, 'pbo_name', None),
+        getattr(report, 'pbo_registration_number', None),
+        getattr(report, 'contact_name', None),
+        getattr(report, 'contact_email', None),
+        row.get('period_display'),
+        row.get('return_filing_date'),
+        row.get('owner_name'),
+        row.get('worker_summary'),
+        row.get('latest_worker'),
+        row.get('latest_activity_summary'),
+        row.get('file_names'),
+        row.get('workflow_status'),
+    ]
+    return any(term in str(value).lower() for value in search_values if value not in [None, ''])
+
+
 @app.route('/my-files')
 @login_required
 def my_files():
@@ -15850,6 +16089,7 @@ def my_files():
                 'scope': report.scope,
                 'reporting_period_start': reporting_period_display(report.reporting_period_start, report.reporting_period_start_raw),
                 'reporting_period_end': reporting_period_display(report.reporting_period_end, report.reporting_period_end_raw),
+                'return_filing_date': return_date_display(report.return_date),
                 'contact_name': report.contact_name,
                 'contact_telephone': report.contact_telephone,
                 'contact_email': report.contact_email,
@@ -15937,6 +16177,7 @@ def my_files():
         ('scope', 'Scope'),
         ('reporting_period_start', 'Reporting Start'),
         ('reporting_period_end', 'Reporting End'),
+        ('return_filing_date', 'Return Filing Date'),
         ('contact_name', 'Contact Name'),
         ('contact_telephone', 'Contact Telephone'),
         ('contact_email', 'Contact Email'),
@@ -15974,6 +16215,50 @@ def my_files():
         generated_at=format_datetime(utc_now()),
         total_reports=len(rows),
         dashboard_cards=dashboard_cards,
+    )
+
+
+@app.route('/all-files')
+@login_required
+def all_files():
+    if not can_manage_all_records(current_user):
+        abort(403)
+
+    search_query = (request.args.get('q') or '').strip()
+    reports = (
+        PBOReport.query
+        .options(
+            selectinload(PBOReport.uploaded_files).selectinload(UploadedFile.uploaded_by),
+            selectinload(PBOReport.field_changes).selectinload(FieldChangeLog.user),
+            selectinload(PBOReport.activity_logs).selectinload(UserActivityLog.user),
+            selectinload(PBOReport.last_modified_by),
+            selectinload(PBOReport.user),
+        )
+        .order_by(PBOReport.updated_at.desc(), PBOReport.id.desc())
+        .all()
+    )
+    rows = build_all_files_rows(reports)
+    filtered_rows = [
+        row for row in rows
+        if all_files_row_matches_search(row, search_query)
+    ]
+    distinct_worker_ids = {
+        user_id
+        for row in rows
+        for user_id in (row.get('worker_ids') or [])
+        if user_id is not None
+    }
+    total_file_count = sum(row.get('file_count') or 0 for row in rows)
+
+    return render_template(
+        'all_files.html',
+        rows=filtered_rows,
+        search_query=search_query,
+        generated_at=format_datetime(utc_now()),
+        total_reports=len(rows),
+        filtered_reports=len(filtered_rows),
+        distinct_worker_count=len(distinct_worker_ids),
+        total_file_count=total_file_count,
     )
 
 
@@ -18738,6 +19023,7 @@ def reports_list():
             'updater_name': report_updater_display(r),
             'reporting_period_start_display': reporting_period_display(r.reporting_period_start, r.reporting_period_start_raw),
             'reporting_period_end_display': reporting_period_display(r.reporting_period_end, r.reporting_period_end_raw),
+            'return_filing_date_display': return_date_display(r.return_date),
             'category_display': category_display,
             'assets_total': assets_total,
             'donations_total': donations_total,

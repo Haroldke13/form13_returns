@@ -4,19 +4,21 @@ set -euo pipefail
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$APP_DIR/_deploy_common.sh"
 
-MODE="${1:-sqlite}"
-DOMAIN_NAME="${2:-${CANONICAL_HOSTNAME:-returnsform13.org}}"
+MODE="sqlite"
+DOMAIN_NAME="${CANONICAL_HOSTNAME:-returnsform13.org}"
 APP_PORT="${APP_PORT:-$(host_port)}"
 APP_HOST="${APP_HOST:-127.0.0.1}"
+DEPLOY_ARGS=()
 
 usage() {
   cat <<EOF
 Usage:
-  ./deploy_once.sh [sqlite|postgres] [domain-name]
+  ./deploy_once.sh [sqlite|postgres] [domain-name] [--no-build]
 
 Examples:
   ./deploy_once.sh sqlite returnsform13.org
   ./deploy_once.sh postgres returnsform13.org
+  ./deploy_once.sh postgres returnsform13.org --no-build
 
 This script will:
   1. prepare the production environment file,
@@ -26,12 +28,27 @@ This script will:
 EOF
 }
 
-case "$MODE" in
-  -h|--help|help)
-    usage
-    exit 0
-    ;;
-esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
+    --no-build|--skip-build|--cached-image)
+      export PBORA_SKIP_DOCKER_BUILD=1
+      DEPLOY_ARGS+=("--no-build")
+      shift
+      ;;
+    sqlite|postgres|postgresql|pg)
+      MODE="$(resolve_mode "$1")"
+      shift
+      ;;
+    *)
+      DOMAIN_NAME="$1"
+      shift
+      ;;
+  esac
+done
 
 if [[ "$MODE" != "sqlite" && "$MODE" != "postgres" ]]; then
   usage >&2
@@ -108,7 +125,7 @@ env_path.write_text('\n'.join(lines) + '\n')
 PY
 
 log_info "Deploying the application in $MODE mode..."
-./deploy.sh "$MODE"
+./deploy.sh "$MODE" "${DEPLOY_ARGS[@]}"
 
 install_caddy() {
   if command -v caddy >/dev/null 2>&1; then

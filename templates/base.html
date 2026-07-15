@@ -2616,6 +2616,12 @@
                     <i class="bi bi-folder2-open"></i>
                     <span>My Files</span>
                   </a>
+                  {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized and (current_user.is_superadmin or current_user.can_manage_all_records) %}
+                  <a class="app-nav-link{% if request.endpoint == 'all_files' %} active{% endif %}" href="{{ url_for('all_files') }}" title="All Files" aria-label="All Files">
+                    <i class="bi bi-folder-symlink"></i>
+                    <span>All Files</span>
+                  </a>
+                  {% endif %}
                   {% if current_user.is_authenticated and current_user.is_superadmin and current_user.is_authorized %}
                   <a class="app-nav-link app-nav-link--overflow{% if request.endpoint in ['authorize_accounts', 'edit_user_account'] %} active{% endif %}" href="{{ url_for('authorize_accounts') }}" title="Accounts" aria-label="Accounts">
                     <i class="bi bi-people-fill"></i>
@@ -2635,12 +2641,18 @@
                     </button>
                   </form>
                   <div class="dropdown app-nav-more">
-                    <button class="app-nav-link app-nav-more-toggle{% if request.endpoint in ['admin_view', 'authorize_accounts', 'edit_user_account'] or (sector_analytics_enabled and request.endpoint in ['data_interpretations', 'sector_report_data', 'sector_report_data_json', 'sector_report_data_download_xlsx']) or (tf_risk_enabled and request.endpoint == 'admin_tf_risk') %} active{% endif %}" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More" aria-label="More navigation options">
+                    <button class="app-nav-link app-nav-more-toggle{% if request.endpoint in ['admin_view', 'authorize_accounts', 'edit_user_account', 'all_files'] or (sector_analytics_enabled and request.endpoint in ['data_interpretations', 'sector_report_data', 'sector_report_data_json', 'sector_report_data_download_xlsx']) or (tf_risk_enabled and request.endpoint == 'admin_tf_risk') %} active{% endif %}" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More" aria-label="More navigation options">
                       <i class="bi bi-three-dots"></i>
                       <span>More</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-end app-nav-more-menu">
                       {% if current_user.is_authenticated and current_user.role == 'admin' and current_user.is_authorized %}
+                      {% if current_user.is_superadmin or current_user.can_manage_all_records %}
+                      <a class="dropdown-item app-nav-more-item{% if request.endpoint == 'all_files' %} active{% endif %}" href="{{ url_for('all_files') }}">
+                        <i class="bi bi-folder-symlink"></i>
+                        <span>All Files</span>
+                      </a>
+                      {% endif %}
                       {% if current_user.is_superadmin %}
                       <a class="dropdown-item app-nav-more-item{% if request.endpoint in ['authorize_accounts', 'edit_user_account'] %} active{% endif %}" href="{{ url_for('authorize_accounts') }}">
                         <i class="bi bi-people-fill"></i>

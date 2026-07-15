@@ -6,22 +6,28 @@ source "$APP_DIR/_deploy_common.sh"
 
 RAW_MODE="postgres"
 SKIP_PULL=0
+UPDATE_ARGS=()
 
 usage() {
   cat <<'EOF'
 Usage:
-  ./update_one_command_deploy.sh [sqlite|postgres] [--no-pull]
+  ./update_one_command_deploy.sh [sqlite|postgres] [--no-pull] [--no-build]
 
 Examples:
   ./update_one_command_deploy.sh
   ./update_one_command_deploy.sh postgres
   ./update_one_command_deploy.sh sqlite --no-pull
+  ./update_one_command_deploy.sh postgres --no-pull --no-build
 
 What this does:
   1. Pulls the latest committed GitHub update for the current branch.
   2. Rebuilds/restarts the existing Docker deployment through update.sh.
   3. Runs a one-time schema sync and return_date backfill.
   4. Verifies pbo_reports.return_date exists and has no missing values.
+
+Notes:
+  - By default Docker uses the layer cache while rebuilding the app image.
+  - Use --no-build or PBORA_SKIP_DOCKER_BUILD=1 to reuse the existing app image.
 EOF
 }
 
@@ -33,6 +39,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-pull)
       SKIP_PULL=1
+      shift
+      ;;
+    --no-build|--skip-build|--cached-image)
+      UPDATE_ARGS+=("--no-build")
       shift
       ;;
     sqlite|postgres|postgresql|pg)
@@ -67,7 +77,7 @@ else
 fi
 
 log_info "Running existing Docker update flow for $MODE deployment."
-"$APP_DIR/update.sh" "$MODE"
+"$APP_DIR/update.sh" "$MODE" "${UPDATE_ARGS[@]}"
 
 log_info "Running one-time schema sync and return_date backfill."
 docker_compose_cmd --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T web flask sync-db-schema

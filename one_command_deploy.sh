@@ -9,7 +9,7 @@ if [[ $EUID -eq 0 ]]; then
   exit 1
 fi
 
-MODE="${1:-postgres}"
+MODE="postgres"
 SOURCE_SQLITE="${SOURCE_SQLITE:-$APP_DIR/returnsform14_org_backup.sqlite}"
 ENV_FILE="${ENV_FILE:-$APP_DIR/.env.production}"
 ENV_EXAMPLE_FILE="${ENV_EXAMPLE_FILE:-$APP_DIR/.env.production.example}"
@@ -36,6 +36,22 @@ die() {
   exit 1
 }
 
+usage() {
+  cat <<'EOF'
+Usage:
+  ./one_command_deploy.sh [sqlite|postgres] [--no-build]
+
+Examples:
+  ./one_command_deploy.sh
+  ./one_command_deploy.sh postgres
+  ./one_command_deploy.sh postgres --no-build
+
+Notes:
+  - By default Docker uses cached image layers while building the app image.
+  - Use --no-build or PBORA_SKIP_DOCKER_BUILD=1 to reuse the existing app image.
+EOF
+}
+
 cleanup_sudo_keepalive() {
   if [[ -n "${SUDO_KEEPALIVE_PID:-}" ]]; then
     kill "$SUDO_KEEPALIVE_PID" >/dev/null 2>&1 || true
@@ -43,6 +59,30 @@ cleanup_sudo_keepalive() {
 }
 
 trap cleanup_sudo_keepalive EXIT
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help|help)
+      usage
+      exit 0
+      ;;
+    --no-build|--skip-build|--cached-image)
+      export PBORA_SKIP_DOCKER_BUILD=1
+      shift
+      ;;
+    sqlite|postgres|postgresql|pg)
+      case "$1" in
+        sqlite) MODE="sqlite" ;;
+        postgres|postgresql|pg) MODE="postgres" ;;
+      esac
+      shift
+      ;;
+    *)
+      usage >&2
+      die "Unknown argument: $1"
+      ;;
+  esac
+done
 
 prime_sudo() {
   if [[ "$SUDO_PRIMED" -eq 1 ]]; then
@@ -512,7 +552,7 @@ test_browser_access() {
 }
 
 if [[ "$MODE" != "sqlite" && "$MODE" != "postgres" ]]; then
-  echo "Usage: ./one_command_deploy.sh [sqlite|postgres]" >&2
+  usage >&2
   exit 2
 fi
 
@@ -715,10 +755,18 @@ open_lan_firewall
 
 remove_stale_deploy_containers
 
-if [[ "$MODE" == "postgres" ]]; then
-  "${DOCKER_CMD[@]}" compose --env-file "$ENV_FILE" -f docker-compose.prod.postgres.yml up -d --build
+compose_up_args=(up -d --build)
+if [[ "$(printf '%s' "${PBORA_SKIP_DOCKER_BUILD:-0}" | tr '[:upper:]' '[:lower:]')" =~ ^(1|true|yes|on|skip|no-build)$ ]]; then
+  echo "Starting containers from existing cached Docker images; skipping app image rebuild."
+  compose_up_args=(up -d --no-build)
 else
-  "${DOCKER_CMD[@]}" compose --env-file "$ENV_FILE" -f docker-compose.prod.yml up -d --build
+  echo "Building with Docker layer cache and starting containers."
+fi
+
+if [[ "$MODE" == "postgres" ]]; then
+  "${DOCKER_CMD[@]}" compose --env-file "$ENV_FILE" -f docker-compose.prod.postgres.yml "${compose_up_args[@]}"
+else
+  "${DOCKER_CMD[@]}" compose --env-file "$ENV_FILE" -f docker-compose.prod.yml "${compose_up_args[@]}"
 fi
 
 sleep 5

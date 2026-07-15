@@ -863,8 +863,8 @@ report.non_membership_number_of_directors else 'is-empty') %}
               <div class="report-detail-stat-label">Reporting Window</div>
               <span class="report-detail-stat-icon"><i class="bi bi-calendar-range"></i></span>
             </div>
-            <div class="report-detail-stat-value">{{ reporting_period_start_display }}</div>
-            <p class="report-detail-stat-note">Start date for this filing period.</p>
+            <div class="report-detail-stat-value">{{ reporting_period_start_display }} to {{ reporting_period_end_display }}</div>
+            <p class="report-detail-stat-note">Return filing date: {{ return_filing_date_display }}</p>
           </div>
           <div class="report-detail-stat coverage">
             <div class="report-detail-stat-head">
@@ -1172,8 +1172,8 @@ report.non_membership_number_of_directors else 'is-empty') %}
                                 <td title="Reporting period end value">{{ reporting_period_end_display }}</td>
                               </tr>
                               <tr title="Return date row">
-                                <th title="Return date label">Return Date</th>
-                                <td title="Return date value">{{ return_date_display }}</td>
+                                <th title="Return filing date label">Return Filing Date</th>
+                                <td title="Return filing date value">{{ return_filing_date_display }}</td>
                               </tr>
                             </tbody>
                           </table>

@@ -138,14 +138,14 @@
 
     {% if reports_vm %}
     <!-- Responsive table wrapper -->
-    <div class="table-container table-responsive shadow-sm rounded">
+    <div class="table-container table-responsive reports-table-scroll shadow-sm rounded" tabindex="0" aria-label="Scrollable reports table">
         <table id="reports-table" class="table table-striped table-hover table-bordered align-middle">
             <thead class="table-dark sticky-top">
                 <tr>
                     <th class="text-nowrap">PBO Name</th>
                     <th class="text-nowrap">Updated By</th>
                     <th class="text-nowrap">Registration</th>
-                    <th class="text-nowrap">Reporting Period</th>
+                    <th class="text-nowrap">Reporting Period / Filing Date</th>
                     <th class="text-nowrap">Dates</th>
                     <th class="text-nowrap">Category</th>
                     <th class="text-nowrap">Scope & Counties</th>
@@ -173,8 +173,9 @@
                         {{ report.pbo_registration_number or 'N/A' }}
                         <br><small class="text-muted">{{ report.pbo_registration_date|format_date or '' }}</small>
                     </td>
-                    <td class="text-nowrap small" style="font-size: 12pt;" title="Reporting period">
-                        {{ vm.reporting_period_start_display }} to {{ vm.reporting_period_end_display }}
+                    <td class="text-nowrap small" style="font-size: 12pt;" title="Reporting period and return filing date">
+                        <strong>Period:</strong> {{ vm.reporting_period_start_display }} to {{ vm.reporting_period_end_display }}
+                        <br><strong>Return Filing:</strong> {{ vm.return_filing_date_display }}
                     </td>
                     <td class="text-nowrap small" style="font-size: 12pt;" title="Created, updated, and submitted dates">
                         <strong>Created:</strong> {{ vm.created_at_display or 'N/A' }}
@@ -396,6 +397,23 @@
         width: auto;
     }
 
+    .reports-table-scroll {
+        max-height: min(72vh, calc(100vh - 260px));
+        min-height: 360px;
+        overflow: auto;
+        scrollbar-gutter: stable both-edges;
+    }
+
+    .reports-table-scroll:focus {
+        outline: 2px solid rgba(13, 110, 253, 0.35);
+        outline-offset: 2px;
+    }
+
+    #reports-table {
+        min-width: 1680px;
+        margin-bottom: 0;
+    }
+
     /* Analysis table optimized styles */
     .table {
         font-size: 0.875rem;
@@ -452,6 +470,11 @@
 
         .table {
             font-size: 0.75rem;
+        }
+
+        .reports-table-scroll {
+            max-height: min(70vh, calc(100vh - 220px));
+            min-height: 300px;
         }
 
         .badge {
