@@ -6,3 +6,4 @@ cloudflared/cert.pem
 __pycache__/
 *.py[cod]
 .pytest_cache/
+logs/

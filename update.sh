@@ -78,6 +78,8 @@ docker_compose_cmd --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T web flask i
 log_info "Running post-update healthcheck..."
 "$APP_DIR/healthcheck.sh" "$MODE"
 
+start_github_sqlite_backup_loop
+
 echo
 log_info "Update complete."
 docker_compose_cmd --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps

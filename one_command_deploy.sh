@@ -551,6 +551,43 @@ test_browser_access() {
   rm -f "$output_file"
 }
 
+github_sqlite_backup_enabled() {
+  local value
+  value="$(read_env_file_value GITHUB_SQLITE_BACKUP_ENABLED 1 | tr '[:upper:]' '[:lower:]')"
+  case "$value" in
+    0|false|no|off)
+      return 1
+      ;;
+    *)
+      return 0
+      ;;
+  esac
+}
+
+start_github_sqlite_backup_loop() {
+  local backup_script="$APP_DIR/scripts/github_sqlite_backup.sh"
+  if ! github_sqlite_backup_enabled; then
+    echo "GitHub SQLite backup loop disabled by GITHUB_SQLITE_BACKUP_ENABLED."
+    return 0
+  fi
+
+  if [[ ! -f "$backup_script" ]]; then
+    echo "GitHub SQLite backup script not found: $backup_script" >&2
+    return 0
+  fi
+
+  chmod +x "$backup_script" >/dev/null 2>&1 || true
+
+  echo "Starting GitHub SQLite backup loop in the background."
+  CONTAINER_NAME="$(read_env_file_value GITHUB_SQLITE_BACKUP_CONTAINER_NAME form14_web)" \
+  GIT_REMOTE="$(read_env_file_value GITHUB_SQLITE_BACKUP_REMOTE origin)" \
+  GIT_BRANCH="$(read_env_file_value GITHUB_SQLITE_BACKUP_BRANCH main)" \
+  BACKUP_PREFIX="$(read_env_file_value GITHUB_SQLITE_BACKUP_PREFIX backup)" \
+  BACKUP_INTERVAL_SECONDS="$(read_env_file_value GITHUB_SQLITE_BACKUP_INTERVAL_SECONDS 14400)" \
+  "$backup_script" --start-background || \
+    echo "GitHub SQLite backup loop did not start. The app deployment remains active." >&2
+}
+
 if [[ "$MODE" != "sqlite" && "$MODE" != "postgres" ]]; then
   usage >&2
   exit 2
@@ -779,6 +816,7 @@ fi
 
 run_app_healthcheck
 test_browser_access
+start_github_sqlite_backup_loop
 
 cat <<EOF
 
