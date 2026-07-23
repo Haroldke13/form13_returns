@@ -199,11 +199,12 @@ start_background() {
   fi
 
   rm -f "$BACKUP_PID_FILE"
-  (
-    cd "$APP_DIR"
-    exec nohup "$SCRIPT_PATH" --once >> "$BACKUP_LOG_FILE" 2>&1
-  ) </dev/null &
+  local original_dir
+  original_dir="$PWD"
+  cd "$APP_DIR"
+  nohup "$SCRIPT_PATH" --once >> "$BACKUP_LOG_FILE" 2>&1 < /dev/null &
   local pid="$!"
+  cd "$original_dir"
   printf '%s\n' "$pid" > "$BACKUP_PID_FILE"
   log "Started immediate GitHub SQLite backup with PID $pid."
   log "Backup log: $BACKUP_LOG_FILE"
