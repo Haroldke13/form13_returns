@@ -177,7 +177,7 @@ run_once() {
 
 run_loop() {
   while true; do
-    if "$SCRIPT_PATH" --once; then
+    if ( run_once ); then
       log "Next backup starts in $BACKUP_INTERVAL_SECONDS seconds."
     else
       log "Backup attempt failed. Retrying in $BACKUP_INTERVAL_SECONDS seconds." >&2
