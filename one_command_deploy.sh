@@ -578,14 +578,15 @@ start_github_sqlite_backup_loop() {
 
   chmod +x "$backup_script" >/dev/null 2>&1 || true
 
-  echo "Starting GitHub SQLite backup loop in the background."
+  echo "Starting GitHub SQLite backup scheduler in the background."
   CONTAINER_NAME="$(read_env_file_value GITHUB_SQLITE_BACKUP_CONTAINER_NAME form14_web)" \
   GIT_REMOTE="$(read_env_file_value GITHUB_SQLITE_BACKUP_REMOTE origin)" \
   GIT_BRANCH="$(read_env_file_value GITHUB_SQLITE_BACKUP_BRANCH main)" \
   BACKUP_PREFIX="$(read_env_file_value GITHUB_SQLITE_BACKUP_PREFIX backup)" \
   BACKUP_INTERVAL_SECONDS="$(read_env_file_value GITHUB_SQLITE_BACKUP_INTERVAL_SECONDS 14400)" \
+  BACKUP_CRON_SCHEDULE="$(read_env_file_value GITHUB_SQLITE_BACKUP_CRON_SCHEDULE '0 */4 * * *')" \
   "$backup_script" --start-background || \
-    echo "GitHub SQLite backup loop did not start. The app deployment remains active." >&2
+    echo "GitHub SQLite backup scheduler did not start. The app deployment remains active." >&2
 }
 
 if [[ "$MODE" != "sqlite" && "$MODE" != "postgres" ]]; then

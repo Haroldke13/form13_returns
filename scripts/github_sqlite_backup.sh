@@ -10,6 +10,7 @@ GIT_REMOTE="${GIT_REMOTE:-origin}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 BACKUP_PREFIX="${BACKUP_PREFIX:-backup}"
 BACKUP_INTERVAL_SECONDS="${BACKUP_INTERVAL_SECONDS:-14400}"
+BACKUP_CRON_SCHEDULE="${BACKUP_CRON_SCHEDULE:-0 */4 * * *}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 BACKUP_LOG_FILE="${BACKUP_LOG_FILE:-$APP_DIR/logs/github_sqlite_backup.log}"
 BACKUP_PID_FILE="${BACKUP_PID_FILE:-$APP_DIR/logs/github_sqlite_backup.pid}"
@@ -24,7 +25,7 @@ Usage:
 
 Defaults:
   --loop runs one backup immediately, then repeats every 4 hours.
-  --start-background starts the same loop with nohup and a PID file.
+  --start-background installs a 4-hour cron entry and starts one backup now.
 
 Environment overrides:
   CONTAINER_NAME=form14_web
@@ -32,6 +33,7 @@ Environment overrides:
   GIT_BRANCH=main
   BACKUP_PREFIX=backup
   BACKUP_INTERVAL_SECONDS=14400
+  BACKUP_CRON_SCHEDULE="0 */4 * * *"
   BACKUP_LOG_FILE=logs/github_sqlite_backup.log
   BACKUP_PID_FILE=logs/github_sqlite_backup.pid
 EOF
@@ -56,7 +58,7 @@ pid_is_running() {
   read -r pid < "$BACKUP_PID_FILE" || return 1
   [[ "$pid" =~ ^[0-9]+$ ]] || return 1
   kill -0 "$pid" >/dev/null 2>&1 || return 1
-  ps -p "$pid" -o args= 2>/dev/null | grep -F "$SCRIPT_PATH" | grep -F -- "--loop" >/dev/null
+  ps -p "$pid" -o args= 2>/dev/null | grep -F "$SCRIPT_PATH" | grep -E -- "--(loop|once)" >/dev/null
 }
 
 backup_timestamp() {
@@ -188,38 +190,43 @@ run_loop() {
 
 start_background() {
   require_command nohup
+  install_cron_entry
   mkdir -p "$(dirname "$BACKUP_LOG_FILE")" "$(dirname "$BACKUP_PID_FILE")"
 
   if pid_is_running; then
-    log "GitHub SQLite backup loop is already running with PID $(cat "$BACKUP_PID_FILE")."
+    log "GitHub SQLite backup is already running with PID $(cat "$BACKUP_PID_FILE")."
     return 0
   fi
 
   rm -f "$BACKUP_PID_FILE"
   (
     cd "$APP_DIR"
-    exec nohup "$SCRIPT_PATH" --loop >> "$BACKUP_LOG_FILE" 2>&1
+    exec nohup "$SCRIPT_PATH" --once >> "$BACKUP_LOG_FILE" 2>&1
   ) </dev/null &
   local pid="$!"
   printf '%s\n' "$pid" > "$BACKUP_PID_FILE"
-  log "Started GitHub SQLite backup loop with PID $pid."
+  log "Started immediate GitHub SQLite backup with PID $pid."
   log "Backup log: $BACKUP_LOG_FILE"
 }
 
-install_cron() {
+install_cron_entry() {
   require_command crontab
   mkdir -p "$APP_DIR/logs"
 
   local cron_line
-  cron_line="0 */4 * * * cd $APP_DIR && $SCRIPT_PATH --once >> $APP_DIR/logs/github_sqlite_backup.log 2>&1"
+  cron_line="$BACKUP_CRON_SCHEDULE cd $APP_DIR && $SCRIPT_PATH --once >> $APP_DIR/logs/github_sqlite_backup.log 2>&1"
 
   (
     crontab -l 2>/dev/null | grep -Fv "$SCRIPT_PATH --once" || true
     printf '%s\n' "$cron_line"
   ) | crontab -
+}
+
+install_cron() {
+  install_cron_entry
 
   log "Installed cron entry:"
-  log "$cron_line"
+  crontab -l | grep -F "$SCRIPT_PATH --once" || true
 }
 
 case "${1:---loop}" in
