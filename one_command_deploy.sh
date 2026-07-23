@@ -567,7 +567,7 @@ github_sqlite_backup_enabled() {
 start_github_sqlite_backup_loop() {
   local backup_script="$APP_DIR/scripts/github_sqlite_backup.sh"
   if ! github_sqlite_backup_enabled; then
-    echo "GitHub SQLite backup loop disabled by GITHUB_SQLITE_BACKUP_ENABLED."
+    echo "GitHub SQLite backup scheduler disabled by GITHUB_SQLITE_BACKUP_ENABLED."
     return 0
   fi
 
@@ -578,15 +578,25 @@ start_github_sqlite_backup_loop() {
 
   chmod +x "$backup_script" >/dev/null 2>&1 || true
 
-  echo "Starting GitHub SQLite backup scheduler in the background."
+  echo "Installing GitHub SQLite backup scheduler."
   CONTAINER_NAME="$(read_env_file_value GITHUB_SQLITE_BACKUP_CONTAINER_NAME form14_web)" \
   GIT_REMOTE="$(read_env_file_value GITHUB_SQLITE_BACKUP_REMOTE origin)" \
   GIT_BRANCH="$(read_env_file_value GITHUB_SQLITE_BACKUP_BRANCH main)" \
   BACKUP_PREFIX="$(read_env_file_value GITHUB_SQLITE_BACKUP_PREFIX backup)" \
   BACKUP_INTERVAL_SECONDS="$(read_env_file_value GITHUB_SQLITE_BACKUP_INTERVAL_SECONDS 14400)" \
   BACKUP_CRON_SCHEDULE="$(read_env_file_value GITHUB_SQLITE_BACKUP_CRON_SCHEDULE '0 */4 * * *')" \
-  "$backup_script" --start-background || \
-    echo "GitHub SQLite backup scheduler did not start. The app deployment remains active." >&2
+  "$backup_script" --install-cron || {
+    echo "GitHub SQLite backup scheduler was not installed. The app deployment remains active." >&2
+    return 0
+  }
+
+  echo "Running first post-deploy GitHub SQLite backup."
+  CONTAINER_NAME="$(read_env_file_value GITHUB_SQLITE_BACKUP_CONTAINER_NAME form14_web)" \
+  GIT_REMOTE="$(read_env_file_value GITHUB_SQLITE_BACKUP_REMOTE origin)" \
+  GIT_BRANCH="$(read_env_file_value GITHUB_SQLITE_BACKUP_BRANCH main)" \
+  BACKUP_PREFIX="$(read_env_file_value GITHUB_SQLITE_BACKUP_PREFIX backup)" \
+  "$backup_script" --once || \
+    echo "First post-deploy GitHub SQLite backup failed. Scheduled backups remain installed." >&2
 }
 
 if [[ "$MODE" != "sqlite" && "$MODE" != "postgres" ]]; then
