@@ -1,3 +1,5 @@
+import argparse
+import hashlib
 import json
 import os
 import sqlite3
@@ -84,6 +86,77 @@ def normalize_dataframe(dataframe: pd.DataFrame) -> pd.DataFrame:
     return normalized
 
 
+def quote_identifier(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
+def database_state_fingerprint() -> dict:
+    database_url = normalized_database_url()
+    is_postgresql = database_url.startswith("postgresql://") or database_url.startswith("postgresql+")
+    engine = create_engine(database_url, pool_pre_ping=True)
+
+    try:
+        with engine.connect() as connection:
+            inspector = inspect(connection)
+            table_states = []
+            for table_name in sorted(inspector.get_table_names()):
+                columns = [column["name"] for column in inspector.get_columns(table_name)]
+                qualified_table = quote_identifier(table_name)
+
+                if is_postgresql:
+                    row = connection.execute(
+                        text(
+                            "SELECT COUNT(*)::bigint AS row_count, "
+                            "COALESCE(MAX((xmin::text)::bigint), 0)::bigint AS max_row_xmin "
+                            f"FROM {qualified_table}"
+                        )
+                    ).mappings().one()
+                    table_states.append(
+                        {
+                            "table": table_name,
+                            "columns": columns,
+                            "row_count": int(row["row_count"] or 0),
+                            "max_row_xmin": int(row["max_row_xmin"] or 0),
+                        }
+                    )
+                    continue
+
+                timestamp_columns = [
+                    column_name
+                    for column_name in columns
+                    if column_name.lower() in {"updated_at", "created_at", "modified_at", "last_modified_at"}
+                    or column_name.lower().endswith("_updated_at")
+                ]
+                value_columns = ["COUNT(*) AS row_count"]
+                if "id" in columns:
+                    value_columns.append(f"MAX({quote_identifier('id')}) AS max_id")
+                for column_name in timestamp_columns[:3]:
+                    value_columns.append(f"MAX({quote_identifier(column_name)}) AS max_{column_name}")
+
+                row = connection.execute(
+                    text(f"SELECT {', '.join(value_columns)} FROM {qualified_table}")
+                ).mappings().one()
+                table_states.append(
+                    {
+                        "table": table_name,
+                        "columns": columns,
+                        **{key: str(value) for key, value in row.items()},
+                    }
+                )
+    finally:
+        engine.dispose()
+
+    stable_payload = {"tables": table_states}
+    fingerprint = hashlib.sha256(
+        json.dumps(stable_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return {
+        "fingerprint": fingerprint,
+        "table_count": len(table_states),
+        "tables": table_states,
+    }
+
+
 def export_database(target: Path) -> None:
     target.unlink(missing_ok=True)
 
@@ -150,6 +223,14 @@ def export_database(target: Path) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Export or fingerprint the configured live database.")
+    parser.add_argument("--fingerprint", action="store_true", help="Print a JSON database row-change fingerprint.")
+    args = parser.parse_args()
+
+    if args.fingerprint:
+        print(json.dumps(database_state_fingerprint(), sort_keys=True))
+        return
+
     target_text = os.environ.get("TARGET_SQLITE", "").strip()
     if not target_text:
         raise SystemExit("TARGET_SQLITE is required.")

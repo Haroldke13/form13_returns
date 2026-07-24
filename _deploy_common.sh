@@ -335,6 +335,8 @@ start_github_sqlite_backup_loop() {
   BACKUP_PREFIX="$(read_env_value GITHUB_SQLITE_BACKUP_PREFIX backup)" \
   BACKUP_INTERVAL_SECONDS="$(read_env_value GITHUB_SQLITE_BACKUP_INTERVAL_SECONDS 14400)" \
   BACKUP_CRON_SCHEDULE="$(read_env_value GITHUB_SQLITE_BACKUP_CRON_SCHEDULE '0 */4 * * *')" \
+  BACKUP_WATCH_CRON_SCHEDULE="$(read_env_value GITHUB_SQLITE_BACKUP_WATCH_CRON_SCHEDULE '* * * * *')" \
+  GITHUB_SQLITE_BACKUP_INCLUDE_CHANGED_FILES="$(read_env_value GITHUB_SQLITE_BACKUP_INCLUDE_CHANGED_FILES 1)" \
   "$backup_script" --install-cron || {
     log_warn "GitHub SQLite backup scheduler was not installed. The app deployment remains active."
     return 0
@@ -345,6 +347,7 @@ start_github_sqlite_backup_loop() {
   GIT_REMOTE="$(read_env_value GITHUB_SQLITE_BACKUP_REMOTE origin)" \
   GIT_BRANCH="$(read_env_value GITHUB_SQLITE_BACKUP_BRANCH main)" \
   BACKUP_PREFIX="$(read_env_value GITHUB_SQLITE_BACKUP_PREFIX backup)" \
+  GITHUB_SQLITE_BACKUP_INCLUDE_CHANGED_FILES="$(read_env_value GITHUB_SQLITE_BACKUP_INCLUDE_CHANGED_FILES 1)" \
   "$backup_script" --once || \
     log_warn "First post-deploy GitHub SQLite backup failed. Scheduled backups remain installed."
 }

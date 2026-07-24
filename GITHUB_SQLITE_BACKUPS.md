@@ -9,9 +9,13 @@ pushes it to GitHub.
 
 - Backup files are created in the repo root with this format:
   `backup_DD_MM_YYYY_HH-MM-SS.sqlite`
-- The first backup runs after deployment, after the app healthcheck passes.
-- A cron job runs future backups every 4 hours.
-- Each backup is committed and pushed to `origin/main`.
+- The first backup check runs after deployment, after the app healthcheck passes.
+- A watcher cron job checks for row changes every minute.
+- A fallback cron job checks every 4 hours.
+- If the live database fingerprint matches the last successfully pushed backup,
+  no SQLite file is exported and no Git commit is made.
+- When row changes are detected, a backup is committed and pushed to
+  `origin/main`.
 - The export reads from the live database using a read-only PostgreSQL
   transaction and writes to a temporary SQLite file before copying it into the
   repo root.
@@ -21,11 +25,11 @@ pushes it to GitHub.
 ## Files Added or Updated
 
 - `scripts/export_live_db_to_sqlite.py`
-  Exports the live database tables into a SQLite file and checks SQLite
-  integrity.
+  Fingerprints the live database row state, exports live tables into a SQLite
+  file, and checks SQLite integrity.
 - `scripts/github_sqlite_backup.sh`
   Orchestrates export, verification, Git commit, Git push, cron installation,
-  and one-shot backup runs.
+  row-change skipping, and one-shot backup runs.
 - `_deploy_common.sh`
   Installs the backup scheduler and runs the first post-deploy backup from the
   standard deploy/update flow.
@@ -38,13 +42,17 @@ pushes it to GitHub.
 
 ## Current Schedule
 
-Cron entry:
+Cron entries:
 
 ```cron
+* * * * * cd /home/pbora/form13_returns && /home/pbora/form13_returns/scripts/github_sqlite_backup.sh --once >> /home/pbora/form13_returns/logs/github_sqlite_backup.log 2>&1
 0 */4 * * * cd /home/pbora/form13_returns && /home/pbora/form13_returns/scripts/github_sqlite_backup.sh --once >> /home/pbora/form13_returns/logs/github_sqlite_backup.log 2>&1
 ```
 
-This runs at minute `0` every 4 hours according to the server clock.
+The minute-level watcher starts a backup soon after a submitted record changes
+the database. The 4-hour entry is a fallback check that keeps verifying the live
+database state even during quiet periods. Both commands skip backup creation
+when the database fingerprint has not changed.
 
 ## Manual Commands
 
@@ -83,6 +91,8 @@ GITHUB_SQLITE_BACKUP_REMOTE=origin
 GITHUB_SQLITE_BACKUP_BRANCH=main
 GITHUB_SQLITE_BACKUP_PREFIX=backup
 GITHUB_SQLITE_BACKUP_CRON_SCHEDULE="0 */4 * * *"
+GITHUB_SQLITE_BACKUP_WATCH_CRON_SCHEDULE="* * * * *"
+GITHUB_SQLITE_BACKUP_INCLUDE_CHANGED_FILES=1
 ```
 
 Set `GITHUB_SQLITE_BACKUP_ENABLED=0` to skip scheduler installation and the
@@ -91,16 +101,21 @@ first post-deploy backup.
 ## Safety Notes
 
 - The backup script checks that the Git index is clean before staging a backup.
-- It stages only the generated SQLite backup file.
-- It refuses to commit if any other file is staged.
+- It always stages the generated SQLite backup file when a database change is
+  detected.
+- With `GITHUB_SQLITE_BACKUP_INCLUDE_CHANGED_FILES=1`, it also stages other
+  changed files, excluding sensitive/runtime paths such as `.env*`, `logs/`,
+  `backups/`, `instance/`, certificates, and credential JSON files.
+- It refuses to start if files are already staged before the backup job begins.
 - It verifies `PRAGMA integrity_check` before committing.
-- Runtime logs stay local under `logs/` and are not tracked by Git.
+- Runtime logs and the local database fingerprint state stay under `logs/` and
+  are not tracked by Git.
 
 ## Verification From Deployment
 
 On July 23, 2026, the deployed update completed successfully:
 
 - App healthcheck passed for `https://returnsform14.org`.
-- Cron was installed for four-hour backups.
+- Cron was installed for the minute-level watcher and four-hour fallback checks.
 - First post-deploy backup was created, verified, committed, and pushed:
   `backup_23_07_2026_13-54-08.sqlite`.
