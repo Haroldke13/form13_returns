@@ -2,10 +2,13 @@
 
 ## Cloudflare Tunnel domain setup
 
-The preferred domain setup for this server is Cloudflare Tunnel at `returnsform14.org`.
-Use [docs/CLOUDFLARE_TUNNEL.md](docs/CLOUDFLARE_TUNNEL.md) to create the
-Cloudflare connector token, configure `returnsform14.org` and
-`www.returnsform14.org`, and start the `cloudflared` sidecar.
+The preferred domain setup for this server is Cloudflare Tunnel at
+`returnsform14.org`, with `research.harolditdata.uk` available through the
+separate Cloudflare tunnel named `dummy tunnel`. Use
+[docs/CLOUDFLARE_TUNNEL.md](docs/CLOUDFLARE_TUNNEL.md) to create the
+Cloudflare connector tokens, configure `returnsform14.org`,
+`www.returnsform14.org`, and `research.harolditdata.uk`, and start the
+`cloudflared` sidecar.
 
 Quick start after the Cloudflare tunnel token has been copied:
 
@@ -13,6 +16,18 @@ Quick start after the Cloudflare tunnel token has been copied:
 cp .env.cloudflare.example .env.cloudflare
 nano .env.cloudflare
 ./scripts/cloudflare_tunnel_up.sh postgres
+```
+
+To start only the research hostname tunnel sidecar:
+
+```bash
+./scripts/cloudflare_tunnel_up.sh postgres dummy
+```
+
+To start both Cloudflare tunnel sidecars from the saved local tokens:
+
+```bash
+./scripts/cloudflaretunnel.sh
 ```
 
 The Cloudflare published application should use service type `HTTPS`, URL

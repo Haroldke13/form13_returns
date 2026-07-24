@@ -199,7 +199,7 @@ db_password = (
 database_url = f"postgresql+psycopg2://{db_user}:{db_password}@{app_ip}:{db_port}/{db_name}"
 
 values = {
-    "ALLOWED_HOSTS": f"{app_ip},172.17.0.1,172.18.0.1,localhost,127.0.0.1,returnsform14.onrender.com,www.returnsform14.org,returnsform14.org",
+    "ALLOWED_HOSTS": f"{app_ip},172.17.0.1,172.18.0.1,localhost,127.0.0.1,returnsform14.onrender.com,www.returnsform14.org,returnsform14.org,research.harolditdata.uk",
     "ANNUAL_RETURNS_DATABASE_URL": database_url,
     "APP_HOST": "0.0.0.0",
     "DATABASE_URL": database_url,

@@ -189,7 +189,7 @@ Confirm `.env.production` includes:
 ```text
 PBORA_RUNTIME_ENV_AUTO_UPDATE=1
 PUBLIC_BASE_URL=auto
-ALLOWED_HOSTS=auto,localhost,127.0.0.1,returnsform14.onrender.com,www.returnsform14.org,returnsform14.org
+ALLOWED_HOSTS=auto,localhost,127.0.0.1,returnsform14.onrender.com,www.returnsform14.org,returnsform14.org,research.harolditdata.uk
 PBORA_NETWORK_INTERFACE=auto
 PBORA_APP_HOST_IP=auto
 PBORA_GATEWAY=auto

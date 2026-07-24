@@ -5,6 +5,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCKERFILE = ROOT / "Dockerfile"
 ENTRYPOINT = ROOT / "docker-entrypoint.sh"
 POSTGRES_COMPOSE = ROOT / "docker-compose.prod.postgres.yml"
+CF_COMPOSE = ROOT / "docker-compose.cloudflare.yml"
+CF_DUMMY_COMPOSE = ROOT / "docker-compose.cloudflare.dummy.yml"
 ROUTE_SCRIPT = ROOT / "scripts" / "configure_host_routes.sh"
 
 
@@ -48,3 +50,15 @@ def test_host_route_script_uses_ubuntu_ip_route_commands():
     assert 'ip route replace default via "$PBORA_GATEWAY"' in script
     assert "PBORA_ROUTE_DRY_RUN" in script
     assert "PBORA_ASSIGN_HOST_IP" in script
+
+
+def test_cloudflare_tunnel_sidecars_use_token_files_not_token_args():
+    compose = CF_COMPOSE.read_text(encoding="utf-8")
+    dummy_compose = CF_DUMMY_COMPOSE.read_text(encoding="utf-8")
+
+    assert "--token-file" in compose
+    assert "--token-file" in dummy_compose
+    assert "--token\n" not in compose
+    assert "--token\n" not in dummy_compose
+    assert "returnsform14-tunnel.token" in compose
+    assert "dummy-tunnel.token" in dummy_compose

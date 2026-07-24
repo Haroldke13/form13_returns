@@ -137,7 +137,7 @@ The runtime environment was refreshed and important values were set in `.env.pro
 Important production values:
 
 ```dotenv
-ALLOWED_HOSTS=10.107.20.241,172.17.0.1,172.18.0.1,localhost,127.0.0.1,returnsform14.onrender.com,www.returnsform14.org,returnsform14.org
+ALLOWED_HOSTS=10.107.20.241,172.17.0.1,172.18.0.1,localhost,127.0.0.1,returnsform14.onrender.com,www.returnsform14.org,returnsform14.org,research.harolditdata.uk
 PBORA_APP_HOST_IP=10.107.20.241
 PBORA_GATEWAY=10.107.20.254
 DB_HOST=10.107.20.241

@@ -9,7 +9,11 @@ keys, or OAuth client secrets into this file.
 
 ## Summary
 
-- Primary change: add Cloudflare Tunnel support for `returnsform14.org`.
+- Primary change: add Cloudflare Tunnel support for `returnsform14.org` and
+  `research.harolditdata.uk`.
+- Follow-up fix on 2026-07-16: activated the `dummy tunnel` connector for
+  `research.harolditdata.uk` and added local token-file based Docker sidecars
+  for both Cloudflare tunnels.
 - Production domain alignment: move visible public app settings from older
   `returnsform13.org`, Render, or LAN-only defaults toward
   `https://returnsform14.org`.
@@ -63,7 +67,8 @@ Important changes:
 - `GOOGLE_OAUTH_REDIRECT_URI_FALLBACK` now points to the
   `returnsform14.org` callback path.
 - `ALLOWED_HOSTS` includes the LAN server IP, Docker bridge IPs, localhost, the
-  Render hostname, and both `returnsform14.org` hostnames.
+  Render hostname, both `returnsform14.org` hostnames, and
+  `research.harolditdata.uk`.
 - PostgreSQL-related URLs and host values now point at the LAN server IP rather
   than `127.0.0.1` or `host.docker.internal`.
 - Upload size was increased from 16 MB to 50 MB.
@@ -78,8 +83,8 @@ Impact on the app:
   the Cloudflare HTTPS domain instead of a LAN URL.
 - Secure cookies now require HTTPS. This is correct for Cloudflare access, but
   plain HTTP direct-LAN testing may not keep sessions unless HTTPS is used.
-- The app will accept requests for `returnsform14.org` and
-  `www.returnsform14.org`.
+- The app will accept requests for `returnsform14.org`,
+  `www.returnsform14.org`, and `research.harolditdata.uk`.
 - Database connectivity now assumes PostgreSQL is reachable at the LAN server
   IP from the app container.
 - Users can upload larger files, up to the configured 50 MB limit.
@@ -103,8 +108,8 @@ Changed new-deployment defaults from the older `returnsform13.org` domain to
 Important changes:
 
 - Default canonical host is `returnsform14.org`.
-- Default allowed hosts include `returnsform14.org` and
-  `www.returnsform14.org`.
+- Default allowed hosts include `returnsform14.org`, `www.returnsform14.org`,
+  and `research.harolditdata.uk`.
 - Default Google OAuth fallback callback uses the `returnsform14.org` domain.
 
 Impact on the app:
